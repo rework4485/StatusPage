@@ -105,7 +105,7 @@
     .c-badge.bad { background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.22); }
     .c-badge.maint { background:rgba(59,130,246,0.1); color:var(--maint); border:1px solid rgba(59,130,246,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:14px; }
-    .inc-block { border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+    .inc-block { border-radius:10px; padding:12px 14px; margin-bottom:12px; display:flex; flex-direction:column; flex:1; min-height:0; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
@@ -113,11 +113,16 @@
     .inc-label { font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:14px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; }
-    .inc-body { font-size:12.5px; color:var(--sub); line-height:1.55; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+    .inc-body { font-size:12.5px; color:var(--sub); line-height:1.5; display:-webkit-box; -webkit-line-clamp:var(--body-lines, 4); -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; min-height:0; }
     .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .meta-updated svg { width:12px; height:12px; opacity:0.6; }
     .meta-tag { font-size:10.5px; font-weight:500; color:var(--muted); padding:2px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+
+    .card.compact .inc-title { font-size:13px; margin-bottom:3px; }
+    .card.compact .inc-body { font-size:11.5px; --body-lines:3; }
+    .card.compact .meta-updated { font-size:10.5px; }
+    .card.compact .meta-tag { font-size:10px; }
     .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
     .f-left { display:flex; align-items:center; gap:20px; }
     .leg { display:flex; align-items:center; gap:16px; }
@@ -142,7 +147,7 @@
       .card-top { margin-bottom:10px; }
       .card-div { margin-bottom:10px; }
       .inc-block { padding:10px 12px; margin-bottom:8px; }
-      .inc-body { -webkit-line-clamp:4; }
+      .inc-body { font-size:11.5px; --body-lines:3; }
     }
   </style>
 </head>
@@ -215,7 +220,7 @@ const SVCS=[
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com'},
   {name:'SecureW2',su:'https://status.securew2.com/api/v1/status',iu:'https://status.securew2.com/api/v1/notices',hu:'https://status.securew2.com',p:'securew2'},
-  {name:'Adobe CC',su:null,iu:null,hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}
+  {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}
 ];
 
 window._pi = window._pi || {};
@@ -278,8 +283,67 @@ function errSvc(s){
   return {name:s.name,ind:'major',label:'Unavailable',title:'Cannot reach status API',body:'Check the status page manually.',updated:'—',url:s.hu};
 }
 
+function adobeSeverityToIndicator(sev, impact){
+  const value=String(sev || impact || '').toLowerCase().trim();
+  if(!value || value==='none' || value==='na' || value==='n/a') return 'none';
+  if(/maint|scheduled/.test(value)) return 'maintenance';
+  if(/major|critical|sev1|sev2|outage|down/.test(value)) return 'major';
+  if(/minor|degrad|partial|sev3|sev4|performance/.test(value)) return 'minor';
+  return 'minor';
+}
+
+function isOpenAdobeStatus(status){
+  const s=String(status||'').toLowerCase().trim();
+  return !!s && !['closed','resolved','complete','completed','cancelled','canceled'].includes(s);
+}
+
 async function fetchOne(s){
-  if(s.p==='adobe') return mk(s.name,'none','','','N/A',s.hu);
+  if(s.p==='adobe'){
+    try {
+      const [registry, events]=await Promise.all([getJson(s.su), getJson(s.iu)]);
+      const ccEntry=Object.values(registry?.clouds||{}).find(c=>String(c?.name||'').toLowerCase()==='creative cloud');
+      const ccId=ccEntry?.id;
+      if(!ccId) return mk(s.name,'major','Adobe source format changed','Could not locate Creative Cloud in Adobe status registry.',new Date().toLocaleString(),s.hu);
+
+      const active=[];
+      const collectActive=(collection, kind)=>{
+        Object.values(collection||{}).forEach(item=>{
+          if(!item?.clouds || !(ccId in item.clouds)) return;
+          const hist=item.history || {};
+          const keys=Object.keys(hist).sort((a,b)=>Number(a)-Number(b));
+          const last=keys.length ? hist[keys[keys.length-1]] : null;
+          const status=last?.status || item.status;
+          if(status && !isOpenAdobeStatus(status)) return;
+          if(!status && !last) return;
+
+          const ind=kind==='maintenance'
+            ? 'maintenance'
+            : adobeSeverityToIndicator(last?.severity || item.severity, last?.customerImpact || item.customerImpact);
+
+          const title=item.headline || item.name || last?.shortDescription || last?.description || '';
+          const body=stripHtml(last?.description || last?.message || '');
+          const updatedEpoch=Number(keys[keys.length-1] || item.startedOn || 0);
+          active.push({ind, title, body, updatedEpoch});
+        });
+      };
+
+      collectActive(events?.incidentEvent?.incidents, 'incident');
+      collectActive(events?.maintenanceEvent?.maintenance, 'maintenance');
+
+      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+
+      active.sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
+      const top=active[0];
+      return mk(
+        s.name,
+        top.ind,
+        top.title || (top.ind==='maintenance' ? 'Scheduled maintenance' : 'Active incident'),
+        top.body,
+        top.updatedEpoch ? new Date(top.updatedEpoch*1000).toLocaleString() : new Date().toLocaleString(),
+        s.hu
+      );
+    } catch { return errSvc(s); }
+  }
 
   if(s.p==='follett'){
     try {
@@ -499,10 +563,13 @@ async function init(){
   const H=wrap.clientHeight || 640;
   const GAP=12;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const desiredRows=W>=1600 ? 3 : W>=960 ? 2 : 1;
-  const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (220 + GAP)));
-  const rows=Math.min(desiredRows, maxRowsThatFit);
+  const desiredRows=W>=960 ? 2 : 1;
+  const minCardHeight=W>=1600 ? 320 : W>=960 ? 260 : 220;
+  const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (minCardHeight + GAP)));
+  const maxRowsByCount=Math.max(1, Math.ceil(results.length/cols));
+  const rows=Math.min(desiredRows, maxRowsThatFit, maxRowsByCount);
   const CARD_H=Math.floor((H - GAP*(rows-1))/rows);
+  const compactCards=CARD_H<290;
   const perPage=cols*rows;
   const totalPages=Math.ceil(results.length/perPage);
 
@@ -516,7 +583,11 @@ async function init(){
     const c=(p===totalPages-1 && slice.length<cols) ? slice.length : cols;
     pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
     pg.style.gridAutoRows=CARD_H+'px';
-    slice.forEach((s,i)=>pg.appendChild(mkCard(s,i*30)));
+    slice.forEach((s,i)=>{
+      const card=mkCard(s,i*30);
+      if(compactCards) card.classList.add('compact');
+      pg.appendChild(card);
+    });
     wrap.appendChild(pg);
 
     if(totalPages>1){
