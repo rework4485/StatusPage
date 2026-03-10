@@ -113,11 +113,16 @@
     .inc-label { font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:14px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; }
-    .inc-body { font-size:12.5px; color:var(--sub); line-height:1.5; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:4px; }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+    .inc-body { font-size:12.5px; color:var(--sub); line-height:1.5; display:-webkit-box; -webkit-line-clamp:var(--body-lines, 4); -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; min-height:0; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .meta-updated svg { width:12px; height:12px; opacity:0.6; }
     .meta-tag { font-size:10.5px; font-weight:500; color:var(--muted); padding:2px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+
+    .card.compact .inc-title { font-size:13px; margin-bottom:3px; }
+    .card.compact .inc-body { font-size:11.5px; --body-lines:3; }
+    .card.compact .meta-updated { font-size:10.5px; }
+    .card.compact .meta-tag { font-size:10px; }
     .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
     .f-left { display:flex; align-items:center; gap:20px; }
     .leg { display:flex; align-items:center; gap:16px; }
@@ -142,7 +147,7 @@
       .card-top { margin-bottom:10px; }
       .card-div { margin-bottom:10px; }
       .inc-block { padding:10px 12px; margin-bottom:8px; }
-      .inc-body { font-size:12px; }
+      .inc-body { font-size:11.5px; --body-lines:3; }
     }
   </style>
 </head>
@@ -243,17 +248,32 @@ function beep(){
   } catch (_) {}
 }
 
-async function getText(url){
-  const px=[
-    u=>u,
-    u=>'https://corsproxy.io/?'+encodeURIComponent(u),
-    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-    u=>'https://thingproxy.freeboard.io/fetch/'+u
-  ];
+const PROXIES=[
+  u=>u,
+  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://cors.isomorphic-git.org/'+u
+];
+
+function proxyOrder(provider){
+  return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
+}
+
+async function fetchWithTimeout(url, timeout=15000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(), timeout);
+  try {
+    return await fetch(url,{signal:controller.signal});
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function getText(url, provider){
   let err;
-  for(const p of px){
+  for(const idx of proxyOrder(provider)){
     try {
-      const r=await fetch(p(url));
+      const r=await fetchWithTimeout(PROXIES[idx](url));
       if(!r.ok) throw new Error(String(r.status));
       return await r.text();
     } catch(e){ err=e; }
@@ -261,9 +281,9 @@ async function getText(url){
   throw err;
 }
 
-async function getJson(url){
-  const t=await getText(url);
-  return JSON.parse(t.replace(/^\uFEFF/,''));
+async function getJson(url, provider){
+  const t=await getText(url, provider);
+  return JSON.parse(t.replace(/^﻿/,''));
 }
 
 function stripHtml(txt){
@@ -295,7 +315,7 @@ function isOpenAdobeStatus(status){
 async function fetchOne(s){
   if(s.p==='adobe'){
     try {
-      const [registry, events]=await Promise.all([getJson(s.su), getJson(s.iu)]);
+      const [registry, events]=await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
       const ccEntry=Object.values(registry?.clouds||{}).find(c=>String(c?.name||'').toLowerCase()==='creative cloud');
       const ccId=ccEntry?.id;
       if(!ccId) return mk(s.name,'major','Adobe source format changed','Could not locate Creative Cloud in Adobe status registry.',new Date().toLocaleString(),s.hu);
@@ -342,7 +362,7 @@ async function fetchOne(s){
 
   if(s.p==='follett'){
     try {
-      const d=await getJson(s.su);
+      const d=await getJson(s.su, s.p);
       let ind='none';
       if(d.generalStatus==='issues') ind='minor';
       else if(d.generalStatus==='maintenance') ind='maintenance';
@@ -354,7 +374,7 @@ async function fetchOne(s){
 
   if(s.p==='securew2'){
     try {
-      const [status, notices] = await Promise.all([getJson(s.su), getJson(s.iu)]);
+      const [status, notices] = await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
       const st=(status?.page?.state||'').toLowerCase();
       let ind=normalizeIndicator(st || 'none');
 
@@ -366,7 +386,7 @@ async function fetchOne(s){
 
   if(s.p==='statusio'){
     try {
-      const h=await getText(s.su);
+      const h=await getText(s.su, s.p);
       let ind='none';
       const statusBarMatch=h.match(/id=["']statusbar_text["'][^>]*>([^<]+)/i);
       const statusBarText=(statusBarMatch?.[1]||'').toLowerCase();
@@ -385,8 +405,8 @@ async function fetchOne(s){
 
   try {
     const [sd,id]=await Promise.all([
-      getJson(s.su),
-      s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+      getJson(s.su, s.p),
+      s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
     ]);
     let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -558,12 +578,13 @@ async function init(){
   const H=wrap.clientHeight || 640;
   const GAP=12;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const desiredRows=W>=1600 ? 3 : W>=960 ? 2 : 1;
-  const minCardHeight=W>=1600 ? 248 : W>=960 ? 230 : 210;
+  const desiredRows=W>=960 ? 2 : 1;
+  const minCardHeight=W>=1600 ? 320 : W>=960 ? 260 : 220;
   const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (minCardHeight + GAP)));
   const maxRowsByCount=Math.max(1, Math.ceil(results.length/cols));
   const rows=Math.min(desiredRows, maxRowsThatFit, maxRowsByCount);
   const CARD_H=Math.floor((H - GAP*(rows-1))/rows);
+  const compactCards=CARD_H<290;
   const perPage=cols*rows;
   const totalPages=Math.ceil(results.length/perPage);
 
@@ -577,7 +598,11 @@ async function init(){
     const c=(p===totalPages-1 && slice.length<cols) ? slice.length : cols;
     pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
     pg.style.gridAutoRows=CARD_H+'px';
-    slice.forEach((s,i)=>pg.appendChild(mkCard(s,i*30)));
+    slice.forEach((s,i)=>{
+      const card=mkCard(s,i*30);
+      if(compactCards) card.classList.add('compact');
+      pg.appendChild(card);
+    });
     wrap.appendChild(pg);
 
     if(totalPages>1){
