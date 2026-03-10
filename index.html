@@ -90,6 +90,8 @@
     .c-icon.warn { background:rgba(245,158,11,0.1); color:var(--warn); }
     .c-icon.bad { background:rgba(239,68,68,0.1); color:var(--bad); }
     .c-icon.maint { background:rgba(59,130,246,0.1); color:var(--maint); }
+    .c-logo { width:24px; height:24px; border-radius:6px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
+    .c-fallback { font-size:18px; font-weight:700; line-height:1; }
     .c-name { font-size:17px; font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
     .c-url { font-size:11px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
@@ -346,10 +348,26 @@ async function fetchOne(s){
 }
 
 const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙'};
+const LOGO_OVERRIDES={
+  'Adobe CC':'https://www.adobe.com/favicon.ico',
+  'i-Ready':'https://i-ready.status.io/favicon.ico'
+};
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint'};
 const BLOCK_CLS={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block'};
 const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)'};
+
+
+function logoUrl(svc){
+  if(LOGO_OVERRIDES[svc.name]) return LOGO_OVERRIDES[svc.name];
+  try {
+    const host=new URL(svc.url||'').hostname;
+    if(!host) return '';
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+  } catch (_) {
+    return '';
+  }
+}
 
 function mkCard(svc, delay){
   const d=document.createElement('div');
@@ -362,11 +380,13 @@ function mkCard(svc, delay){
   const incTitle=svc.ind==='none' ? 'No incidents reported' : (svc.title||svc.label);
   const incBody=svc.ind==='none' ? 'All systems are operating normally.' : (svc.body||'See the status page for full details.');
   const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
+  const logo=logoUrl(svc);
+  const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
 
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${ICONS[svc.ind]||'?'}</div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logo ? `<img class="c-logo" src="${logo}" alt="${svc.name} logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ""}<span class="c-fallback" style="display:${logo?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
           ${urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
