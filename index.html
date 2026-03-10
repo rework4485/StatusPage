@@ -348,25 +348,56 @@ async function fetchOne(s){
 }
 
 const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙'};
-const LOGO_OVERRIDES={
-  'Adobe CC':'https://www.adobe.com/favicon.ico',
-  'i-Ready':'https://i-ready.status.io/favicon.ico'
+const LOGO_DOMAINS={
+  'i-Ready':'curriculumassociates.com',
+  'HMH':'hmhco.com',
+  'Follett':'follettsoftware.com',
+  'IncidentIQ':'incidentiq.com',
+  'Clever':'clever.com',
+  'Seesaw':'seesaw.me',
+  'Jamf':'jamf.com',
+  'Meraki':'meraki.com',
+  'Duo':'duo.com',
+  'Imagine Learning':'imaginelearning.com',
+  'Blackboard':'blackboard.com',
+  'FinalSite':'finalsite.com',
+  'Cloudflare':'cloudflare.com',
+  'DNSFilter':'dnsfilter.com',
+  'SecureW2':'securew2.com',
+  'Adobe CC':'adobe.com'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint'};
 const BLOCK_CLS={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block'};
 const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)'};
 
+function logoSources(svc){
+  const sources=[];
+  const companyDomain=LOGO_DOMAINS[svc.name] || '';
+  const statusHost=(svc.url||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
 
-function logoUrl(svc){
-  if(LOGO_OVERRIDES[svc.name]) return LOGO_OVERRIDES[svc.name];
-  try {
-    const host=new URL(svc.url||'').hostname;
-    if(!host) return '';
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
-  } catch (_) {
-    return '';
+  if(companyDomain){
+    sources.push(`https://logo.clearbit.com/${companyDomain}`);
+    sources.push(`https://icons.duckduckgo.com/ip3/${companyDomain}.ico`);
+    sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(companyDomain)}&sz=64`);
   }
+  if(statusHost){
+    sources.push(`https://icons.duckduckgo.com/ip3/${statusHost}.ico`);
+    sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(statusHost)}&sz=64`);
+  }
+  return [...new Set(sources.filter(Boolean))];
+}
+
+function nextLogo(img){
+  const sources=(img.dataset.sources||'').split('|').filter(Boolean);
+  const idx=Number(img.dataset.idx||'0')+1;
+  if(idx>=sources.length){
+    img.style.display='none';
+    if(img.nextElementSibling) img.nextElementSibling.style.display='inline';
+    return;
+  }
+  img.dataset.idx=String(idx);
+  img.src=sources[idx];
 }
 
 function mkCard(svc, delay){
@@ -380,13 +411,13 @@ function mkCard(svc, delay){
   const incTitle=svc.ind==='none' ? 'No incidents reported' : (svc.title||svc.label);
   const incBody=svc.ind==='none' ? 'All systems are operating normally.' : (svc.body||'See the status page for full details.');
   const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
-  const logo=logoUrl(svc);
+  const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
 
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logo ? `<img class="c-logo" src="${logo}" alt="${svc.name} logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ""}<span class="c-fallback" style="display:${logo?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
           ${urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
