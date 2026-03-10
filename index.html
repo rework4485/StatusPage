@@ -3,115 +3,537 @@
 <head>
   <meta charset="UTF-8">
   <title>Service Status</title>
+  <!-- PR refresh: republishing full dashboard changes -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --maint:#3b82f6;
-      --bg:#09090b; --card:#111113; --border:rgba(255,255,255,.07);
-      --text:#f4f4f5; --sub:#a1a1aa; --muted:#52525b;
-      --font:'Inter',system-ui,sans-serif;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --maint: #3b82f6;
+      --bg: #09090b;
+      --card: #111113;
+      --border: rgba(255,255,255,0.07);
+      --text: #f4f4f5;
+      --sub: #a1a1aa;
+      --muted: #52525b;
+      --font: 'Inter', system-ui, sans-serif;
     }
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
-    .shell{height:100vh;display:flex;flex-direction:column;padding:20px 24px 16px;gap:16px}
-    .hdr{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-shrink:0}
-    .brand{display:flex;align-items:center;gap:12px}.brand-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);display:flex;align-items:center;justify-content:center}
-    .brand-name{font-size:17px;font-weight:800;letter-spacing:-.03em}.brand-sub{font-size:12px;color:var(--sub);margin-top:2px}
-    .pill{display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--ok)}
-    .pill.warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.22);color:var(--warn)}.pill.bad{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:var(--bad)}
-    .pill-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 2s ease-in-out infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-    .hdr-right,.stats{display:flex;align-items:center}.hdr-right{gap:24px}.stats{gap:16px}.stat{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub)}
-    .sdot{width:7px;height:7px;border-radius:50%}.stat strong{color:var(--text);font-size:14px}.clock{font-size:15px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}
-    .divider{height:1px;background:var(--border);flex-shrink:0}
-    .grid-wrap{flex:1;min-height:0;overflow:hidden;position:relative}.page{position:absolute;inset:0;display:grid;gap:12px;align-content:start;opacity:0;pointer-events:none;transform:translateY(12px);transition:opacity .5s,transform .5s}
-    .page.active{opacity:1;pointer-events:auto;position:relative;transform:none}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;position:relative;overflow:hidden;cursor:pointer;animation:cardIn .35s ease both}
-    @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-    .card::before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--ok)}.card.cw::before{background:var(--warn)}.card.cb::before{background:var(--bad)}.card.cm::before{background:var(--maint)}
-    .card-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}.card-title-row{display:flex;align-items:center;gap:10px;min-width:0}
-    .c-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}.c-icon.ok{background:rgba(34,197,94,.1);color:var(--ok)}.c-icon.warn{background:rgba(245,158,11,.1);color:var(--warn)}.c-icon.bad{background:rgba(239,68,68,.1);color:var(--bad)}.c-icon.maint{background:rgba(59,130,246,.1);color:var(--maint)}
-    .c-name{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c-url{font-size:11px;color:var(--muted);text-decoration:none}.c-url:hover{color:var(--sub)}
-    .c-badge{font-size:11px;font-weight:700;text-transform:uppercase;padding:5px 10px;border-radius:7px}.c-badge.ok{background:rgba(34,197,94,.1);color:var(--ok);border:1px solid rgba(34,197,94,.2)}.c-badge.warn{background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2)}.c-badge.bad{background:rgba(239,68,68,.1);color:var(--bad);border:1px solid rgba(239,68,68,.2)}.c-badge.maint{background:rgba(59,130,246,.1);color:var(--maint);border:1px solid rgba(59,130,246,.2)}
-    .card-div{height:1px;background:var(--border);margin-bottom:12px}.inc-block{border-radius:10px;padding:11px 12px;margin-bottom:12px}.ok-block{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.1)}.warn-block{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.12)}.bad-block{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15)}.maint-block{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15)}
-    .inc-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.inc-title{font-size:14px;font-weight:600;margin-bottom:4px}.inc-body{font-size:12.5px;color:var(--sub);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .card-meta{display:flex;justify-content:space-between;margin-top:auto}.meta-updated{font-size:11px;color:var(--muted)}.meta-tag{font-size:10px;color:var(--muted);padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
-    .footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-shrink:0}.f-left,.leg{display:flex;align-items:center}.f-left{gap:20px}.leg{gap:14px}.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}.leg-dot{width:7px;height:7px;border-radius:50%}.f-meta{font-size:12px;color:var(--muted)}
-    .pdots{display:flex;gap:6px}.pdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer}.pdot.active{background:#fff;transform:scale(1.3)}
-    .prog-track{width:200px;height:2px;background:rgba(255,255,255,.07);border-radius:1px;overflow:hidden}.prog-fill{height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .3s linear}
-    .loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}.spinner{width:32px;height:32px;border:2.5px solid rgba(255,255,255,.08);border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.load-t{font-size:13px;color:var(--muted)}
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      height:100%; overflow:hidden;
+      background:var(--bg); color:var(--text);
+      font-family:var(--font); -webkit-font-smoothing:antialiased;
+    }
+    .shell { height:100vh; display:flex; flex-direction:column; padding:20px 24px 16px; gap:16px; }
+    .hdr { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:20px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand-icon {
+      width:40px; height:40px; border-radius:10px; flex-shrink:0;
+      background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .brand-icon svg { width:20px; height:20px; }
+    .brand-name { font-size:17px; font-weight:800; letter-spacing:-0.03em; }
+    .brand-sub { font-size:12px; color:var(--sub); margin-top:2px; }
+    .pill {
+      display:inline-flex; align-items:center; gap:9px;
+      padding:8px 18px; border-radius:100px; font-size:13.5px; font-weight:600;
+      background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); color:var(--ok);
+      transition:all 0.4s; white-space:nowrap;
+    }
+    .pill.warn { background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.22); color:var(--warn); }
+    .pill.bad { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.28); color:var(--bad); animation:ring 1.8s infinite; }
+    @keyframes ring { 0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,0.35); } 50%{ box-shadow:0 0 0 8px rgba(239,68,68,0); } }
+    .pill-dot { width:7px; height:7px; border-radius:50%; background:currentColor; animation:blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .hdr-right { display:flex; align-items:center; gap:24px; }
+    .stats { display:flex; align-items:center; gap:18px; }
+    .stat { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--sub); }
+    .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .stat strong { color:var(--text); font-weight:700; font-size:14px; }
+    .clock { font-size:15px; font-weight:600; color:var(--sub); font-variant-numeric:tabular-nums; letter-spacing:0.02em; }
+    .divider { height:1px; background:var(--border); flex-shrink:0; }
+    .grid-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
+    .page {
+      position:absolute; inset:0; display:grid; gap:12px; align-content:start;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.55s ease, transform 0.55s ease;
+      transform:translateY(12px);
+    }
+    .page.active { opacity:1; pointer-events:auto; position:relative; transform:translateY(0); }
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:20px 22px; display:flex; flex-direction:column; position:relative; overflow:hidden;
+      transition:border-color 0.3s, box-shadow 0.3s; cursor:pointer; animation:cardIn 0.35s ease both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .card:hover { border-color:rgba(255,255,255,0.14); }
+    .card::before {
+      content:''; position:absolute; left:0; top:16px; bottom:16px; width:3px;
+      border-radius:0 3px 3px 0; background:var(--ok); opacity:0.7;
+    }
+    .card.cw::before { background:var(--warn); opacity:0.8; }
+    .card.cb::before { background:var(--bad); opacity:0.9; }
+    .card.cm::before { background:var(--maint); opacity:0.8; }
+    .card.cb { border-color:rgba(239,68,68,0.16); background:linear-gradient(160deg, #111113, rgba(239,68,68,0.04)); box-shadow:0 0 32px rgba(239,68,68,0.08); }
+    .card.cw { border-color:rgba(245,158,11,0.13); }
+    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .card-title-row { display:flex; align-items:center; gap:12px; min-width:0; }
+    .c-icon {
+      width:44px; height:44px; border-radius:11px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:20px;
+    }
+    .c-icon.ok { background:rgba(34,197,94,0.1); color:var(--ok); }
+    .c-icon.warn { background:rgba(245,158,11,0.1); color:var(--warn); }
+    .c-icon.bad { background:rgba(239,68,68,0.1); color:var(--bad); }
+    .c-icon.maint { background:rgba(59,130,246,0.1); color:var(--maint); }
+    .c-logo { width:24px; height:24px; border-radius:6px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
+    .c-fallback { font-size:18px; font-weight:700; line-height:1; }
+    .c-name { font-size:17px; font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+    .c-url { font-size:11px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
+    .c-url:hover { color:var(--sub); }
+    .c-badge {
+      flex-shrink:0; font-size:12px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase;
+      padding:5px 12px; border-radius:7px; margin-top:2px;
+    }
+    .c-badge.ok { background:rgba(34,197,94,0.1); color:var(--ok); border:1px solid rgba(34,197,94,0.2); }
+    .c-badge.warn { background:rgba(245,158,11,0.1); color:var(--warn); border:1px solid rgba(245,158,11,0.22); }
+    .c-badge.bad { background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.22); }
+    .c-badge.maint { background:rgba(59,130,246,0.1); color:var(--maint); border:1px solid rgba(59,130,246,0.22); }
+    .card-div { height:1px; background:var(--border); margin-bottom:14px; }
+    .inc-block { border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+    .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
+    .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
+    .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
+    .inc-block.maint-block { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15); }
+    .inc-label { font-size:10.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+    .inc-label-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+    .inc-title { font-size:14px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; }
+    .inc-body { font-size:12.5px; color:var(--sub); line-height:1.55; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
+    .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+    .meta-updated svg { width:12px; height:12px; opacity:0.6; }
+    .meta-tag { font-size:10.5px; font-weight:500; color:var(--muted); padding:2px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+    .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
+    .f-left { display:flex; align-items:center; gap:20px; }
+    .leg { display:flex; align-items:center; gap:16px; }
+    .leg-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
+    .leg-dot { width:7px; height:7px; border-radius:50%; }
+    .f-meta { font-size:12px; color:var(--muted); }
+    .pdots { display:flex; align-items:center; gap:6px; }
+    .pdot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15); cursor:pointer; transition:all 0.3s; }
+    .pdot.active { background:#fff; transform:scale(1.35); }
+    .prog-track { width:200px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px; overflow:hidden; }
+    .prog-fill { height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#8b5cf6); transition:width 0.4s linear; }
+    .loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+    .spinner { width:32px; height:32px; border:2.5px solid rgba(255,255,255,0.07); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .load-t { font-size:13px; color:var(--muted); }
+
+    @media (max-height: 720px) {
+      .shell { padding:14px 16px 10px; gap:10px; }
+      .hdr { gap:12px; }
+      .brand-sub, .stats, .f-meta { display:none; }
+      .card { padding:14px 16px; }
+      .card-top { margin-bottom:10px; }
+      .card-div { margin-bottom:10px; }
+      .inc-block { padding:10px 12px; margin-bottom:8px; }
+      .inc-body { -webkit-line-clamp:4; }
+    }
   </style>
 </head>
 <body>
 <div class="shell">
   <div class="hdr">
     <div class="brand">
-      <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <div><div class="brand-name">Service Status</div><div class="brand-sub">Live monitoring · auto-refresh every 2 min</div></div>
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Service Status</div>
+        <div class="brand-sub">Live monitoring · auto-refresh every 2 min</div>
+      </div>
     </div>
     <div class="pill" id="pill"><span class="pill-dot"></span><span id="pill-txt">Loading…</span></div>
-    <div class="hdr-right"><div class="stats">
-      <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>Operational</div>
-      <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>Degraded</div>
-      <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>Down</div>
-      <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>Maintenance</div>
-    </div><div class="clock" id="clock">--:--:--</div></div>
+    <div class="hdr-right">
+      <div class="stats">
+        <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
+        <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
+        <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
+        <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
+      </div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
   </div>
   <div class="divider"></div>
-  <div class="grid-wrap" id="grid-wrap"><div class="loading"><div class="spinner"></div><div class="load-t">Fetching service status…</div></div></div>
-  <div class="footer"><div class="f-left"><div class="leg">
-    <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>Operational</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--warn)"></div>Degraded</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--bad)"></div>Outage</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--maint)"></div>Maintenance</div>
-  </div><div class="f-meta" id="f-meta"></div></div>
-  <div class="pdots" id="pdots"></div><div class="prog-track" id="prog-track" style="display:none"><div class="prog-fill" id="prog-fill"></div></div></div>
+  <div class="grid-wrap" id="grid-wrap">
+    <div class="loading" id="loading-el">
+      <div class="spinner"></div>
+      <div class="load-t">Fetching service status…</div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="f-left">
+      <div class="leg">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>Operational</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--warn)"></div>Degraded</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--bad)"></div>Outage</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--maint)"></div>Maintenance</div>
+      </div>
+      <div class="f-meta" id="f-meta"></div>
+    </div>
+    <div class="pdots" id="pdots"></div>
+    <div class="prog-track" id="prog-track" style="display:none"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
 </div>
 <script>
-(function tick(){const e=document.getElementById('clock'),n=new Date();e.textContent=n.toLocaleTimeString('en-US',{hour12:false});setTimeout(tick,1000-n.getMilliseconds());})();
+(function tick(){
+  const e=document.getElementById('clock');
+  e.textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+  setTimeout(tick, 1000-new Date().getMilliseconds());
+})();
+
 const SVCS=[
-{name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio'},
-{name:'HMH',su:'https://status.hmhco.com/api/v2/status.json',iu:'https://status.hmhco.com/api/v2/incidents.json',hu:'https://status.hmhco.com'},
-{name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett'},
-{name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/status.json',iu:'https://status.incidentiq.com/api/v2/incidents.json',hu:'https://status.incidentiq.com'},
-{name:'Clever',su:'https://status.clever.com/api/v2/status.json',iu:'https://status.clever.com/api/v2/incidents.json',hu:'https://status.clever.com'},
-{name:'Seesaw',su:'https://status.seesaw.me/api/v2/status.json',iu:'https://status.seesaw.me/api/v2/incidents.json',hu:'https://status.seesaw.me'},
-{name:'Jamf',su:'https://status.jamf.com/api/v2/status.json',iu:'https://status.jamf.com/api/v2/incidents.json',hu:'https://status.jamf.com'},
-{name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net'},
-{name:'Duo',su:'https://status.duo.com/api/v2/status.json',iu:'https://status.duo.com/api/v2/incidents.json',hu:'https://status.duo.com'},
-{name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/status.json',iu:'https://status.imaginelearning.com/api/v2/incidents.json',hu:'https://status.imaginelearning.com'},
-{name:'Blackboard',su:'https://status.blackboard.com/api/v2/status.json',iu:'https://status.blackboard.com/api/v2/incidents.json',hu:'https://status.blackboard.com'},
-{name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com'},
-{name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com'},
-{name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com'},
-{name:'SecureW2',su:'https://status.securew2.com/api/v1/status',iu:'https://status.securew2.com/api/v1/notices',hu:'https://status.securew2.com',p:'securew2'},
-{name:'Adobe CC',su:null,iu:null,hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}];
-window._pi=window._pi||{};
-const PRI={major:1,minor:2,maintenance:3,none:4},LABELS={none:'Operational',minor:'Degraded',major:'Outage',maintenance:'Maintenance'};
-async function getText(url){const px=[u=>u,u=>'https://corsproxy.io/?'+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://thingproxy.freeboard.io/fetch/'+u];let err;for(const p of px){try{const r=await fetch(p(url),{headers:{'x-requested-with':'fetch'}});if(!r.ok)throw new Error(r.status);return await r.text();}catch(e){err=e;}}throw err;}
-async function getJson(url){const t=await getText(url);return JSON.parse(t.replace(/^\uFEFF/,''));}
-const activeStatuses=['investigating','identified','monitoring','in_progress'];
+  {name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio'},
+  {name:'HMH',su:'https://status.hmhco.com/api/v2/status.json',iu:'https://status.hmhco.com/api/v2/incidents.json',hu:'https://status.hmhco.com'},
+  {name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett'},
+  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/status.json',iu:'https://status.incidentiq.com/api/v2/incidents.json',hu:'https://status.incidentiq.com'},
+  {name:'Clever',su:'https://status.clever.com/api/v2/status.json',iu:'https://status.clever.com/api/v2/incidents.json',hu:'https://status.clever.com'},
+  {name:'Seesaw',su:'https://status.seesaw.me/api/v2/status.json',iu:'https://status.seesaw.me/api/v2/incidents.json',hu:'https://status.seesaw.me'},
+  {name:'Jamf',su:'https://status.jamf.com/api/v2/status.json',iu:'https://status.jamf.com/api/v2/incidents.json',hu:'https://status.jamf.com'},
+  {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net'},
+  {name:'Duo',su:'https://status.duo.com/api/v2/status.json',iu:'https://status.duo.com/api/v2/incidents.json',hu:'https://status.duo.com'},
+  {name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/status.json',iu:'https://status.imaginelearning.com/api/v2/incidents.json',hu:'https://status.imaginelearning.com'},
+  {name:'Blackboard',su:'https://status.blackboard.com/api/v2/status.json',iu:'https://status.blackboard.com/api/v2/incidents.json',hu:'https://status.blackboard.com'},
+  {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com'},
+  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com'},
+  {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com'},
+  {name:'SecureW2',su:'https://status.securew2.com/api/v1/status',iu:'https://status.securew2.com/api/v1/notices',hu:'https://status.securew2.com',p:'securew2'},
+  {name:'Adobe CC',su:null,iu:null,hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}
+];
+
+window._pi = window._pi || {};
+const PRI={major:1,minor:2,maintenance:3,none:4};
+const LABELS={none:'Operational',minor:'Degraded',major:'Outage',maintenance:'Maintenance'};
+
+function normalizeIndicator(ind){
+  const val=String(ind||'none').toLowerCase().trim();
+  if(['none','operational','ok','up'].includes(val)) return 'none';
+  if(['minor','degraded','warning','partial_outage','partial outage'].includes(val)) return 'minor';
+  if(['maintenance','under_maintenance','scheduled','scheduled_maintenance'].includes(val)) return 'maintenance';
+  if(['major','critical','down','outage'].includes(val)) return 'major';
+  return 'major';
+}
+
+function beep(){
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, c.currentTime);
+    o.connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + 0.35);
+  } catch (_) {}
+}
+
+async function getText(url){
+  const px=[
+    u=>u,
+    u=>'https://corsproxy.io/?'+encodeURIComponent(u),
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://thingproxy.freeboard.io/fetch/'+u
+  ];
+  let err;
+  for(const p of px){
+    try {
+      const r=await fetch(p(url));
+      if(!r.ok) throw new Error(String(r.status));
+      return await r.text();
+    } catch(e){ err=e; }
+  }
+  throw err;
+}
+
+async function getJson(url){
+  const t=await getText(url);
+  return JSON.parse(t.replace(/^\uFEFF/,''));
+}
+
+function stripHtml(txt){
+  return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function mk(name,ind,title,body,updated,url){
+  return {name,ind,label:LABELS[ind]||'Unknown',title,body,updated,url};
+}
+
+function errSvc(s){
+  return {name:s.name,ind:'major',label:'Unavailable',title:'Cannot reach status API',body:'Check the status page manually.',updated:'—',url:s.hu};
+}
+
 async function fetchOne(s){
   if(s.p==='adobe') return mk(s.name,'none','','','N/A',s.hu);
-  if(s.p==='follett'){try{const d=await getJson(s.su);let ind='none';if(d.generalStatus==='issues')ind='minor';else if(d.generalStatus==='maintenance')ind='maintenance';else if(d.generalStatus&&d.generalStatus!=='ok')ind='major';const msg=(d.systemMessage||'').replace(/<[^>]+>/g,'').trim();return mk(s.name,ind,msg?'Follett Announcement':'',msg,new Date().toLocaleString(),s.hu);}catch{return errSvc(s);}}
-  if(s.p==='securew2'){try{const [st,nt]=await Promise.all([getJson(s.su),getJson(s.iu)]);let ind='none';const state=(st?.page?.state||'').toLowerCase();if(state==='degraded')ind='minor';else if(state==='under_maintenance')ind='maintenance';else if(state&&state!=='operational')ind='major';const active=(nt?.notices||[]).find(n=>!['resolved','complete','cancelled','canceled'].includes((n.state||'').toLowerCase()));const title=active?.subject||'';const body=(active?.latest_update?.content||'').replace(/<[^>]+>/g,'').trim();return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);}catch{return errSvc(s);}}
-  if(s.p==='statusio'){try{const h=await getText(s.su);let ind='none';if(/(Partial|Major) Outage|Investigating|Identified/i.test(h))ind='major';else if(/Degraded|Monitoring/i.test(h))ind='minor';else if(/Maintenance/i.test(h))ind='maintenance';return mk(s.name,ind,'','',new Date().toLocaleString(),s.hu);}catch{return errSvc(s);}}
-  try{const [sd,id]=await Promise.all([getJson(s.su),getJson(s.iu)]);let ind=(sd?.status?.indicator||'none').toLowerCase();const updated=sd?.page?.updated_at?new Date(sd.page.updated_at).toLocaleString():new Date().toLocaleString();const active=(id?.incidents||[]).filter(x=>activeStatuses.includes((x.status||'').toLowerCase()));let title='',body='';if(active.length){const a=active[0];if(ind==='none'){const imp=(a.impact||'').toLowerCase();if(['critical','major'].includes(imp))ind='major';else if(imp&&imp!=='none')ind='minor';}title=a.name||'';body=(a.description||a.incident_updates?.[0]?.body||'').replace(/<[^>]+>/g,'').trim();}return mk(s.name,ind,title,body,updated,s.hu);}catch{return errSvc(s);}
+
+  if(s.p==='follett'){
+    try {
+      const d=await getJson(s.su);
+      let ind='none';
+      if(d.generalStatus==='issues') ind='minor';
+      else if(d.generalStatus==='maintenance') ind='maintenance';
+      else if(d.generalStatus && d.generalStatus!=='ok') ind='major';
+      const msg=stripHtml(d.systemMessage||'');
+      return mk(s.name,ind,msg?'Follett Announcement':'',msg,new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='securew2'){
+    try {
+      const [status, notices] = await Promise.all([getJson(s.su), getJson(s.iu)]);
+      const st=(status?.page?.state||'').toLowerCase();
+      let ind=normalizeIndicator(st || 'none');
+
+      const active=(notices?.notices||[]).find(n=>!['resolved','complete','cancelled','canceled'].includes((n.state||'').toLowerCase()));
+      const body=stripHtml(active?.latest_update?.content||'');
+      return mk(s.name,ind,active?.subject||'',body,new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='statusio'){
+    try {
+      const h=await getText(s.su);
+      let ind='none';
+      const statusBarMatch=h.match(/id=["']statusbar_text["'][^>]*>([^<]+)/i);
+      const statusBarText=(statusBarMatch?.[1]||'').toLowerCase();
+      if(statusBarText){
+        if(/all systems operational|operational/.test(statusBarText)) ind='none';
+        else if(/maintenance/.test(statusBarText)) ind='maintenance';
+        else if(/degraded|partial/.test(statusBarText)) ind='minor';
+        else if(/outage|critical|down/.test(statusBarText)) ind='major';
+      } else {
+        const statusCode=h.match(/return\s+status\s*===\s*(\d+)/i);
+        ind = statusCode ? (Number(statusCode[1])>=500 ? 'major' : Number(statusCode[1])>=300 ? 'minor' : Number(statusCode[1])===200 ? 'maintenance' : 'none') : 'none';
+      }
+      return mk(s.name,ind,'','',new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  try {
+    const [sd,id]=await Promise.all([
+      getJson(s.su),
+      s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+    ]);
+    let ind=normalizeIndicator(sd?.status?.indicator||'none');
+    const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
+    const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
+    let title='', body='';
+    if(active.length){
+      const a=active[0];
+      if(ind==='none'){
+        const impact=normalizeIndicator(a.impact||'none');
+        if(impact!=='none') ind=impact;
+      }
+      title=a.name||'';
+      let desc=stripHtml(a.description||'');
+      if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
+      body=desc;
+    }
+    return mk(s.name,ind,title,body,updated,s.hu);
+  } catch { return errSvc(s); }
 }
-function mk(name,ind,title,body,updated,url){return{name,ind,label:LABELS[ind]||'Unknown',title,body,updated,url};}
-function errSvc(s){return{name:s.name,ind:'major',label:'Unavailable',title:'Cannot reach status API',body:'Check the status page manually.',updated:'—',url:s.hu};}
-const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙'},CC={none:'',minor:'cw',major:'cb',maintenance:'cm'},IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint'},BLOCK={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block'},LC={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)'};
-function mkCard(svc,delay){const d=document.createElement('div');d.className=`card ${CC[svc.ind]||''}`;d.style.animationDelay=delay+'ms';if(svc.url)d.addEventListener('click',()=>window.open(svc.url,'_blank'));const color=LC[svc.ind]||'var(--sub)';const incTitle=svc.ind==='none'?'No incidents reported':(svc.title||svc.label);const incBody=svc.ind==='none'?'All systems are operating normally.':(svc.body||'See the status page for full details.');const urlHost=svc.url?svc.url.replace(/^https?:\/\//,'').replace(/\/$/,''):'';d.innerHTML=`<div class="card-top"><div class="card-title-row"><div class="c-icon ${IC[svc.ind]||'ok'}">${ICONS[svc.ind]||'?'}</div><div><div class="c-name">${svc.name}</div>${urlHost?`<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${urlHost}</a>`:''}</div></div><div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div></div><div class="card-div"></div><div class="inc-block ${BLOCK[svc.ind]||'ok-block'}"><div class="inc-label" style="color:${color}">${svc.ind==='none'?'Current Status':'Active Incident'}</div><div class="inc-title">${incTitle}</div><div class="inc-body">${incBody}</div></div><div class="card-meta"><div class="meta-updated">Updated ${svc.updated}</div><div class="meta-tag">${svc.ind==='none'?'Healthy':svc.ind==='maintenance'?'Scheduled':'Attention'}</div></div>`;return d;}
-let cur=0,rTimer=null,pTimer=null,pStart=0;const ROT_MS=60000;
-function goPage(idx){[...document.querySelectorAll('.page')].forEach((p,i)=>p.classList.toggle('active',i===idx));[...document.querySelectorAll('.pdot')].forEach((d,i)=>d.classList.toggle('active',i===idx));cur=idx;resetProg();}
-function resetProg(){clearInterval(pTimer);const fill=document.getElementById('prog-fill');pStart=Date.now();fill.style.width='0%';pTimer=setInterval(()=>{fill.style.width=Math.min(100,(Date.now()-pStart)/ROT_MS*100)+'%';},300)}
-function startRot(n){clearInterval(rTimer);if(n>1)rTimer=setInterval(()=>goPage((cur+1)%n),ROT_MS)}
-function updateStats(data){const ok=data.filter(s=>s.ind==='none').length,wn=data.filter(s=>s.ind==='minor').length,bd=data.filter(s=>s.ind==='major').length,mt=data.filter(s=>s.ind==='maintenance').length;document.getElementById('n-ok').textContent=ok;document.getElementById('n-warn').textContent=wn;document.getElementById('n-bad').textContent=bd;document.getElementById('n-maint').textContent=mt;const pill=document.getElementById('pill'),txt=document.getElementById('pill-txt');if(bd>0){pill.className='pill bad';txt.textContent=bd===1?'1 Service Down':`${bd} Services Down`;}else if(wn>0){pill.className='pill warn';txt.textContent='Degraded Performance';}else{pill.className='pill';txt.textContent='All Systems Operational';}document.getElementById('f-meta').textContent='Last updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'});}
-async function init(){const wrap=document.getElementById('grid-wrap'),dotsEl=document.getElementById('pdots');const results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))),i*150))));results.sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));updateStats(results);const W=wrap.clientWidth||1280,H=wrap.clientHeight||640,GAP=12,cols=W>=1600?4:W>=960?3:2,CARD_H=190,rows=Math.max(1,Math.floor((H+GAP)/(CARD_H+GAP))),perPage=cols*rows,totalPages=Math.ceil(results.length/perPage);clearInterval(rTimer);clearInterval(pTimer);wrap.innerHTML='';dotsEl.innerHTML='';cur=0;for(let p=0;p<totalPages;p++){const slice=results.slice(p*perPage,(p+1)*perPage);const pg=document.createElement('div');pg.className=`page ${p===0?'active':''}`;const c=(p===totalPages-1&&slice.length<cols)?slice.length:cols;pg.style.gridTemplateColumns=`repeat(${Math.max(c,1)},1fr)`;pg.style.gridAutoRows=CARD_H+'px';slice.forEach((s,i)=>pg.appendChild(mkCard(s,i*35)));wrap.appendChild(pg);if(totalPages>1){const dot=document.createElement('div');dot.className=`pdot ${p===0?'active':''}`;dot.addEventListener('click',()=>{clearInterval(rTimer);goPage(p);startRot(totalPages);});dotsEl.appendChild(dot);}}
-  document.getElementById('prog-track').style.display=totalPages>1?'':'none';startRot(totalPages);if(totalPages>1)resetProg();}
-window.addEventListener('DOMContentLoaded',()=>{init();setInterval(init,120000)});
+
+const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙'};
+const LOGO_DOMAINS={
+  'i-Ready':'curriculumassociates.com',
+  'HMH':'hmhco.com',
+  'Follett':'follettsoftware.com',
+  'IncidentIQ':'incidentiq.com',
+  'Clever':'clever.com',
+  'Seesaw':'seesaw.me',
+  'Jamf':'jamf.com',
+  'Meraki':'meraki.com',
+  'Duo':'duo.com',
+  'Imagine Learning':'imaginelearning.com',
+  'Blackboard':'blackboard.com',
+  'FinalSite':'finalsite.com',
+  'Cloudflare':'cloudflare.com',
+  'DNSFilter':'dnsfilter.com',
+  'SecureW2':'securew2.com',
+  'Adobe CC':'adobe.com'
+};
+const CC={none:'',minor:'cw',major:'cb',maintenance:'cm'};
+const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint'};
+const BLOCK_CLS={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block'};
+const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)'};
+
+function logoSources(svc){
+  const sources=[];
+  const companyDomain=LOGO_DOMAINS[svc.name] || '';
+  const statusHost=(svc.url||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
+
+  if(companyDomain){
+    sources.push(`https://logo.clearbit.com/${companyDomain}`);
+    sources.push(`https://icons.duckduckgo.com/ip3/${companyDomain}.ico`);
+    sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(companyDomain)}&sz=64`);
+  }
+  if(statusHost){
+    sources.push(`https://icons.duckduckgo.com/ip3/${statusHost}.ico`);
+    sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(statusHost)}&sz=64`);
+  }
+  return [...new Set(sources.filter(Boolean))];
+}
+
+function nextLogo(img){
+  const sources=(img.dataset.sources||'').split('|').filter(Boolean);
+  const idx=Number(img.dataset.idx||'0')+1;
+  if(idx>=sources.length){
+    img.style.display='none';
+    if(img.nextElementSibling) img.nextElementSibling.style.display='inline';
+    return;
+  }
+  img.dataset.idx=String(idx);
+  img.src=sources[idx];
+}
+
+function mkCard(svc, delay){
+  const d=document.createElement('div');
+  d.className=`card ${CC[svc.ind]||''}`;
+  d.style.animationDelay=delay+'ms';
+  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+
+  const color=LABEL_COLOR[svc.ind]||'var(--sub)';
+  const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
+  const incTitle=svc.ind==='none' ? 'No incidents reported' : (svc.title||svc.label);
+  const incBody=svc.ind==='none' ? 'All systems are operating normally.' : (svc.body||'See the status page for full details.');
+  const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
+  const logos=logoSources(svc);
+  const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+
+  d.innerHTML=`
+    <div class="card-top">
+      <div class="card-title-row">
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
+        <div class="c-name-block">
+          <div class="c-name">${svc.name}</div>
+          ${urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
+        </div>
+      </div>
+      <div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div>
+    </div>
+    <div class="card-div"></div>
+    <div class="inc-block ${blockCls}">
+      <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${svc.ind==='none'?'Current Status':'Active Incident'}</div>
+      <div class="inc-title">${incTitle}</div>
+      <div class="inc-body">${incBody}</div>
+    </div>
+    <div class="card-meta">
+      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated ${svc.updated}</div>
+      <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : 'Investigating'}</div>
+    </div>`;
+  return d;
+}
+
+let cur=0, rTimer=null, pTimer=null, pStart=0;
+const ROT_MS=60000;
+
+function goPage(idx){
+  [...document.querySelectorAll('.page')].forEach((p,i)=>p.classList.toggle('active',i===idx));
+  [...document.querySelectorAll('.pdot')].forEach((d,i)=>d.classList.toggle('active',i===idx));
+  cur=idx;
+  resetProg();
+}
+
+function resetProg(){
+  clearInterval(pTimer);
+  const fill=document.getElementById('prog-fill');
+  pStart=Date.now();
+  fill.style.width='0%';
+  pTimer=setInterval(()=>{ fill.style.width=Math.min(100,(Date.now()-pStart)/ROT_MS*100)+'%'; },300);
+}
+
+function startRot(n){
+  clearInterval(rTimer);
+  if(n>1) rTimer=setInterval(()=>goPage((cur+1)%n),ROT_MS);
+}
+
+function updateStats(data){
+  const ok=data.filter(s=>s.ind==='none').length;
+  const wn=data.filter(s=>s.ind==='minor').length;
+  const bd=data.filter(s=>s.ind==='major').length;
+  const mt=data.filter(s=>s.ind==='maintenance').length;
+  document.getElementById('n-ok').textContent=ok;
+  document.getElementById('n-warn').textContent=wn;
+  document.getElementById('n-bad').textContent=bd;
+  document.getElementById('n-maint').textContent=mt;
+
+  const pill=document.getElementById('pill');
+  const txt=document.getElementById('pill-txt');
+  if(bd>0){ pill.className='pill bad'; txt.textContent=bd===1?'1 Service Down':`${bd} Services Down`; }
+  else if(wn>0){ pill.className='pill warn'; txt.textContent='Degraded Performance'; }
+  else { pill.className='pill'; txt.textContent='All Systems Operational'; }
+
+  document.getElementById('f-meta').textContent='Last updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'});
+}
+
+async function init(){
+  const wrap=document.getElementById('grid-wrap');
+  const dotsEl=document.getElementById('pdots');
+
+  const results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))), i*120))));
+  results.sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
+
+  results.forEach(s=>{
+    const prev=window._pi[s.name];
+    if(prev==='none' && s.ind!=='none') beep();
+    window._pi[s.name]=s.ind;
+  });
+  updateStats(results);
+
+  const W=wrap.clientWidth || 1280;
+  const H=wrap.clientHeight || 640;
+  const GAP=12;
+  const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
+  const desiredRows=W>=1600 ? 3 : W>=960 ? 2 : 1;
+  const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (220 + GAP)));
+  const rows=Math.min(desiredRows, maxRowsThatFit);
+  const CARD_H=Math.floor((H - GAP*(rows-1))/rows);
+  const perPage=cols*rows;
+  const totalPages=Math.ceil(results.length/perPage);
+
+  clearInterval(rTimer); clearInterval(pTimer);
+  wrap.innerHTML=''; dotsEl.innerHTML=''; cur=0;
+
+  for(let p=0;p<totalPages;p++){
+    const slice=results.slice(p*perPage,(p+1)*perPage);
+    const pg=document.createElement('div');
+    pg.className=`page ${p===0?'active':''}`;
+    const c=(p===totalPages-1 && slice.length<cols) ? slice.length : cols;
+    pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
+    pg.style.gridAutoRows=CARD_H+'px';
+    slice.forEach((s,i)=>pg.appendChild(mkCard(s,i*30)));
+    wrap.appendChild(pg);
+
+    if(totalPages>1){
+      const dot=document.createElement('div');
+      dot.className=`pdot ${p===0?'active':''}`;
+      dot.title=`Page ${p+1} of ${totalPages}`;
+      dot.addEventListener('click',()=>{ clearInterval(rTimer); goPage(p); startRot(totalPages); });
+      dotsEl.appendChild(dot);
+    }
+  }
+
+  document.getElementById('prog-track').style.display=totalPages>1 ? '' : 'none';
+  startRot(totalPages);
+  if(totalPages>1) resetProg();
+}
+
+window.addEventListener('DOMContentLoaded',()=>{ init(); setInterval(init,120000); });
 </script>
 </body>
 </html>
