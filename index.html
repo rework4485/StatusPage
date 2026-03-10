@@ -208,6 +208,15 @@ window._pi = window._pi || {};
 const PRI={major:1,minor:2,maintenance:3,none:4};
 const LABELS={none:'Operational',minor:'Degraded',major:'Outage',maintenance:'Maintenance'};
 
+function normalizeIndicator(ind){
+  const val=String(ind||'none').toLowerCase().trim();
+  if(['none','operational','ok','up'].includes(val)) return 'none';
+  if(['minor','degraded','warning','partial_outage','partial outage'].includes(val)) return 'minor';
+  if(['maintenance','under_maintenance','scheduled','scheduled_maintenance'].includes(val)) return 'maintenance';
+  if(['major','critical','down','outage'].includes(val)) return 'major';
+  return 'major';
+}
+
 function beep(){
   try {
     const c = new (window.AudioContext || window.webkitAudioContext)();
@@ -230,7 +239,7 @@ async function getText(url){
   let err;
   for(const p of px){
     try {
-      const r=await fetch(p(url),{headers:{'x-requested-with':'fetch'}});
+      const r=await fetch(p(url));
       if(!r.ok) throw new Error(String(r.status));
       return await r.text();
     } catch(e){ err=e; }
@@ -241,6 +250,10 @@ async function getText(url){
 async function getJson(url){
   const t=await getText(url);
   return JSON.parse(t.replace(/^\uFEFF/,''));
+}
+
+function stripHtml(txt){
+  return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
 
 function mk(name,ind,title,body,updated,url){
@@ -261,7 +274,7 @@ async function fetchOne(s){
       if(d.generalStatus==='issues') ind='minor';
       else if(d.generalStatus==='maintenance') ind='maintenance';
       else if(d.generalStatus && d.generalStatus!=='ok') ind='major';
-      const msg=(d.systemMessage||'').replace(/<[^>]+>/g,'').trim();
+      const msg=stripHtml(d.systemMessage||'');
       return mk(s.name,ind,msg?'Follett Announcement':'',msg,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -270,13 +283,10 @@ async function fetchOne(s){
     try {
       const [status, notices] = await Promise.all([getJson(s.su), getJson(s.iu)]);
       const st=(status?.page?.state||'').toLowerCase();
-      let ind='none';
-      if(st==='degraded') ind='minor';
-      else if(st==='under_maintenance') ind='maintenance';
-      else if(st && st!=='operational') ind='major';
+      let ind=normalizeIndicator(st || 'none');
 
       const active=(notices?.notices||[]).find(n=>!['resolved','complete','cancelled','canceled'].includes((n.state||'').toLowerCase()));
-      const body=String(active?.latest_update?.content||'').replace(/<[^>]+>/g,'').trim();
+      const body=stripHtml(active?.latest_update?.content||'');
       return mk(s.name,ind,active?.subject||'',body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -285,9 +295,17 @@ async function fetchOne(s){
     try {
       const h=await getText(s.su);
       let ind='none';
-      if(/(Investigating|Identified|Outage|Disruption)/i.test(h)) ind='major';
-      else if(/(Monitoring|Degraded)/i.test(h)) ind='minor';
-      else if(/Maintenance/i.test(h)) ind='maintenance';
+      const statusBarMatch=h.match(/id=["']statusbar_text["'][^>]*>([^<]+)/i);
+      const statusBarText=(statusBarMatch?.[1]||'').toLowerCase();
+      if(statusBarText){
+        if(/all systems operational|operational/.test(statusBarText)) ind='none';
+        else if(/maintenance/.test(statusBarText)) ind='maintenance';
+        else if(/degraded|partial/.test(statusBarText)) ind='minor';
+        else if(/outage|critical|down/.test(statusBarText)) ind='major';
+      } else {
+        const statusCode=h.match(/return\s+status\s*===\s*(\d+)/i);
+        ind = statusCode ? (Number(statusCode[1])>=500 ? 'major' : Number(statusCode[1])>=300 ? 'minor' : Number(statusCode[1])===200 ? 'maintenance' : 'none') : 'none';
+      }
       return mk(s.name,ind,'','',new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -297,19 +315,19 @@ async function fetchOne(s){
       getJson(s.su),
       s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
     ]);
-    let ind=(sd?.status?.indicator||'none').toLowerCase();
+    let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
     const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
     let title='', body='';
     if(active.length){
       const a=active[0];
       if(ind==='none'){
-        if(['critical','major'].includes((a.impact||'').toLowerCase())) ind='major';
-        else if(a.impact && a.impact.toLowerCase()!=='none') ind='minor';
+        const impact=normalizeIndicator(a.impact||'none');
+        if(impact!=='none') ind=impact;
       }
       title=a.name||'';
-      let desc=(a.description||'').trim();
-      if(!desc && a.incident_updates?.[0]?.body) desc=a.incident_updates[0].body.replace(/<[^>]+>/g,'').trim();
+      let desc=stripHtml(a.description||'');
+      if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
       body=desc;
     }
     return mk(s.name,ind,title,body,updated,s.hu);
