@@ -476,6 +476,25 @@ function normalizeIndicator(ind){
 }
 
 let audioCtx;
+let audioPrimed=false;
+const CHIME_SPEECH_DELAY={
+  outage:760,
+  degraded:610,
+  restored:700
+};
+const TTS_STATUS_LABEL={
+  outage:'Outage',
+  degraded:'Degraded',
+  restored:'Operational'
+};
+const PREFERRED_TTS_VOICES=[
+  'Google US English',
+  'Google UK English Female',
+  'Microsoft Aria Online (Natural) - English (United States)',
+  'Microsoft Jenny Online (Natural) - English (United States)',
+  'Samantha'
+];
+
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -485,6 +504,17 @@ function getAudioCtx(){
 async function ensureAudioReady(){
   const c=getAudioCtx();
   if(c.state==='suspended') await c.resume();
+  if(!audioPrimed){
+    const warmup=c.createOscillator();
+    const warmGain=c.createGain();
+    warmGain.gain.setValueAtTime(0.00001, c.currentTime);
+    warmup.frequency.setValueAtTime(440, c.currentTime);
+    warmup.connect(warmGain);
+    warmGain.connect(c.destination);
+    warmup.start(c.currentTime);
+    warmup.stop(c.currentTime+0.03);
+    audioPrimed=true;
+  }
   return c;
 }
 
@@ -493,17 +523,47 @@ function primeAudio(){
 }
 
 function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
+  const prep=0.015;
+  const startTime=Math.max(start, ctx.currentTime+prep);
+  const oscStart=Math.max(ctx.currentTime, startTime-prep);
   const o=ctx.createOscillator();
   const g=ctx.createGain();
   o.type=type;
-  o.frequency.setValueAtTime(freq, start);
-  g.gain.setValueAtTime(0, start);
-  g.gain.linearRampToValueAtTime(gain, start+0.008);
-  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.frequency.setValueAtTime(freq, oscStart);
+  g.gain.setValueAtTime(0.00001, oscStart);
+  g.gain.setValueAtTime(0, startTime);
+  g.gain.linearRampToValueAtTime(gain, startTime+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, startTime+dur);
   o.connect(g);
   g.connect(ctx.destination);
-  o.start(start);
-  o.stop(start+dur+0.02);
+  o.start(oscStart);
+  o.stop(startTime+dur+0.02);
+}
+
+function getPreferredVoice(){
+  if(!('speechSynthesis' in window)) return null;
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length) return null;
+  const preferred=voices.find((v)=>PREFERRED_TTS_VOICES.includes(v.name));
+  if(preferred) return preferred;
+  return voices.find((v)=>/en[-_](US|GB)/i.test(v.lang)) || voices.find((v)=>/^en/i.test(v.lang)) || null;
+}
+
+function speakBannerStatus(serviceName, kind){
+  if(!('speechSynthesis' in window)) return;
+  const status=TTS_STATUS_LABEL[kind] || 'Status Updated';
+  const utterance=new SpeechSynthesisUtterance(`${serviceName}. ${status}.`);
+  const voice=getPreferredVoice();
+  if(voice) utterance.voice=voice;
+  utterance.rate=1;
+  utterance.pitch=1;
+  utterance.volume=1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged=()=>{ getPreferredVoice(); };
 }
 
 function chime(kind){
@@ -533,6 +593,7 @@ function chime(kind){
 }
 
 let bannerTimer;
+let bannerSpeechTimer;
 
 function showStatusBanner(svc, kind){
   const banner=document.getElementById('status-banner');
@@ -557,6 +618,9 @@ function showStatusBanner(svc, kind){
     </div>
     <div class="status-banner-time"></div>`;
   requestAnimationFrame(()=>banner.classList.add('show'));
+  const speakDelay=CHIME_SPEECH_DELAY[kind] || 650;
+  clearTimeout(bannerSpeechTimer);
+  bannerSpeechTimer=setTimeout(()=>speakBannerStatus(svc.name, kind), speakDelay);
   clearTimeout(bannerTimer);
   bannerTimer=setTimeout(()=>{
     banner.classList.remove('show');
