@@ -138,6 +138,51 @@
     .spinner { width:32px; height:32px; border:2.5px solid rgba(255,255,255,0.07); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .load-t { font-size:13px; color:var(--muted); }
+    .status-banner-wrap {
+      position:fixed;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(1080px, calc(100vw - 28px));
+      z-index:45;
+      pointer-events:none;
+    }
+    .status-banner {
+      border-radius:16px;
+      border:2px solid transparent;
+      background:rgba(9,9,11,0.96);
+      box-shadow:0 18px 48px rgba(0,0,0,0.55);
+      overflow:hidden;
+      display:none;
+      opacity:0;
+      transform:translateY(-14px) scale(0.99);
+      transition:opacity 0.28s ease, transform 0.28s ease;
+    }
+    .status-banner.show { display:block; opacity:1; transform:translateY(0) scale(1); }
+    .status-banner.down { border-color:rgba(239,68,68,0.72); }
+    .status-banner.restored { border-color:rgba(34,197,94,0.72); }
+    .status-banner-main { display:flex; align-items:center; gap:14px; padding:18px 20px; }
+    .status-banner-icon { font-size:32px; line-height:1; }
+    .status-banner-text { min-width:0; }
+    .status-banner-heading {
+      font-size:14px;
+      letter-spacing:0.09em;
+      text-transform:uppercase;
+      font-weight:800;
+      margin-bottom:2px;
+    }
+    .status-banner-title { font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.1; }
+    .status-banner-sub { font-size:15px; color:var(--sub); margin-top:4px; }
+    .status-banner.down .status-banner-heading { color:#fca5a5; }
+    .status-banner.restored .status-banner-heading { color:#86efac; }
+    .status-banner-time {
+      height:5px;
+      transform-origin:left;
+      animation:bannerLife 60s linear forwards;
+    }
+    .status-banner.down .status-banner-time { background:linear-gradient(90deg,#ef4444,#f97316); }
+    .status-banner.restored .status-banner-time { background:linear-gradient(90deg,#22c55e,#14b8a6); }
+    @keyframes bannerLife { from { transform:scaleX(1); } to { transform:scaleX(0); } }
 
     @media (max-height: 720px) {
       .shell { padding:14px 16px 10px; gap:10px; }
@@ -148,6 +193,10 @@
       .card-div { margin-bottom:10px; }
       .inc-block { padding:10px 12px; margin-bottom:8px; }
       .inc-body { font-size:11.5px; --body-lines:3; }
+      .status-banner-main { padding:12px 14px; }
+      .status-banner-icon { font-size:24px; }
+      .status-banner-title { font-size:20px; }
+      .status-banner-sub { font-size:13px; }
     }
   </style>
 </head>
@@ -197,6 +246,7 @@
     <div class="prog-track" id="prog-track" style="display:none"><div class="prog-fill" id="prog-fill"></div></div>
   </div>
 </div>
+<div class="status-banner-wrap" aria-live="assertive" aria-atomic="true"><div class="status-banner" id="status-banner"></div></div>
 <script>
 (function tick(){
   const e=document.getElementById('clock');
@@ -236,16 +286,68 @@ function normalizeIndicator(ind){
   return 'major';
 }
 
-function beep(){
+let audioCtx;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.045){
+  const o=ctx.createOscillator();
+  const g=ctx.createGain();
+  o.type=type;
+  o.frequency.setValueAtTime(freq, start);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(gain, start+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start(start);
+  o.stop(start+dur+0.02);
+}
+
+function chime(kind){
   try {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const o = c.createOscillator();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(880, c.currentTime);
-    o.connect(c.destination);
-    o.start();
-    o.stop(c.currentTime + 0.35);
+    const c=getAudioCtx();
+    if(c.state==='suspended') c.resume();
+    const t=c.currentTime+0.02;
+    if(kind==='down'){
+      tone(c,t,740,0.2,'triangle',0.05);
+      tone(c,t+0.16,622,0.25,'triangle',0.05);
+      tone(c,t+0.33,494,0.34,'sine',0.04);
+    } else {
+      tone(c,t,523,0.14,'sine',0.045);
+      tone(c,t+0.12,659,0.16,'sine',0.05);
+      tone(c,t+0.24,784,0.2,'sine',0.055);
+      tone(c,t+0.38,988,0.22,'triangle',0.04);
+    }
   } catch (_) {}
+}
+
+let bannerTimer;
+
+function showStatusBanner(svc, kind){
+  const banner=document.getElementById('status-banner');
+  if(!banner) return;
+  const heading=kind==='down' ? 'Service Disruption' : 'Service Restored';
+  const detail=kind==='down' ? `${svc.name} is now ${svc.label.toLowerCase()}.` : `${svc.name} is back to operational.`;
+  banner.className=`status-banner ${kind}`;
+  banner.innerHTML=`
+    <div class="status-banner-main">
+      <div class="status-banner-icon">${kind==='down'?'🚨':'✅'}</div>
+      <div class="status-banner-text">
+        <div class="status-banner-heading">${heading}</div>
+        <div class="status-banner-title">${svc.name}</div>
+        <div class="status-banner-sub">${detail}</div>
+      </div>
+    </div>
+    <div class="status-banner-time"></div>`;
+  requestAnimationFrame(()=>banner.classList.add('show'));
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>{
+    banner.classList.remove('show');
+    setTimeout(()=>{ if(!banner.classList.contains('show')) banner.innerHTML=''; }, 320);
+  }, 60000);
 }
 
 const PROXIES=[
@@ -556,7 +658,13 @@ async function init(){
 
   results.forEach(s=>{
     const prev=window._pi[s.name];
-    if(prev==='none' && s.ind!=='none') beep();
+    if(prev && prev==='none' && s.ind!=='none'){
+      chime('down');
+      showStatusBanner(s,'down');
+    } else if(prev && prev!=='none' && s.ind==='none'){
+      chime('restored');
+      showStatusBanner(s,'restored');
+    }
     window._pi[s.name]=s.ind;
   });
   updateStats(results);
