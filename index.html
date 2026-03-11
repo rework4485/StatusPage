@@ -318,11 +318,14 @@ function getAudioCtx(){
 }
 
 
+async function ensureAudioReady(){
+  const c=getAudioCtx();
+  if(c.state==='suspended') await c.resume();
+  return c;
+}
+
 function primeAudio(){
-  try {
-    const c=getAudioCtx();
-    if(c.state==='suspended') c.resume().catch(()=>{});
-  } catch (_) {}
+  ensureAudioReady().catch(()=>{});
 }
 
 function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
@@ -330,8 +333,8 @@ function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
   const g=ctx.createGain();
   o.type=type;
   o.frequency.setValueAtTime(freq, start);
-  g.gain.setValueAtTime(0.0001, start);
-  g.gain.exponentialRampToValueAtTime(gain, start+0.02);
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(gain, start+0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
   o.connect(g);
   g.connect(ctx.destination);
@@ -340,32 +343,27 @@ function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
 }
 
 function chime(kind){
-  try {
-    const c=getAudioCtx();
-    const play=(startAt)=>{
-      if(kind==='outage'){
-        tone(c,startAt,880,0.13,'square',0.16);
-        tone(c,startAt+0.12,659,0.13,'square',0.16);
-        tone(c,startAt+0.24,880,0.13,'square',0.16);
-        tone(c,startAt+0.36,523,0.2,'sawtooth',0.14);
-      } else if(kind==='degraded'){
-        tone(c,startAt,740,0.2,'triangle',0.12);
-        tone(c,startAt+0.16,622,0.25,'triangle',0.12);
-        tone(c,startAt+0.33,494,0.34,'sine',0.1);
-      } else {
-        tone(c,startAt,523,0.14,'sine',0.11);
-        tone(c,startAt+0.12,659,0.16,'sine',0.12);
-        tone(c,startAt+0.24,784,0.2,'sine',0.13);
-        tone(c,startAt+0.38,988,0.22,'triangle',0.1);
-      }
-    };
-
-    if(c.state==='suspended'){
-      c.resume().then(()=>play(c.currentTime+0.06)).catch(()=>{});
+  const play=(c,startAt)=>{
+    if(kind==='outage'){
+      tone(c,startAt,784,0.11,'sawtooth',0.2);
+      tone(c,startAt+0.11,932,0.11,'sawtooth',0.2);
+      tone(c,startAt+0.22,1175,0.14,'square',0.22);
+      tone(c,startAt+0.37,740,0.24,'triangle',0.18);
+    } else if(kind==='degraded'){
+      tone(c,startAt,740,0.2,'triangle',0.12);
+      tone(c,startAt+0.16,622,0.25,'triangle',0.12);
+      tone(c,startAt+0.33,494,0.34,'sine',0.1);
     } else {
-      play(c.currentTime+0.02);
+      tone(c,startAt,523,0.14,'sine',0.11);
+      tone(c,startAt+0.12,659,0.16,'sine',0.12);
+      tone(c,startAt+0.24,784,0.2,'sine',0.13);
+      tone(c,startAt+0.38,988,0.22,'triangle',0.1);
     }
-  } catch (_) {}
+  };
+
+  ensureAudioReady()
+    .then((c)=>play(c, c.currentTime+0.12))
+    .catch(()=>{});
 }
 
 let bannerTimer;
