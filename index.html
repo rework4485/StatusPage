@@ -85,7 +85,49 @@
     .stat { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--sub); }
     .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .stat strong { color:var(--text); font-weight:700; font-size:14px; }
-    .clock { font-size:15px; font-weight:600; color:var(--sub); font-variant-numeric:tabular-nums; letter-spacing:0.02em; }
+    .clock {
+      font-size:15px;
+      font-weight:600;
+      color:var(--sub);
+      font-variant-numeric:tabular-nums;
+      letter-spacing:0.02em;
+      display:inline-flex;
+      align-items:baseline;
+      gap:2px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.02);
+      text-shadow:0 0 16px rgba(59,130,246,0.2);
+      transition:transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+    .clock .clock-sep {
+      color:rgba(244,244,245,0.62);
+      animation:clockSepBlink 1s steps(1, end) infinite;
+      min-width:6px;
+      text-align:center;
+    }
+    .clock .clock-meridiem {
+      font-size:10px;
+      letter-spacing:0.08em;
+      margin-left:6px;
+      color:rgba(161,161,170,0.9);
+    }
+    .clock.ticking {
+      transform:translateY(-1px);
+      border-color:rgba(96,165,250,0.4);
+      box-shadow:0 0 0 1px rgba(59,130,246,0.2), 0 8px 24px rgba(15,23,42,0.25);
+      animation:clockTick 0.5s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes clockTick {
+      0% { transform:translateY(0) scale(1); }
+      50% { transform:translateY(-2px) scale(1.02); }
+      100% { transform:translateY(-1px) scale(1); }
+    }
+    @keyframes clockSepBlink {
+      0%, 49% { opacity:1; }
+      50%, 100% { opacity:0.28; }
+    }
     .test-btn {
       border:1px solid rgba(59,130,246,0.45);
       background:rgba(59,130,246,0.12);
@@ -107,11 +149,18 @@
     .page {
       position:absolute; inset:0; display:grid; gap:12px; align-content:start;
       opacity:0; pointer-events:none;
-      transition:opacity 0.55s ease, transform 0.55s ease, filter 0.55s ease;
-      transform:translateY(12px) scale(0.995);
+      transform:translateX(36px) scale(0.995);
       filter:blur(3px);
     }
-    .page.active { opacity:1; pointer-events:auto; position:relative; transform:translateY(0) scale(1); filter:blur(0); }
+    .page.active { opacity:1; pointer-events:auto; position:relative; transform:translateX(0) scale(1); filter:blur(0); }
+    .page.enter-next { animation:pageInNext 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .page.leave-next { animation:pageOutNext 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .page.enter-prev { animation:pageInPrev 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .page.leave-prev { animation:pageOutPrev 0.55s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes pageInNext { from { opacity:0; transform:translateX(44px) scale(0.99); filter:blur(4px); } to { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} }
+    @keyframes pageOutNext { from { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} to { opacity:0; transform:translateX(-44px) scale(0.99); filter:blur(4px);} }
+    @keyframes pageInPrev { from { opacity:0; transform:translateX(-44px) scale(0.99); filter:blur(4px);} to { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} }
+    @keyframes pageOutPrev { from { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} to { opacity:0; transform:translateX(44px) scale(0.99); filter:blur(4px);} }
     .card {
       background:linear-gradient(170deg, rgba(255,255,255,0.02), transparent 44%), var(--card);
       border:1px solid var(--border); border-radius:16px;
@@ -334,8 +383,17 @@
 <script>
 (function tick(){
   const e=document.getElementById('clock');
-  e.textContent=new Date().toLocaleTimeString('en-US',{hour12:true});
-  setTimeout(tick, 1000-new Date().getMilliseconds());
+  const now=new Date();
+  let h=now.getHours();
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const ampm=h>=12?'PM':'AM';
+  h=h%12 || 12;
+  e.innerHTML=`<span>${h}</span><span class="clock-sep">:</span><span>${m}</span><span class="clock-sep">:</span><span>${s}</span><span class="clock-meridiem">${ampm}</span>`;
+  e.classList.remove('ticking');
+  void e.offsetWidth;
+  e.classList.add('ticking');
+  setTimeout(tick, 1000-now.getMilliseconds());
 })();
 
 const SVCS=[
@@ -734,8 +792,35 @@ let cur=0, rTimer=null, pTimer=null, pStart=0;
 const ROT_MS=60000;
 
 function goPage(idx){
-  [...document.querySelectorAll('.page')].forEach((p,i)=>p.classList.toggle('active',i===idx));
+  const pages=[...document.querySelectorAll('.page')];
+  if(!pages.length) return;
+  idx=((idx%pages.length)+pages.length)%pages.length;
+
   [...document.querySelectorAll('.pdot')].forEach((d,i)=>d.classList.toggle('active',i===idx));
+
+  if(idx===cur){
+    resetProg();
+    return;
+  }
+
+  const prev=cur;
+  const forward=(idx>prev) || (prev===pages.length-1 && idx===0);
+  const outgoing=pages[prev];
+  const incoming=pages[idx];
+  const enterCls=forward?'enter-next':'enter-prev';
+  const leaveCls=forward?'leave-next':'leave-prev';
+
+  pages.forEach(p=>p.classList.remove('enter-next','enter-prev','leave-next','leave-prev'));
+  outgoing.classList.remove('active');
+  outgoing.classList.add(leaveCls);
+
+  incoming.classList.add('active', enterCls);
+
+  setTimeout(()=>{
+    outgoing.classList.remove(leaveCls);
+    incoming.classList.remove(enterCls);
+  }, 580);
+
   cur=idx;
   resetProg();
 }
