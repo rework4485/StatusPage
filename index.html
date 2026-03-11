@@ -56,6 +56,22 @@
     .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .stat strong { color:var(--text); font-weight:700; font-size:14px; }
     .clock { font-size:15px; font-weight:600; color:var(--sub); font-variant-numeric:tabular-nums; letter-spacing:0.02em; }
+    .test-btn {
+      border:1px solid rgba(59,130,246,0.45);
+      background:rgba(59,130,246,0.12);
+      color:#bfdbfe;
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.03em;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition:all 0.2s ease;
+      white-space:nowrap;
+    }
+    .test-btn:hover { background:rgba(59,130,246,0.2); color:#dbeafe; border-color:rgba(96,165,250,0.6); }
+    .test-btn:active { transform:translateY(1px); }
     .divider { height:1px; background:var(--border); flex-shrink:0; }
     .grid-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
     .page {
@@ -138,16 +154,73 @@
     .spinner { width:32px; height:32px; border:2.5px solid rgba(255,255,255,0.07); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .load-t { font-size:13px; color:var(--muted); }
+    .status-banner-wrap {
+      position:fixed;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(1080px, calc(100vw - 28px));
+      z-index:45;
+      pointer-events:none;
+    }
+    .status-banner {
+      border-radius:16px;
+      border:2px solid transparent;
+      background:rgba(9,9,11,0.96);
+      box-shadow:0 18px 48px rgba(0,0,0,0.55);
+      overflow:hidden;
+      display:none;
+      opacity:0;
+      transform:translateY(-14px) scale(0.99);
+      transition:opacity 0.28s ease, transform 0.28s ease;
+    }
+    .status-banner.show { display:block; opacity:1; transform:translateY(0) scale(1); }
+    .status-banner.degraded { border-color:rgba(245,158,11,0.78); }
+    .status-banner.outage { border-color:rgba(239,68,68,0.86); animation:outagePulse 0.95s ease-in-out infinite; }
+    .status-banner.restored { border-color:rgba(34,197,94,0.72); }
+    .status-banner-main { display:flex; align-items:center; gap:14px; padding:18px 20px; }
+    .status-banner-icon { font-size:32px; line-height:1; }
+    .status-banner-text { min-width:0; }
+    .status-banner-heading {
+      font-size:14px;
+      letter-spacing:0.09em;
+      text-transform:uppercase;
+      font-weight:800;
+      margin-bottom:2px;
+    }
+    .status-banner-title { font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.1; }
+    .status-banner-sub { font-size:15px; color:var(--sub); margin-top:4px; }
+    .status-banner.degraded .status-banner-heading { color:#fcd34d; }
+    .status-banner.outage .status-banner-heading { color:#fecaca; }
+    .status-banner.restored .status-banner-heading { color:#86efac; }
+    .status-banner-time {
+      height:5px;
+      transform-origin:left;
+      animation:bannerLife 30s linear forwards;
+    }
+    .status-banner.degraded .status-banner-time { background:linear-gradient(90deg,#f59e0b,#f97316); }
+    .status-banner.outage .status-banner-time { background:linear-gradient(90deg,#ef4444,#dc2626); }
+    .status-banner.restored .status-banner-time { background:linear-gradient(90deg,#22c55e,#14b8a6); }
+    @keyframes bannerLife { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+    @keyframes outagePulse {
+      0%, 100% { box-shadow:0 18px 48px rgba(0,0,0,0.55), 0 0 0 0 rgba(239,68,68,0.42); }
+      50% { box-shadow:0 18px 48px rgba(0,0,0,0.55), 0 0 0 14px rgba(239,68,68,0); }
+    }
 
     @media (max-height: 720px) {
       .shell { padding:14px 16px 10px; gap:10px; }
       .hdr { gap:12px; }
       .brand-sub, .stats, .f-meta { display:none; }
+      .test-btn { padding:6px 9px; font-size:11px; }
       .card { padding:14px 16px; }
       .card-top { margin-bottom:10px; }
       .card-div { margin-bottom:10px; }
       .inc-block { padding:10px 12px; margin-bottom:8px; }
       .inc-body { font-size:11.5px; --body-lines:3; }
+      .status-banner-main { padding:12px 14px; }
+      .status-banner-icon { font-size:24px; }
+      .status-banner-title { font-size:20px; }
+      .status-banner-sub { font-size:13px; }
     }
   </style>
 </head>
@@ -173,6 +246,7 @@
         <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
         <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
       </div>
+      <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
       <div class="clock" id="clock">--:--:--</div>
     </div>
   </div>
@@ -197,10 +271,11 @@
     <div class="prog-track" id="prog-track" style="display:none"><div class="prog-fill" id="prog-fill"></div></div>
   </div>
 </div>
+<div class="status-banner-wrap" aria-live="assertive" aria-atomic="true"><div class="status-banner" id="status-banner"></div></div>
 <script>
 (function tick(){
   const e=document.getElementById('clock');
-  e.textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+  e.textContent=new Date().toLocaleTimeString('en-US',{hour12:true});
   setTimeout(tick, 1000-new Date().getMilliseconds());
 })();
 
@@ -236,16 +311,107 @@ function normalizeIndicator(ind){
   return 'major';
 }
 
-function beep(){
-  try {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const o = c.createOscillator();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(880, c.currentTime);
-    o.connect(c.destination);
-    o.start();
-    o.stop(c.currentTime + 0.35);
-  } catch (_) {}
+let audioCtx;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+
+async function ensureAudioReady(){
+  const c=getAudioCtx();
+  if(c.state==='suspended') await c.resume();
+  return c;
+}
+
+function primeAudio(){
+  ensureAudioReady().catch(()=>{});
+}
+
+function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
+  const o=ctx.createOscillator();
+  const g=ctx.createGain();
+  o.type=type;
+  o.frequency.setValueAtTime(freq, start);
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(gain, start+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start(start);
+  o.stop(start+dur+0.02);
+}
+
+function chime(kind){
+  const play=(c,startAt)=>{
+    if(kind==='outage'){
+      tone(c,startAt,740,0.2,'triangle',0.16);
+      tone(c,startAt+0.01,1480,0.16,'square',0.08);
+      tone(c,startAt+0.15,622,0.24,'triangle',0.17);
+      tone(c,startAt+0.16,1244,0.18,'square',0.085);
+      tone(c,startAt+0.31,494,0.34,'triangle',0.18);
+      tone(c,startAt+0.32,988,0.26,'square',0.09);
+    } else if(kind==='degraded'){
+      tone(c,startAt,740,0.2,'triangle',0.12);
+      tone(c,startAt+0.16,622,0.25,'triangle',0.12);
+      tone(c,startAt+0.33,494,0.34,'sine',0.1);
+    } else {
+      tone(c,startAt,523,0.14,'sine',0.11);
+      tone(c,startAt+0.12,659,0.16,'sine',0.12);
+      tone(c,startAt+0.24,784,0.2,'sine',0.13);
+      tone(c,startAt+0.38,988,0.22,'triangle',0.1);
+    }
+  };
+
+  ensureAudioReady()
+    .then((c)=>play(c, c.currentTime+0.12))
+    .catch(()=>{});
+}
+
+let bannerTimer;
+
+function showStatusBanner(svc, kind){
+  const banner=document.getElementById('status-banner');
+  if(!banner) return;
+  const heading=kind==='outage'
+    ? 'Service Outage'
+    : kind==='degraded'
+      ? 'Service Degraded'
+      : 'Service Restored';
+  const detail=kind==='restored'
+    ? `${svc.name} is back to operational.`
+    : `${svc.name} is now ${svc.label.toLowerCase()}.`;
+  banner.className=`status-banner ${kind}`;
+  banner.innerHTML=`
+    <div class="status-banner-main">
+      <div class="status-banner-icon">${kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅'}</div>
+      <div class="status-banner-text">
+        <div class="status-banner-heading">${heading}</div>
+        <div class="status-banner-title">${svc.name}</div>
+        <div class="status-banner-sub">${detail}</div>
+      </div>
+    </div>
+    <div class="status-banner-time"></div>`;
+  requestAnimationFrame(()=>banner.classList.add('show'));
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>{
+    banner.classList.remove('show');
+    setTimeout(()=>{ if(!banner.classList.contains('show')) banner.innerHTML=''; }, 320);
+  }, 30000);
+}
+
+
+function runAlertTest(){
+  chime('degraded');
+  showStatusBanner({name:'Test Service', label:'Degraded'}, 'degraded');
+  setTimeout(()=>{
+    chime('outage');
+    showStatusBanner({name:'Test Service', label:'Outage'}, 'outage');
+  }, 1800);
+  setTimeout(()=>{
+    chime('restored');
+    showStatusBanner({name:'Test Service', label:'Operational'}, 'restored');
+  }, 3600);
 }
 
 const PROXIES=[
@@ -556,7 +722,14 @@ async function init(){
 
   results.forEach(s=>{
     const prev=window._pi[s.name];
-    if(prev==='none' && s.ind!=='none') beep();
+    if(prev && prev==='none' && s.ind!=='none'){
+      const kind=s.ind==='major' ? 'outage' : 'degraded';
+      chime(kind);
+      showStatusBanner(s,kind);
+    } else if(prev && prev!=='none' && s.ind==='none'){
+      chime('restored');
+      showStatusBanner(s,'restored');
+    }
     window._pi[s.name]=s.ind;
   });
   updateStats(results);
@@ -606,7 +779,16 @@ async function init(){
   if(totalPages>1) resetProg();
 }
 
-window.addEventListener('DOMContentLoaded',()=>{ init(); setInterval(init,120000); });
+window.addEventListener('DOMContentLoaded',()=>{
+  const testBtn=document.getElementById('test-alert-btn');
+  if(testBtn) testBtn.addEventListener('click', runAlertTest);
+
+  window.addEventListener('pointerdown', primeAudio, {once:true, passive:true});
+  window.addEventListener('keydown', primeAudio, {once:true});
+
+  init();
+  setInterval(init,120000);
+});
 </script>
 </body>
 </html>
