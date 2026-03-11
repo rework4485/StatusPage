@@ -220,7 +220,6 @@ const SVCS=[
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com'},
   {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com'},
-  {name:'SecureW2',su:'https://status.securew2.com/api/v1/status',iu:'https://status.securew2.com/api/v1/notices',hu:'https://status.securew2.com',p:'securew2'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}
 ];
 
@@ -373,18 +372,6 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
-  if(s.p==='securew2'){
-    try {
-      const [status, notices] = await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
-      const st=(status?.page?.state||'').toLowerCase();
-      let ind=normalizeIndicator(st || 'none');
-
-      const active=(notices?.notices||[]).find(n=>!['resolved','complete','cancelled','canceled'].includes((n.state||'').toLowerCase()));
-      const body=stripHtml(active?.latest_update?.content||'');
-      return mk(s.name,ind,active?.subject||'',body,new Date().toLocaleString(),s.hu);
-    } catch { return errSvc(s); }
-  }
-
   if(s.p==='statusio'){
     try {
       const h=await getText(s.su, s.p);
@@ -444,7 +431,6 @@ const LOGO_DOMAINS={
   'FinalSite':'finalsite.com',
   'Cloudflare':'cloudflare.com',
   'DNSFilter':'dnsfilter.com',
-  'SecureW2':'securew2.com',
   'Adobe CC':'adobe.com'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm'};
