@@ -175,7 +175,8 @@
       transition:opacity 0.28s ease, transform 0.28s ease;
     }
     .status-banner.show { display:block; opacity:1; transform:translateY(0) scale(1); }
-    .status-banner.down { border-color:rgba(239,68,68,0.72); }
+    .status-banner.degraded { border-color:rgba(245,158,11,0.78); }
+    .status-banner.outage { border-color:rgba(239,68,68,0.86); animation:outagePulse 0.95s ease-in-out infinite; }
     .status-banner.restored { border-color:rgba(34,197,94,0.72); }
     .status-banner-main { display:flex; align-items:center; gap:14px; padding:18px 20px; }
     .status-banner-icon { font-size:32px; line-height:1; }
@@ -189,16 +190,22 @@
     }
     .status-banner-title { font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.1; }
     .status-banner-sub { font-size:15px; color:var(--sub); margin-top:4px; }
-    .status-banner.down .status-banner-heading { color:#fca5a5; }
+    .status-banner.degraded .status-banner-heading { color:#fcd34d; }
+    .status-banner.outage .status-banner-heading { color:#fecaca; }
     .status-banner.restored .status-banner-heading { color:#86efac; }
     .status-banner-time {
       height:5px;
       transform-origin:left;
       animation:bannerLife 30s linear forwards;
     }
-    .status-banner.down .status-banner-time { background:linear-gradient(90deg,#ef4444,#f97316); }
+    .status-banner.degraded .status-banner-time { background:linear-gradient(90deg,#f59e0b,#f97316); }
+    .status-banner.outage .status-banner-time { background:linear-gradient(90deg,#ef4444,#dc2626); }
     .status-banner.restored .status-banner-time { background:linear-gradient(90deg,#22c55e,#14b8a6); }
     @keyframes bannerLife { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+    @keyframes outagePulse {
+      0%, 100% { box-shadow:0 18px 48px rgba(0,0,0,0.55), 0 0 0 0 rgba(239,68,68,0.42); }
+      50% { box-shadow:0 18px 48px rgba(0,0,0,0.55), 0 0 0 14px rgba(239,68,68,0); }
+    }
 
     @media (max-height: 720px) {
       .shell { padding:14px 16px 10px; gap:10px; }
@@ -336,7 +343,12 @@ function chime(kind){
   try {
     const c=getAudioCtx();
     const play=(startAt)=>{
-      if(kind==='down'){
+      if(kind==='outage'){
+        tone(c,startAt,880,0.13,'square',0.16);
+        tone(c,startAt+0.12,659,0.13,'square',0.16);
+        tone(c,startAt+0.24,880,0.13,'square',0.16);
+        tone(c,startAt+0.36,523,0.2,'sawtooth',0.14);
+      } else if(kind==='degraded'){
         tone(c,startAt,740,0.2,'triangle',0.12);
         tone(c,startAt+0.16,622,0.25,'triangle',0.12);
         tone(c,startAt+0.33,494,0.34,'sine',0.1);
@@ -361,12 +373,18 @@ let bannerTimer;
 function showStatusBanner(svc, kind){
   const banner=document.getElementById('status-banner');
   if(!banner) return;
-  const heading=kind==='down' ? 'Service Disruption' : 'Service Restored';
-  const detail=kind==='down' ? `${svc.name} is now ${svc.label.toLowerCase()}.` : `${svc.name} is back to operational.`;
+  const heading=kind==='outage'
+    ? 'Service Outage'
+    : kind==='degraded'
+      ? 'Service Degraded'
+      : 'Service Restored';
+  const detail=kind==='restored'
+    ? `${svc.name} is back to operational.`
+    : `${svc.name} is now ${svc.label.toLowerCase()}.`;
   banner.className=`status-banner ${kind}`;
   banner.innerHTML=`
     <div class="status-banner-main">
-      <div class="status-banner-icon">${kind==='down'?'🚨':'✅'}</div>
+      <div class="status-banner-icon">${kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅'}</div>
       <div class="status-banner-text">
         <div class="status-banner-heading">${heading}</div>
         <div class="status-banner-title">${svc.name}</div>
@@ -384,12 +402,16 @@ function showStatusBanner(svc, kind){
 
 
 function runAlertTest(){
-  chime('down');
-  showStatusBanner({name:'Test Service', label:'Outage'}, 'down');
+  chime('degraded');
+  showStatusBanner({name:'Test Service', label:'Degraded'}, 'degraded');
+  setTimeout(()=>{
+    chime('outage');
+    showStatusBanner({name:'Test Service', label:'Outage'}, 'outage');
+  }, 1800);
   setTimeout(()=>{
     chime('restored');
     showStatusBanner({name:'Test Service', label:'Operational'}, 'restored');
-  }, 1800);
+  }, 3600);
 }
 
 const PROXIES=[
@@ -701,8 +723,9 @@ async function init(){
   results.forEach(s=>{
     const prev=window._pi[s.name];
     if(prev && prev==='none' && s.ind!=='none'){
-      chime('down');
-      showStatusBanner(s,'down');
+      const kind=s.ind==='major' ? 'outage' : 'degraded';
+      chime(kind);
+      showStatusBanner(s,kind);
     } else if(prev && prev!=='none' && s.ind==='none'){
       chime('restored');
       showStatusBanner(s,'restored');
