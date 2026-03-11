@@ -56,6 +56,22 @@
     .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .stat strong { color:var(--text); font-weight:700; font-size:14px; }
     .clock { font-size:15px; font-weight:600; color:var(--sub); font-variant-numeric:tabular-nums; letter-spacing:0.02em; }
+    .test-btn {
+      border:1px solid rgba(59,130,246,0.45);
+      background:rgba(59,130,246,0.12);
+      color:#bfdbfe;
+      border-radius:10px;
+      padding:8px 12px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.03em;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition:all 0.2s ease;
+      white-space:nowrap;
+    }
+    .test-btn:hover { background:rgba(59,130,246,0.2); color:#dbeafe; border-color:rgba(96,165,250,0.6); }
+    .test-btn:active { transform:translateY(1px); }
     .divider { height:1px; background:var(--border); flex-shrink:0; }
     .grid-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
     .page {
@@ -188,6 +204,7 @@
       .shell { padding:14px 16px 10px; gap:10px; }
       .hdr { gap:12px; }
       .brand-sub, .stats, .f-meta { display:none; }
+      .test-btn { padding:6px 9px; font-size:11px; }
       .card { padding:14px 16px; }
       .card-top { margin-bottom:10px; }
       .card-div { margin-bottom:10px; }
@@ -222,6 +239,7 @@
         <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
         <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
       </div>
+      <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
       <div class="clock" id="clock">--:--:--</div>
     </div>
   </div>
@@ -348,6 +366,16 @@ function showStatusBanner(svc, kind){
     banner.classList.remove('show');
     setTimeout(()=>{ if(!banner.classList.contains('show')) banner.innerHTML=''; }, 320);
   }, 60000);
+}
+
+
+function runAlertTest(){
+  chime('down');
+  showStatusBanner({name:'Test Service', label:'Outage'}, 'down');
+  setTimeout(()=>{
+    chime('restored');
+    showStatusBanner({name:'Test Service', label:'Operational'}, 'restored');
+  }, 1800);
 }
 
 const PROXIES=[
@@ -714,7 +742,12 @@ async function init(){
   if(totalPages>1) resetProg();
 }
 
-window.addEventListener('DOMContentLoaded',()=>{ init(); setInterval(init,120000); });
+window.addEventListener('DOMContentLoaded',()=>{
+  const testBtn=document.getElementById('test-alert-btn');
+  if(testBtn) testBtn.addEventListener('click', runAlertTest);
+  init();
+  setInterval(init,120000);
+});
 </script>
 </body>
 </html>
