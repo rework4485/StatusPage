@@ -345,10 +345,12 @@ function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
 function chime(kind){
   const play=(c,startAt)=>{
     if(kind==='outage'){
-      tone(c,startAt,784,0.11,'sawtooth',0.2);
-      tone(c,startAt+0.11,932,0.11,'sawtooth',0.2);
-      tone(c,startAt+0.22,1175,0.14,'square',0.22);
-      tone(c,startAt+0.37,740,0.24,'triangle',0.18);
+      tone(c,startAt,740,0.2,'triangle',0.16);
+      tone(c,startAt+0.01,1480,0.16,'square',0.08);
+      tone(c,startAt+0.15,622,0.24,'triangle',0.17);
+      tone(c,startAt+0.16,1244,0.18,'square',0.085);
+      tone(c,startAt+0.31,494,0.34,'triangle',0.18);
+      tone(c,startAt+0.32,988,0.26,'square',0.09);
     } else if(kind==='degraded'){
       tone(c,startAt,740,0.2,'triangle',0.12);
       tone(c,startAt+0.16,622,0.25,'triangle',0.12);
