@@ -477,6 +477,24 @@ function normalizeIndicator(ind){
 
 let audioCtx;
 let audioPrimed=false;
+const CHIME_SPEECH_DELAY={
+  outage:760,
+  degraded:610,
+  restored:700
+};
+const TTS_STATUS_LABEL={
+  outage:'Outage',
+  degraded:'Degraded',
+  restored:'Operational'
+};
+const PREFERRED_TTS_VOICES=[
+  'Google US English',
+  'Google UK English Female',
+  'Microsoft Aria Online (Natural) - English (United States)',
+  'Microsoft Jenny Online (Natural) - English (United States)',
+  'Samantha'
+];
+
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -522,6 +540,32 @@ function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
   o.stop(startTime+dur+0.02);
 }
 
+function getPreferredVoice(){
+  if(!('speechSynthesis' in window)) return null;
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length) return null;
+  const preferred=voices.find((v)=>PREFERRED_TTS_VOICES.includes(v.name));
+  if(preferred) return preferred;
+  return voices.find((v)=>/en[-_](US|GB)/i.test(v.lang)) || voices.find((v)=>/^en/i.test(v.lang)) || null;
+}
+
+function speakBannerStatus(serviceName, kind){
+  if(!('speechSynthesis' in window)) return;
+  const status=TTS_STATUS_LABEL[kind] || 'Status Updated';
+  const utterance=new SpeechSynthesisUtterance(`${serviceName}. ${status}.`);
+  const voice=getPreferredVoice();
+  if(voice) utterance.voice=voice;
+  utterance.rate=1;
+  utterance.pitch=1;
+  utterance.volume=1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged=()=>{ getPreferredVoice(); };
+}
+
 function chime(kind){
   const play=(c,startAt)=>{
     if(kind==='outage'){
@@ -549,6 +593,7 @@ function chime(kind){
 }
 
 let bannerTimer;
+let bannerSpeechTimer;
 
 function showStatusBanner(svc, kind){
   const banner=document.getElementById('status-banner');
@@ -573,6 +618,9 @@ function showStatusBanner(svc, kind){
     </div>
     <div class="status-banner-time"></div>`;
   requestAnimationFrame(()=>banner.classList.add('show'));
+  const speakDelay=CHIME_SPEECH_DELAY[kind] || 650;
+  clearTimeout(bannerSpeechTimer);
+  bannerSpeechTimer=setTimeout(()=>speakBannerStatus(svc.name, kind), speakDelay);
   clearTimeout(bannerTimer);
   bannerTimer=setTimeout(()=>{
     banner.classList.remove('show');
