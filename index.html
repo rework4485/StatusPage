@@ -476,6 +476,7 @@ function normalizeIndicator(ind){
 }
 
 let audioCtx;
+let audioPrimed=false;
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -485,6 +486,17 @@ function getAudioCtx(){
 async function ensureAudioReady(){
   const c=getAudioCtx();
   if(c.state==='suspended') await c.resume();
+  if(!audioPrimed){
+    const warmup=c.createOscillator();
+    const warmGain=c.createGain();
+    warmGain.gain.setValueAtTime(0.00001, c.currentTime);
+    warmup.frequency.setValueAtTime(440, c.currentTime);
+    warmup.connect(warmGain);
+    warmGain.connect(c.destination);
+    warmup.start(c.currentTime);
+    warmup.stop(c.currentTime+0.03);
+    audioPrimed=true;
+  }
   return c;
 }
 
@@ -493,17 +505,21 @@ function primeAudio(){
 }
 
 function tone(ctx, start, freq, dur=0.18, type='sine', gain=0.09){
+  const prep=0.015;
+  const startTime=Math.max(start, ctx.currentTime+prep);
+  const oscStart=Math.max(ctx.currentTime, startTime-prep);
   const o=ctx.createOscillator();
   const g=ctx.createGain();
   o.type=type;
-  o.frequency.setValueAtTime(freq, start);
-  g.gain.setValueAtTime(0, start);
-  g.gain.linearRampToValueAtTime(gain, start+0.008);
-  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.frequency.setValueAtTime(freq, oscStart);
+  g.gain.setValueAtTime(0.00001, oscStart);
+  g.gain.setValueAtTime(0, startTime);
+  g.gain.linearRampToValueAtTime(gain, startTime+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, startTime+dur);
   o.connect(g);
   g.connect(ctx.destination);
-  o.start(start);
-  o.stop(start+dur+0.02);
+  o.start(oscStart);
+  o.stop(startTime+dur+0.02);
 }
 
 function chime(kind){
