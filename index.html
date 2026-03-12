@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Service Status</title>
-  <!-- PR refresh: republishing full dashboard changes -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#09090b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -366,6 +369,32 @@
       .inc-block { padding:10px 12px; margin-bottom:8px; }
       .inc-body { font-size:13px; --body-lines:3; }
     }
+
+    /* Stale data warning badge */
+    .stale-badge {
+      display:none; align-items:center; gap:6px;
+      padding:5px 13px; border-radius:8px; font-size:12px; font-weight:700;
+      background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+      color:var(--bad); letter-spacing:0.06em; text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .stale-badge.show { display:flex; animation:stalePulse 3s ease-in-out infinite; }
+    @keyframes stalePulse {
+      0%,100% { opacity:1; } 50% { opacity:0.55; }
+    }
+
+    /* Refresh spinner shown while data is fetching */
+    .refresh-spinner {
+      width:15px; height:15px; border:2px solid rgba(255,255,255,0.1);
+      border-top-color:rgba(161,161,170,0.7); border-radius:50%;
+      flex-shrink:0; opacity:0; transition:opacity 0.35s;
+      animation:spin 0.9s linear infinite;
+    }
+    .refresh-spinner.active { opacity:1; }
+
+    /* Hide test button unless header is hovered — not distracting during normal kiosk display */
+    .hdr:not(:hover) .test-btn { opacity:0; pointer-events:none; }
+    .test-btn { transition:opacity 0.3s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
   </style>
 </head>
 <body>
@@ -391,6 +420,8 @@
         <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
         <div class="stat unknown-stat" id="stat-unknown"><span class="sdot" style="background:var(--unknown)"></span><strong id="n-unknown">—</strong>&nbsp;Unknown</div>
       </div>
+      <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
+      <div class="refresh-spinner" id="refresh-spinner" title="Refreshing…"></div>
       <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
       <div class="clock" id="clock">--:--:--</div>
     </div>
@@ -613,7 +644,13 @@ function processAlertQueue() {
   showStatusBanner(svc, kind);
 }
 
+const MAX_ALERT_QUEUE = 6;
+
 function queueAlert(svc, kind) {
+  // Deduplicate: don't enqueue the same service+kind if already waiting
+  if (alertQueue.some(a => a.svc.name === svc.name && a.kind === kind)) return;
+  // Cap queue to prevent overflow during connectivity blips
+  if (alertQueue.length >= MAX_ALERT_QUEUE) return;
   alertQueue.push({ svc, kind });
   processAlertQueue();
 }
@@ -849,6 +886,7 @@ const LOGO_DOMAINS={
   'FinalSite':'finalsite.com',
   'Cloudflare':'cloudflare.com',
   'DNSFilter':'dnsfilter.com',
+  'Dexcom':'dexcom.com',
   'Adobe CC':'adobe.com'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',unknown:'cu'};
@@ -926,6 +964,21 @@ function mkCard(svc, delay){
 
 let cur=0, rTimer=null, pTimer=null, pStart=0, pageAnimTimer=null, pageAnimating=false;
 const ROT_MS=60000;
+
+let refreshFailCount=0;
+let lastSuccessfulRefresh=null;
+let isRefreshing=false;
+
+function setRefreshing(on){
+  isRefreshing=on;
+  const sp=document.getElementById('refresh-spinner');
+  if(sp) sp.classList.toggle('active', on);
+}
+
+function setStale(on){
+  const badge=document.getElementById('stale-badge');
+  if(badge) badge.classList.toggle('show', on);
+}
 
 function goPage(idx){
   const pages=[...document.querySelectorAll('.page')];
@@ -1005,19 +1058,38 @@ function updateStats(data){
   else if(wn>0){ pill.className='pill warn'; txt.textContent='Degraded Performance'; }
   else { pill.className='pill'; txt.textContent='All Systems Operational'; }
 
-  document.getElementById('f-meta').textContent='Last updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'});
+  const fmeta=document.getElementById('f-meta');
+  if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
 }
 
 async function init(){
+  if(isRefreshing) return; // don't overlap concurrent refreshes
+  setRefreshing(true);
+
   const wrap=document.getElementById('grid-wrap');
   const dotsEl=document.getElementById('pdots');
 
-  const results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))), i*120))));
+  let results;
+  try {
+    results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))), i*120))));
+  } catch(e) {
+    refreshFailCount++;
+    if(refreshFailCount>=2) setStale(true);
+    setRefreshing(false);
+    return;
+  }
+
+  // Successful fetch
+  refreshFailCount=0;
+  lastSuccessfulRefresh=Date.now();
+  setStale(false);
+  setRefreshing(false);
+
   results.sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
 
   results.forEach(s=>{
     const prev=window._pi[s.name];
-    // don't alert for unknown
+    // don't alert for unknown transitions
     if(prev && prev==='none' && (s.ind==='minor' || s.ind==='major')){
       const kind=s.ind==='major' ? 'outage' : 'degraded';
       queueAlert(s, kind);
@@ -1043,7 +1115,7 @@ async function init(){
   const totalPages=Math.ceil(results.length/perPage);
 
   clearInterval(rTimer); clearInterval(pTimer);
-  wrap.innerHTML=''; dotsEl.innerHTML=''; cur=0;
+  wrap.innerHTML=''; dotsEl.innerHTML=''; cur=0; pageAnimating=false;
 
   for(let p=0;p<totalPages;p++){
     const slice=results.slice(p*perPage,(p+1)*perPage);
@@ -1071,6 +1143,23 @@ async function init(){
   document.getElementById('prog-track').style.display=totalPages>1 ? '' : 'none';
   startRot(totalPages);
   if(totalPages>1) resetProg();
+}
+
+// Retry every 30s when stale; no-ops immediately when data is fresh
+let refreshInterval = null;
+function scheduleRefresh(){
+  clearInterval(refreshInterval);
+  refreshInterval = setInterval(()=>{ if(refreshFailCount>=2) init(); }, 30000);
+}
+
+// Screen Wake Lock — keeps the display on in kiosk mode
+let wakeLock = null;
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch(e) { /* silently ignore — not critical */ }
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
@@ -1112,8 +1201,24 @@ window.addEventListener('DOMContentLoaded',()=>{
     }
   });
 
+  // Re-acquire wake lock and refresh data when the tab/window becomes visible again
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    // Re-request wake lock (it's released when page is hidden)
+    requestWakeLock();
+    // If data is stale or it's been a long time since last refresh, update immediately
+    const staleThreshold = 3 * 60 * 1000; // 3 minutes
+    if(!lastSuccessfulRefresh || Date.now() - lastSuccessfulRefresh > staleThreshold){
+      init();
+    }
+  });
+
+  // Request wake lock on load
+  requestWakeLock();
+
   init();
-  setInterval(init,120000);
+  setInterval(init, 120000); // normal 2-minute refresh cycle
+  scheduleRefresh();           // aggressive retry when stale
 });
 </script>
 </body>
