@@ -508,13 +508,13 @@ const SVCS=[
   {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com',cat:'app'},
   {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
-  {name:'Google Workspace',su:'https://www.google.com/appsstatus/json/en',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
+  {name:'Google Workspace',su:'https://www.google.com/appsstatus/rss/en',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/data.json',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azure.status.microsoft/api/v2/status.json',iu:'https://azure.status.microsoft/api/v2/incidents.json',hu:'https://azure.status.microsoft/en-us/status',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/en-us/status/feed/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
 ];
 
@@ -730,7 +730,10 @@ const PROXIES=[
 ];
 
 function proxyOrder(provider){
-  return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
+  if(provider==='adobe' || provider==='follett') return [1,0,2,3];
+  // Services that block direct fetch or need proxy-first routing
+  if(provider==='aws' || provider==='azure' || provider==='gcloud' || provider==='gworkspace') return [2,1,3,0];
+  return [0,1,2,3];
 }
 
 async function fetchWithTimeout(url, timeout=15000){
@@ -933,20 +936,30 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
-  if(s.p==='gworkspace'){
+  if(s.p==='gworkspace' || s.p==='azure'){
+    // Both use RSS/Atom feeds — parse XML for recent active incidents
     try {
       const text=await getText(s.su, s.p);
-      // Google returns a JSONP-like payload; strip any leading/trailing non-JSON characters
-      const json=JSON.parse(text.replace(/^\s*[^[{]*/, '').replace(/\s*[^}\]]*$/, ''));
-      const services=Array.isArray(json) ? json : (json.status||[]);
-      const issues=services.filter(x=>{
-        const st=(x.status||'').toLowerCase();
-        return st && st!=='ok' && st!=='available' && st!=='operational' && st!=='normal';
+      const parser=new DOMParser();
+      const xml=parser.parseFromString(text,'text/xml');
+      const items=[...xml.querySelectorAll('item,entry')];
+      const now=Date.now();
+      const active=items.filter(item=>{
+        const title=(item.querySelector('title')?.textContent||'').trim();
+        const pubDate=item.querySelector('pubDate,published,updated')?.textContent;
+        if(!pubDate) return false;
+        const age=now-new Date(pubDate).getTime();
+        // Keep only recent items; skip resolved/RCA posts
+        if(s.p==='azure' && age > 48*3600*1000) return false;
+        if(s.p==='gworkspace' && age > 24*3600*1000) return false;
+        return !/^(rca\s|resolved[:\s])/i.test(title);
       });
-      if(!issues.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const ind=issues.some(x=>/(outage|disruption|down)/i.test(x.status||'')) ? 'major' : 'minor';
-      const names=issues.map(x=>x.name||x.service||'').filter(Boolean).join(', ');
-      return mk(s.name,ind,names ? `Issues: ${names}` : 'Service Disruption','',new Date().toLocaleString(),s.hu);
+      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const topTitle=(active[0].querySelector('title')?.textContent||'Service Issue').trim();
+      const desc=stripHtml(active[0].querySelector('description,content,summary')?.textContent||'');
+      const combined=(topTitle+' '+desc).toLowerCase();
+      const ind=/outage|down|unavailable|major disruption|service disruption/.test(combined) ? 'major' : 'minor';
+      return mk(s.name,ind,topTitle,desc,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
 
@@ -988,6 +1001,11 @@ async function fetchOne(s){
             if(impact!=='none') ind=impact;
           }
         }
+      }
+      // If degraded/outage but no incident details were found, provide a fallback message
+      if(ind !== 'none' && ind !== 'rerouting' && !title){
+        title=LABELS[ind]||'Service Issue';
+        body='Cloudflare is reporting an issue. Check the status page for details.';
       }
       return mk(s.name,ind,title,body,updated,s.hu);
     } catch { return errSvc(s); }
