@@ -400,6 +400,15 @@
     /* Hide test button unless header is hovered — not distracting during normal kiosk display */
     .hdr:not(:hover) .test-btn { opacity:0; pointer-events:none; }
     .test-btn { transition:opacity 0.3s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
+
+    /* Category section headers inside the card grid */
+    .section-hdr {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); padding: 0 2px; pointer-events: none; user-select: none;
+    }
+    .section-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   </style>
 </head>
 <body>
@@ -486,22 +495,27 @@
 })();;
 
 const SVCS=[
-  {name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio'},
-  {name:'HMH',su:'https://status.hmhco.com/api/v2/status.json',iu:'https://status.hmhco.com/api/v2/incidents.json',hu:'https://status.hmhco.com'},
-  {name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett'},
-  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/status.json',iu:'https://status.incidentiq.com/api/v2/incidents.json',hu:'https://status.incidentiq.com'},
-  {name:'Clever',su:'https://status.clever.com/api/v2/status.json',iu:'https://status.clever.com/api/v2/incidents.json',hu:'https://status.clever.com'},
-  {name:'Seesaw',su:'https://status.seesaw.me/api/v2/status.json',iu:'https://status.seesaw.me/api/v2/incidents.json',hu:'https://status.seesaw.me'},
-  {name:'Jamf',su:'https://status.jamf.com/api/v2/status.json',iu:'https://status.jamf.com/api/v2/incidents.json',hu:'https://status.jamf.com'},
-  {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net'},
-  {name:'Duo',su:'https://status.duo.com/api/v2/status.json',iu:'https://status.duo.com/api/v2/incidents.json',hu:'https://status.duo.com'},
-  {name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/status.json',iu:'https://status.imaginelearning.com/api/v2/incidents.json',hu:'https://status.imaginelearning.com'},
-  {name:'Blackboard',su:'https://status.blackboard.com/api/v2/status.json',iu:'https://status.blackboard.com/api/v2/incidents.json',hu:'https://status.blackboard.com'},
-  {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com'},
-  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare'},
-  {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com'},
-  {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com'},
-  {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe'}
+  // Applications & Education Platforms
+  {name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio',cat:'app'},
+  {name:'HMH',su:'https://status.hmhco.com/api/v2/status.json',iu:'https://status.hmhco.com/api/v2/incidents.json',hu:'https://status.hmhco.com',cat:'app'},
+  {name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett',cat:'app'},
+  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/status.json',iu:'https://status.incidentiq.com/api/v2/incidents.json',hu:'https://status.incidentiq.com',cat:'app'},
+  {name:'Clever',su:'https://status.clever.com/api/v2/status.json',iu:'https://status.clever.com/api/v2/incidents.json',hu:'https://status.clever.com',cat:'app'},
+  {name:'Seesaw',su:'https://status.seesaw.me/api/v2/status.json',iu:'https://status.seesaw.me/api/v2/incidents.json',hu:'https://status.seesaw.me',cat:'app'},
+  {name:'Jamf',su:'https://status.jamf.com/api/v2/status.json',iu:'https://status.jamf.com/api/v2/incidents.json',hu:'https://status.jamf.com',cat:'app'},
+  {name:'Duo',su:'https://status.duo.com/api/v2/status.json',iu:'https://status.duo.com/api/v2/incidents.json',cu:'https://status.duo.com/api/v2/components.json',hu:'https://status.duo.com',p:'duo',cat:'app'},
+  {name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/status.json',iu:'https://status.imaginelearning.com/api/v2/incidents.json',hu:'https://status.imaginelearning.com',cat:'app'},
+  {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com',cat:'app'},
+  {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
+  {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
+  {name:'Google Workspace',su:'https://www.google.com/appsstatus/json/en',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
+  // Infrastructure Providers
+  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
+  {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
+  {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
+  {name:'AWS',su:'https://status.aws.amazon.com/data.json',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/api/v2/status.json',iu:'https://azure.status.microsoft/api/v2/incidents.json',hu:'https://azure.status.microsoft/en-us/status',cat:'infra'},
+  {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
 ];
 
 window._pi = window._pi || {};
@@ -851,6 +865,91 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
+  if(s.p==='duo'){
+    try {
+      const compMap={'operational':'none','degraded_performance':'minor','partial_outage':'minor','major_outage':'major','under_maintenance':'maintenance'};
+      const [sd,id,cd]=await Promise.all([
+        getJson(s.su, s.p),
+        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]})
+      ]);
+      const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      // Filter to only Duo Support and DUO72 components (case-insensitive)
+      const watched=(cd?.components||[]).filter(c=>/duo support|duo72/i.test(c.name||''));
+      let ind='none';
+      if(watched.length){
+        for(const c of watched){
+          const ci=compMap[c.status]||'none';
+          if((PRI[ci]||9)<(PRI[ind]||9)) ind=ci;
+        }
+      }
+      // Also check active incidents that reference watched component IDs
+      const watchedIds=new Set(watched.map(c=>c.id));
+      const active=(id?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        // Include if no components listed (global) or if a watched component is affected
+        if(!x.components?.length) return true;
+        return x.components.some(c=>watchedIds.has(c.id));
+      });
+      let title='', body='';
+      if(active.length){
+        const a=active[0];
+        if(ind==='none'){
+          const impact=normalizeIndicator(a.impact||'none');
+          if(impact!=='none') ind=impact;
+        }
+        title=a.name||'';
+        let desc=stripHtml(a.description||'');
+        if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
+        body=desc;
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='aws'){
+    try {
+      const d=await getJson(s.su, s.p);
+      const current=(d?.current||[]).filter(x=>x.status>0);
+      if(!current.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const worst=current.reduce((a,b)=>b.status>a.status?b:a,current[0]);
+      const ind=worst.status>=2 ? 'major' : 'minor';
+      const title=worst.service_name||'AWS Issue';
+      const body=stripHtml(worst.summary||worst.description||'');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='gcloud'){
+    try {
+      const incidents=await getJson(s.su, s.p);
+      const active=(incidents||[]).filter(x=>!x.end);
+      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const sev=active[0].severity||'low';
+      const ind=/high|critical/.test(sev.toLowerCase()) ? 'major' : 'minor';
+      const title=active[0].external_desc||'Google Cloud Incident';
+      const body=stripHtml((active[0].updates||[])[0]?.text||'');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='gworkspace'){
+    try {
+      const text=await getText(s.su, s.p);
+      // Google returns a JSONP-like payload; strip any leading/trailing non-JSON characters
+      const json=JSON.parse(text.replace(/^\s*[^[{]*/, '').replace(/\s*[^}\]]*$/, ''));
+      const services=Array.isArray(json) ? json : (json.status||[]);
+      const issues=services.filter(x=>{
+        const st=(x.status||'').toLowerCase();
+        return st && st!=='ok' && st!=='available' && st!=='operational' && st!=='normal';
+      });
+      if(!issues.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const ind=issues.some(x=>/(outage|disruption|down)/i.test(x.status||'')) ? 'major' : 'minor';
+      const names=issues.map(x=>x.name||x.service||'').filter(Boolean).join(', ');
+      return mk(s.name,ind,names ? `Issues: ${names}` : 'Service Disruption','',new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
   if(s.p==='cloudflare'){
     try {
       const [sd,id]=await Promise.all([
@@ -930,12 +1029,16 @@ const LOGO_DOMAINS={
   'Meraki':'meraki.com',
   'Duo':'duo.com',
   'Imagine Learning':'imaginelearning.com',
-  'Blackboard':'blackboard.com',
   'FinalSite':'finalsite.com',
+  'Dexcom':'dexcom.com',
+  'Adobe CC':'adobe.com',
+  'Google Workspace':'workspace.google.com',
   'Cloudflare':'cloudflare.com',
   'DNSFilter':'dnsfilter.com',
-  'Dexcom':'dexcom.com',
-  'Adobe CC':'adobe.com'
+  'Meraki':'meraki.com',
+  'AWS':'aws.amazon.com',
+  'Azure':'microsoft.com',
+  'Google Cloud':'cloud.google.com'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
@@ -1133,9 +1236,10 @@ async function init(){
   setStale(false);
   setRefreshing(false);
 
-  results.sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
-
+  // Attach category from SVCS and alert on status changes
+  const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
   results.forEach(s=>{
+    s.cat=svcCatMap[s.name]||'app';
     const prev=window._pi[s.name];
     // don't alert for unknown transitions
     if(prev && prev==='none' && (s.ind==='minor' || s.ind==='major')){
@@ -1151,28 +1255,62 @@ async function init(){
   const W=wrap.clientWidth || 1280;
   const H=wrap.clientHeight || 640;
   const GAP=12;
+  const SECTION_HDR_H=32;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
   const desiredRows=W>=960 ? 2 : 1;
   const minCardHeight=W>=1600 ? 320 : W>=960 ? 260 : 220;
   const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (minCardHeight + GAP)));
-  const maxRowsByCount=Math.max(1, Math.ceil(results.length/cols));
-  const rows=Math.min(desiredRows, maxRowsThatFit, maxRowsByCount);
-  const CARD_H=Math.floor((H - GAP*(rows-1))/rows);
+  const CARD_H=Math.floor((H - GAP*(desiredRows-1))/desiredRows);
   const compactCards=CARD_H<290;
-  const perPage=cols*rows;
-  const totalPages=Math.ceil(results.length/perPage);
+  const perPageFull=cols*Math.min(desiredRows, maxRowsThatFit);
+  // First page of each section has a header row, so fits fewer cards
+  const perPageWithHdr=cols*Math.max(1, Math.min(desiredRows, maxRowsThatFit)-1);
+
+  // Group and sort each category independently
+  const sort=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
+  const groups=[
+    {label:'Applications & Platforms', items: sort(results.filter(s=>s.cat==='app'))},
+    {label:'Infrastructure',           items: sort(results.filter(s=>s.cat==='infra'))}
+  ].filter(g=>g.items.length);
+
+  // Build flat page list
+  const pages=[];
+  for(const group of groups){
+    let rem=[...group.items];
+    let first=true;
+    while(rem.length || first){
+      const pp=first ? perPageWithHdr : perPageFull;
+      const cards=rem.splice(0, pp);
+      pages.push({header: first ? group.label : null, cards});
+      first=false;
+      if(!rem.length) break;
+    }
+  }
+  const totalPages=pages.length;
 
   clearInterval(rTimer); clearInterval(pTimer);
   wrap.innerHTML=''; dotsEl.innerHTML=''; cur=0; pageAnimating=false;
 
-  for(let p=0;p<totalPages;p++){
-    const slice=results.slice(p*perPage,(p+1)*perPage);
+  pages.forEach((pageData, p)=>{
     const pg=document.createElement('div');
     pg.className=`page ${p===0?'active':''}`;
-    const c=(p===totalPages-1 && slice.length<cols) ? slice.length : cols;
+    const cardCount=pageData.cards.length;
+    const c=(cardCount>0 && cardCount<cols) ? cardCount : cols;
     pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
-    pg.style.gridAutoRows=CARD_H+'px';
-    slice.forEach((s,i)=>{
+
+    if(pageData.header){
+      // Explicit rows: header row (auto) + card row(s) (CARD_H each)
+      const cardRows=Math.max(1, Math.ceil(cardCount/cols));
+      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(cardRows).fill(CARD_H+'px').join(' ')}`;
+      const hdr=document.createElement('div');
+      hdr.className='section-hdr';
+      hdr.textContent=pageData.header;
+      pg.appendChild(hdr);
+    } else {
+      pg.style.gridAutoRows=CARD_H+'px';
+    }
+
+    pageData.cards.forEach((s,i)=>{
       const card=mkCard(s,i*30);
       if(compactCards) card.classList.add('compact');
       pg.appendChild(card);
@@ -1186,7 +1324,7 @@ async function init(){
       dot.addEventListener('click',()=>{ clearInterval(rTimer); goPage(p); startRot(totalPages); });
       dotsEl.appendChild(dot);
     }
-  }
+  });
 
   document.getElementById('prog-track').style.display=totalPages>1 ? '' : 'none';
   startRot(totalPages);
