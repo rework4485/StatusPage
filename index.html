@@ -519,13 +519,13 @@ const SVCS=[
   {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com',cat:'app'},
   {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
-  {name:'Google Workspace',su:'https://www.google.com/appsstatus/json/en',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
+  {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
-  {name:'AWS',su:'https://status.aws.amazon.com/data.json',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azure.status.microsoft/api/v2/status.json',iu:'https://azure.status.microsoft/api/v2/incidents.json',hu:'https://azure.status.microsoft/en-us/status',cat:'infra'},
+  {name:'AWS',su:'https://health.aws.amazon.com/public/currentevents',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/en-us/status',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
 ];
 
@@ -921,11 +921,13 @@ async function fetchOne(s){
   if(s.p==='aws'){
     try {
       const d=await getJson(s.su, s.p);
-      const current=(d?.current||[]).filter(x=>x.status>0);
+      // New API returns a plain array; old API wrapped in {current:[]}
+      const items=Array.isArray(d) ? d : (d?.current||[]);
+      const current=items.filter(x=>parseInt(x.status||'0')>0);
       if(!current.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const worst=current.reduce((a,b)=>b.status>a.status?b:a,current[0]);
-      const ind=worst.status>=2 ? 'major' : 'minor';
-      const title=worst.service_name||'AWS Issue';
+      const worst=current.reduce((a,b)=>parseInt(b.status||'0')>parseInt(a.status||'0')?b:a,current[0]);
+      const ind=parseInt(worst.status||'0')>=2 ? 'major' : 'minor';
+      const title=(worst.service_name||'AWS Issue')+(worst.region_name ? ` (${worst.region_name})` : '');
       const body=stripHtml(worst.summary||worst.description||'');
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
@@ -946,18 +948,40 @@ async function fetchOne(s){
 
   if(s.p==='gworkspace'){
     try {
-      const text=await getText(s.su, s.p);
-      // Google returns a JSONP-like payload; strip any leading/trailing non-JSON characters
-      const json=JSON.parse(text.replace(/^\s*[^[{]*/, '').replace(/\s*[^}\]]*$/, ''));
-      const services=Array.isArray(json) ? json : (json.status||[]);
-      const issues=services.filter(x=>{
-        const st=(x.status||'').toLowerCase();
-        return st && st!=='ok' && st!=='available' && st!=='operational' && st!=='normal';
-      });
-      if(!issues.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const ind=issues.some(x=>/(outage|disruption|down)/i.test(x.status||'')) ? 'major' : 'minor';
-      const names=issues.map(x=>x.name||x.service||'').filter(Boolean).join(', ');
-      return mk(s.name,ind,names ? `Issues: ${names}` : 'Service Disruption','',new Date().toLocaleString(),s.hu);
+      const incidents=await getJson(s.su, s.p);
+      // incidents.json is an array; active = no end date yet
+      const active=(incidents||[]).filter(x=>!x.end);
+      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const hasHigh=active.some(x=>/high/i.test(x.severity||'')||/outage/i.test(x.status_impact||''));
+      const ind=hasHigh ? 'major' : 'minor';
+      const top=active[0];
+      const title=top.external_desc||'Service Disruption';
+      const affectedNames=active.map(x=>x.service_name||'').filter(Boolean).join(', ');
+      return mk(s.name,ind,title,affectedNames ? `Affected: ${affectedNames}` : '',new Date().toLocaleString(),s.hu);
+    } catch { return errSvc(s); }
+  }
+
+  if(s.p==='azure'){
+    try {
+      const html=await getText(s.su, s.p);
+      // The Azure status page is server-side rendered HTML.
+      // "There are currently no active events." appears when all systems are good.
+      if(/no active events/i.test(html)){
+        return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      }
+      // Detect severity from status text in the rendered table
+      const hasCritical=/\bCritical\b/.test(html);
+      const hasWarning=/\b(Warning|Disrupted|Degraded)\b/i.test(html);
+      if(hasCritical||hasWarning){
+        const ind=hasCritical ? 'major' : 'minor';
+        // Try to pull the first incident title from the page if present
+        const titleMatch=html.match(/class="[^"]*incident[^"]*"[^>]*>\s*([^<]{5,120})/i)||
+                         html.match(/<h[23][^>]*>\s*([^<]{5,120})/i);
+        const title=titleMatch ? stripHtml(titleMatch[1]).trim() : 'Service Issue Detected';
+        return mk(s.name,ind,title,'',new Date().toLocaleString(),s.hu);
+      }
+      // Page loaded but neither "no active events" nor a known bad status found → treat as operational
+      return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
 
