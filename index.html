@@ -324,7 +324,7 @@
     .card.mini .card-meta { display:none; }
     .card.mini .card-top { margin-bottom:0; align-items:center; gap:10px; }
     .card.mini .card-title-row { gap:10px; }
-    .card.mini .c-icon { width:46px; height:46px; border-radius:10px; font-size:22px; }
+    .card.mini .c-icon { width:56px; height:56px; border-radius:12px; font-size:27px; }
     .card.mini .c-logo { width:30px; height:30px; }
     .card.mini .c-fallback { font-size:20px; }
     .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -470,7 +470,7 @@
       .inc-block { padding:8px 10px; margin-bottom:6px; }
       .inc-body { font-size:13px; }
       .card.mini { padding:8px 12px; }
-      .card.mini .c-icon { width:34px; height:34px; font-size:17px; }
+      .card.mini .c-icon { width:42px; height:42px; font-size:21px; }
       .card.mini .c-logo { width:22px; height:22px; }
       .card.mini .c-fallback { font-size:15px; }
       .card.mini .c-name { font-size:13px; }
@@ -2094,8 +2094,9 @@ async function fetchOne(s){
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
       if(hasRerouteNotice){
+        ind='none';
+        labelOverride='Operational';
         extraStatuses.push('Re-routed');
-        if(ind==='none') labelOverride='Operational';
       }
       const statusLabels=[...new Set(extraStatuses.filter(Boolean))];
       return mk(s.name,ind,title,body,updated,s.hu,labelOverride,statusLabels);
