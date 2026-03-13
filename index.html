@@ -521,7 +521,7 @@ const SVCS=[
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   // Infrastructure Providers
-  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
+  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://health.aws.amazon.com/public/currentevents',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
@@ -540,6 +540,15 @@ function normalizeIndicator(ind){
   if(['maintenance','under_maintenance','scheduled','scheduled_maintenance'].includes(val)) return 'maintenance';
   if(['major','critical','down','outage'].includes(val)) return 'major';
   return 'major';
+}
+
+function componentStatusToIndicator(status){
+  const val=String(status||'').toLowerCase().trim();
+  if(val==='operational') return 'none';
+  if(['degraded_performance','partial_outage'].includes(val)) return 'minor';
+  if(val==='major_outage') return 'major';
+  if(val==='under_maintenance') return 'maintenance';
+  return 'unknown';
 }
 
 let audioCtx;
@@ -741,6 +750,7 @@ const PROXIES=[
 ];
 
 function proxyOrder(provider){
+  if(provider==='aws') return [2,0,3,1];
   return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
 
@@ -776,24 +786,40 @@ async function getJson(url, provider){
 // read the raw bytes and detect the BOM to pick the right decoder.
 async function getJsonEncoded(url, provider){
   let err;
-  for(const idx of proxyOrder(provider)){
-    try {
-      const r=await fetchWithTimeout(PROXIES[idx](url));
-      if(!r.ok) throw new Error(String(r.status));
-      const buf=await r.arrayBuffer();
-      const bytes=new Uint8Array(buf);
-      let text;
-      if(bytes[0]===0xFF && bytes[1]===0xFE){
-        // UTF-16 LE BOM
-        text=new TextDecoder('utf-16le').decode(buf).replace(/^\uFEFF/,'');
-      } else if(bytes[0]===0xFE && bytes[1]===0xFF){
-        // UTF-16 BE BOM
-        text=new TextDecoder('utf-16be').decode(buf).replace(/^\uFEFF/,'');
-      } else {
-        text=new TextDecoder('utf-8').decode(buf).replace(/^\uFEFF/,'');
-      }
-      return JSON.parse(text);
-    } catch(e){ err=e; }
+  const attempts=provider==='aws' ? 3 : 1;
+  for(let attempt=0; attempt<attempts; attempt++){
+    for(const idx of proxyOrder(provider)){
+      try {
+        const r=await fetchWithTimeout(PROXIES[idx](url));
+        if(!r.ok) throw new Error(String(r.status));
+        const buf=await r.arrayBuffer();
+        const bytes=new Uint8Array(buf);
+        let text;
+        if(bytes[0]===0xFF && bytes[1]===0xFE){
+          // UTF-16 LE BOM
+          text=new TextDecoder('utf-16le').decode(buf).replace(/^﻿/,'');
+        } else if(bytes[0]===0xFE && bytes[1]===0xFF){
+          // UTF-16 BE BOM
+          text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
+        } else {
+          // Heuristic for UTF-16 payloads where a proxy strips the BOM.
+          const sampleLen=Math.min(bytes.length, 200);
+          let nulls=0;
+          for(let i=0;i<sampleLen;i++) if(bytes[i]===0) nulls++;
+          if(nulls > sampleLen*0.2) text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
+          else text=new TextDecoder('utf-8').decode(buf).replace(/^﻿/,'');
+        }
+
+        const parsed=JSON.parse(text);
+        if(provider==='aws'){
+          if(!Array.isArray(parsed)) throw new Error('Unexpected AWS response shape');
+          if(parsed.length && !parsed.some(item=>item && (item.service_name || item.summary || item.status))){
+            throw new Error('Unexpected AWS event payload');
+          }
+        }
+        return parsed;
+      } catch(e){ err=e; }
+    }
   }
   throw err;
 }
@@ -1015,41 +1041,58 @@ async function fetchOne(s){
 
   if(s.p==='cloudflare'){
     try {
-      const [sd,id]=await Promise.all([
+      const [sd,id,cd]=await Promise.all([
         getJson(s.su, s.p),
-        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]})
       ]);
-      let ind=normalizeIndicator(sd?.status?.indicator||'none');
+      let ind='none';
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
-      const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
+
+      const targetGroups=['north america','cloudflare sites and services'];
+      const components=cd?.components||[];
+      const targetGroupIds=new Set(
+        components
+          .filter(c=>c.group && targetGroups.includes(String(c.name||'').toLowerCase().trim()))
+          .map(c=>c.id)
+      );
+      const watched=components.filter(c=>targetGroupIds.has(c.id) || targetGroupIds.has(c.group_id));
+      const watchedIds=new Set(watched.map(c=>c.id));
+
+      if(watched.length){
+        const worst=watched.reduce((max,c)=>{
+          const ci=componentStatusToIndicator(c.status);
+          return (PRI[ci]||9) < (PRI[max]||9) ? ci : max;
+        }, 'none');
+        ind=worst;
+      } else {
+        ind=normalizeIndicator(sd?.status?.indicator||'none');
+      }
+
+      const active=(id?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!x.components?.length) return true;
+        return x.components.some(c=>watchedIds.has(c.id));
+      });
+
       let title='', body='';
       if(active.length){
         const a=active[0];
-        const allUpdates=(a.incident_updates||[]).map(u=>u.body||'').join(' ');
-        const incidentText=(a.name+' '+(a.description||'')+' '+allUpdates).toLowerCase();
-
-        // Detect traffic rerouting language (mitigating a localized issue by redirecting traffic)
-        const isRerouting=/re.?rout(?:ing|ed)|traffic.*redirect|redirect.*traffic/.test(incidentText);
-
-        // Detect North American data center references
-        const hasNADC=/north.?america|united.?states|\bcanada\b|atlanta|chicago|dallas|denver|los.?angeles|las.?vegas|miami|minneapolis|new.?york|phoenix|san.?jose|san.?francisco|seattle|washington.?d\.?c|toronto|montreal|vancouver|\batl\b|\bord\b|\bdfw\b|\bden\b|\blax\b|\blas\b|\bmia\b|\bmsp\b|\bewr\b|\bjfk\b|\bphx\b|\bsjc\b|\bsfo\b|\bsea\b|\biad\b|\byyz\b|\byul\b|\byvr\b/.test(incidentText);
-
-        title=a.name||'';
+        if(ind==='none'){
+          const impact=normalizeIndicator(a.impact||'none');
+          if(impact!=='none') ind=impact;
+        }
+        title=a.name||'Service Disruption';
         let desc=stripHtml(a.description||'');
         if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
         body=desc;
-
-        if(isRerouting && !hasNADC){
-          // Traffic being rerouted away from non-North-American locations only — services remain
-          // available via alternate paths, so this is informational rather than an outage
-          ind='rerouting';
-          if(!title) title='Traffic Being Rerouted';
-        } else {
-          // Actual service issue or North American data center affected — show real impact level
-          if(ind==='none'){
-            const impact=normalizeIndicator(a.impact||'none');
-            if(impact!=='none') ind=impact;
-          }
+      } else if(watched.length && ind!=='none'){
+        const topIssue=watched
+          .filter(c=>componentStatusToIndicator(c.status)!=='none')
+          .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
+        if(topIssue){
+          title=`${topIssue.name} is ${LABELS[componentStatusToIndicator(topIssue.status)]||'impacted'}`;
+          body='Monitoring Cloudflare Sites and Services + North America categories only.';
         }
       }
       return mk(s.name,ind,title,body,updated,s.hu);
