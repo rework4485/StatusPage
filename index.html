@@ -570,6 +570,30 @@ function normalizeRegionText(value){
   return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 }
 
+function formatGoogleWorkspaceMarkdown(raw){
+  const text=String(raw||'').trim();
+  if(!text) return {summary:'', body:''};
+
+  const normalized=text.replace(/\r\n?/g,'\n');
+  const summaryMatch=normalized.match(/\*\*Summary\*\*\s*([\s\S]*?)(?=\n\*\*Description\*\*|$)/i);
+  const descriptionMatch=normalized.match(/\*\*Description\*\*\s*([\s\S]*)$/i);
+
+  const summary=(summaryMatch?.[1]||'').trim();
+  const description=(descriptionMatch?.[1]||'').trim();
+  const fallback=normalized
+    .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+
+  return {
+    summary: summary || fallback.split('\n')[0] || '',
+    body: (description || fallback)
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n{2,}/g,'<br><br>')
+      .replace(/\n/g,'<br>')
+  };
+}
+
 function isAwsNorthAmericaEvent(event){
   const region=normalizeRegionText(event?.region_name);
   const text=normalizeRegionText(`${event?.service_name||''} ${event?.summary||''} ${event?.description||''}`);
@@ -1058,9 +1082,12 @@ async function fetchOne(s){
       const hasHigh=active.some(x=>/high/i.test(x.severity||'')||/outage/i.test(x.status_impact||''));
       const ind=hasHigh ? 'major' : 'minor';
       const top=active[0];
-      const title=top.external_desc||'Service Disruption';
+      const formatted=formatGoogleWorkspaceMarkdown(top.external_desc||'');
+      const title=formatted.summary||'Service Disruption';
       const affectedNames=active.map(x=>x.service_name||'').filter(Boolean).join(', ');
-      return mk(s.name,ind,title,affectedNames ? `Affected: ${affectedNames}` : '',new Date().toLocaleString(),s.hu);
+      const affectedLine=affectedNames ? `<strong>Affected:</strong> ${affectedNames}` : '';
+      const body=[formatted.body, affectedLine].filter(Boolean).join('<br><br>');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
 
