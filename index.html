@@ -1273,8 +1273,7 @@ async function init(){
   const GAP=12;
   const SECTION_HDR_H=32;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const minCardHeight=W>=1600 ? 200 : W>=960 ? 180 : 160;
-  const rowsPerPage=Math.max(1, Math.min(3, Math.floor((H + GAP) / (minCardHeight + GAP))));
+  const rowsPerPage=2; // always 2 rows
   const CARD_H=Math.floor((H - GAP*(rowsPerPage-1)) / rowsPerPage);
   // Header pages: same row count, cards slightly shorter to fit the section label
   const hdrAvailH=H - SECTION_HDR_H - GAP;
@@ -1299,16 +1298,17 @@ async function init(){
     makeGroup('Infrastructure',           results.filter(s=>s.cat==='infra'))
   ].filter(g=>g.items.length);
 
-  // Build flat page list
+  // Build flat page list; avoid single-card last pages by borrowing one card from the prior page
   const pages=[];
   for(const group of groups){
     let rem=[...group.items];
     let first=true;
-    while(rem.length || first){
-      const cards=rem.splice(0, perPage);
+    while(rem.length){
+      // If taking a full page would leave exactly 1 card stranded, take one fewer now
+      const take=(rem.length > perPage && rem.length - perPage === 1) ? perPage - 1 : Math.min(perPage, rem.length);
+      const cards=rem.splice(0, take);
       pages.push({header: first ? group.label : null, headerMeta: first ? {issues:group.issues, hasOutage:group.hasOutage, hasDegraded:group.hasDegraded} : null, cards});
       first=false;
-      if(!rem.length) break;
     }
   }
   const totalPages=pages.length;
