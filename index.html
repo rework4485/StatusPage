@@ -69,6 +69,7 @@
       align-items:center;
       justify-content:space-between;
       flex-shrink:0;
+      flex-wrap:wrap;
       gap:24px;
       padding:6px 0 18px;
       border-bottom:1px solid rgba(255,255,255,0.07);
@@ -88,13 +89,38 @@
       background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.18); color:var(--ok);
       transition:all 0.4s; white-space:nowrap; letter-spacing:0.02em;
     }
+    .incident-pin {
+      display:none;
+      align-items:center;
+      gap:8px;
+      min-width:240px;
+      max-width:min(46vw, 620px);
+      padding:7px 14px;
+      border-radius:8px;
+      border:1px solid rgba(245,158,11,0.28);
+      background:rgba(245,158,11,0.08);
+      color:#fcd34d;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:0.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .incident-pin.show { display:inline-flex; }
+    .incident-pin.dot-major { border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.09); color:#fda4af; }
+    .incident-pin.dot-minor { border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.08); color:#fcd34d; }
+    .incident-pin.dot-maintenance { border-color:rgba(59,130,246,0.28); background:rgba(59,130,246,0.09); color:#93c5fd; }
+    .incident-pin.dot-rerouting { border-color:rgba(20,184,166,0.32); background:rgba(20,184,166,0.1); color:#5eead4; }
+    .incident-pin-label { flex-shrink:0; opacity:0.8; }
+    .incident-pin-text { overflow:hidden; text-overflow:ellipsis; }
     .pill.warn { background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.2); color:var(--warn); }
     .pill.bad { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.22); color:var(--bad); animation:ring 1.8s infinite; }
     @keyframes ring { 0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,0.35); } 50%{ box-shadow:0 0 0 8px rgba(239,68,68,0); } }
     .pill-dot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:blink 2s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
-    .hdr-right { display:flex; align-items:center; gap:20px; }
-    .stats { display:flex; align-items:center; gap:16px; }
+    .hdr-right { display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto; }
+    .stats { display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-end; }
     .stat { display:flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); }
     .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .stat strong { color:var(--text); font-weight:600; font-size:15px; }
@@ -222,7 +248,7 @@
     .c-icon.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); }
     .c-logo { width:32px; height:32px; border-radius:6px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
     .c-fallback { font-size:22px; font-weight:700; line-height:1; }
-    .c-name { font-size:22px; font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+    .c-name { font-size:clamp(20px, 1.25vw, 28px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
     .c-url { font-size:13px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
     .c-badge {
@@ -245,8 +271,8 @@
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
     .inc-label { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .inc-label-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:18px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:6px; }
-    .inc-body { font-size:15px; color:var(--sub); line-height:1.5; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
+    .inc-title { font-size:clamp(18px, 1.05vw, 24px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:6px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(15px, 0.92vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card.compact .status-label { font-size:10px; padding:2px 6px; }
@@ -377,6 +403,23 @@
       .inc-body { font-size:13px; --body-lines:3; }
     }
 
+    @media (min-width: 1600px) {
+      .brand-name { font-size:24px; }
+      .brand-sub { font-size:15px; }
+      .pill { font-size:16px; padding:8px 16px; }
+      .incident-pin { font-size:16px; max-width:min(54vw, 820px); }
+      .stat { font-size:16px; }
+      .stat strong { font-size:19px; }
+      .clock { font-size:22px; }
+      .c-badge { font-size:15px; }
+      .meta-updated { font-size:14px; }
+      .meta-tag { font-size:13px; }
+    }
+
+    @media (max-width: 1200px) {
+      .incident-pin { max-width:100%; min-width:0; }
+    }
+
     /* Stale data warning badge */
     .stale-badge {
       display:none; align-items:center; gap:6px;
@@ -436,6 +479,7 @@
       </div>
     </div>
     <div class="pill" id="pill"><span class="pill-dot"></span><span id="pill-txt">Loading…</span></div>
+    <div class="incident-pin" id="incident-pin" aria-live="polite"><span class="incident-pin-label">Active:</span><span class="incident-pin-text" id="incident-pin-text">—</span></div>
     <div class="hdr-right">
       <div class="stats">
         <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
@@ -1499,6 +1543,30 @@ function startRot(n){
   if(n>1) rTimer=setInterval(()=>goPage((cur+1)%n),ROT_MS);
 }
 
+function updateIncidentPin(data){
+  const pin=document.getElementById('incident-pin');
+  const pinText=document.getElementById('incident-pin-text');
+  if(!pin || !pinText) return;
+
+  const active=data
+    .filter(s=>s.ind!=='none' && s.ind!=='unknown')
+    .sort((a,b)=>{
+      const pd=(PRI[a.ind]||9)-(PRI[b.ind]||9);
+      return pd!==0 ? pd : a.name.localeCompare(b.name);
+    });
+
+  if(!active.length){
+    pin.className='incident-pin';
+    pinText.textContent='—';
+    return;
+  }
+
+  const top=active[0];
+  const status=LABELS[top.ind]||top.label||'Issue';
+  pin.className=`incident-pin show dot-${top.ind}`;
+  pinText.textContent=`${top.name} · ${status}`;
+}
+
 function updateStats(data){
   const ok=data.filter(s=>s.ind==='none').length;
   const wn=data.filter(s=>s.ind==='minor').length;
@@ -1569,6 +1637,7 @@ async function init(){
     window._pi[s.name]=s.ind;
   });
   updateStats(results);
+  updateIncidentPin(results);
 
   const W=wrap.clientWidth || 1280;
   const H=wrap.clientHeight || 640;
