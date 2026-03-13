@@ -1058,6 +1058,9 @@ async function fetchOne(s){
       );
       const watched=components.filter(c=>targetGroupIds.has(c.id) || targetGroupIds.has(c.group_id));
       const watchedIds=new Set(watched.map(c=>c.id));
+      const affectedNorthAmerica=watched
+        .filter(c=>c.group_id && componentStatusToIndicator(c.status)!=='none')
+        .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name));
 
       if(watched.length){
         const worst=watched.reduce((max,c)=>{
@@ -1086,7 +1089,18 @@ async function fetchOne(s){
         let desc=stripHtml(a.description||'');
         if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
         body=desc;
-      } else if(watched.length && ind!=='none'){
+      }
+
+      if(affectedNorthAmerica.length){
+        const impactsList=affectedNorthAmerica
+          .map(c=>`• ${c.name}: ${LABELS[componentStatusToIndicator(c.status)]||'Impacted'}`)
+          .join('<br>');
+
+        if(!title){
+          title=`${affectedNorthAmerica.length} non-operational North America status${affectedNorthAmerica.length===1?'':'es'}`;
+        }
+        body=`${body ? `${body}<br><br>` : ''}<strong>North America affected areas:</strong><br>${impactsList}`;
+      } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
           .filter(c=>componentStatusToIndicator(c.status)!=='none')
           .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
