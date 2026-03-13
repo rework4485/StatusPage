@@ -1273,14 +1273,14 @@ async function init(){
   const GAP=12;
   const SECTION_HDR_H=32;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const desiredRows=W>=960 ? 2 : 1;
-  const minCardHeight=W>=1600 ? 320 : W>=960 ? 260 : 220;
-  const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (minCardHeight + GAP)));
-  const CARD_H=Math.floor((H - GAP*(desiredRows-1))/desiredRows);
+  const minCardHeight=W>=1600 ? 200 : W>=960 ? 180 : 160;
+  const rowsPerPage=Math.max(1, Math.min(3, Math.floor((H + GAP) / (minCardHeight + GAP))));
+  const CARD_H=Math.floor((H - GAP*(rowsPerPage-1)) / rowsPerPage);
+  // Header pages: same row count, cards slightly shorter to fit the section label
+  const hdrAvailH=H - SECTION_HDR_H - GAP;
+  const CARD_H_HDR=Math.floor((hdrAvailH - GAP*(rowsPerPage-1)) / rowsPerPage);
   const compactCards=CARD_H<290;
-  const perPageFull=cols*Math.min(desiredRows, maxRowsThatFit);
-  // First page of each section has a header row, so fits fewer cards
-  const perPageWithHdr=cols*Math.max(1, Math.min(desiredRows, maxRowsThatFit)-1);
+  const perPage=cols*rowsPerPage; // same card count on all pages
 
   // Group and sort each category independently
   const sort=(arr)=>[...arr].sort((a,b)=>{
@@ -1305,8 +1305,7 @@ async function init(){
     let rem=[...group.items];
     let first=true;
     while(rem.length || first){
-      const pp=first ? perPageWithHdr : perPageFull;
-      const cards=rem.splice(0, pp);
+      const cards=rem.splice(0, perPage);
       pages.push({header: first ? group.label : null, headerMeta: first ? {issues:group.issues, hasOutage:group.hasOutage, hasDegraded:group.hasDegraded} : null, cards});
       first=false;
       if(!rem.length) break;
@@ -1325,9 +1324,9 @@ async function init(){
     pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
 
     if(pageData.header){
-      // Explicit rows: header row (auto) + card row(s) (CARD_H each)
+      // Explicit rows: header row (auto) + card row(s) (CARD_H_HDR each — slightly shorter to fit header)
       const cardRows=Math.max(1, Math.ceil(cardCount/cols));
-      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(cardRows).fill(CARD_H+'px').join(' ')}`;
+      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(cardRows).fill(CARD_H_HDR+'px').join(' ')}`;
       const hdr=document.createElement('div');
       hdr.className='section-hdr';
       const meta=pageData.headerMeta||{};
