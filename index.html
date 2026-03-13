@@ -261,7 +261,7 @@
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:10px; }
-    .inc-block { border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; flex-direction:column; flex:1; min-height:0; }
+    .inc-block { border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
@@ -331,21 +331,36 @@
     .card.mini .c-badge { font-size:12px; padding:4px 10px; }
     .card.mini .c-name-block { min-width:0; }
 
-    /* Net Connection widget metrics */
+    /* Net Connection widget */
     .net-grid { display:flex; flex-direction:column; gap:6px; }
-    .net-info-rows { display:flex; flex-direction:column; gap:3px; }
-    .net-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:2px 0; }
+    .net-info-rows { display:flex; flex-direction:column; gap:2px; }
+    .net-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:1px 0; }
     .net-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; flex-shrink:0; }
     .net-val { font-size:11px; color:var(--text); font-weight:600; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .net-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
-    .net-metric { display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:6px 4px; }
-    .net-metric-val { font-size:clamp(12px,1.1vw,18px); font-weight:700; color:var(--ok); line-height:1.1; }
-    .net-metric-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; text-align:center; margin-top:2px; line-height:1.2; }
-    .net-latencies { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:7px; padding:6px 8px; }
-    .net-lat-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:3px; }
-    .net-lat-vals { font-size:10px; color:var(--sub); font-variant-numeric:tabular-nums; line-height:1.6; word-break:break-all; }
+    .net-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+    .net-metric { display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:5px 3px; }
+    .net-metric-val { font-size:clamp(11px,1.0vw,17px); font-weight:700; color:var(--ok); line-height:1.1; }
+    .net-metric-lbl { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; text-align:center; margin-top:2px; line-height:1.2; }
     .net-testing { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
     .net-spinner { width:12px; height:12px; border:2px solid rgba(255,255,255,0.1); border-top-color:rgba(59,130,246,0.7); border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0; }
+    /* Net Connection box plot (latency measurements) */
+    .net-lat-section { display:flex; flex-direction:column; gap:4px; }
+    .net-lat-section-hdr { font-size:9px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; }
+    .net-bp-rows { display:flex; flex-direction:column; gap:4px; }
+    .net-bp-row { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:7px; padding:5px 8px; }
+    .net-bp-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:3px; }
+    .net-bp-label { font-size:10px; font-weight:600; color:var(--text); }
+    .net-bp-count { font-size:9px; color:var(--muted); }
+    .net-bp-chart { position:relative; height:24px; user-select:none; }
+    .net-bp-axis-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:var(--border); }
+    .net-bp-whisker { position:absolute; height:2px; top:50%; transform:translateY(-50%); border-radius:1px; }
+    .net-bp-iqr { position:absolute; top:20%; height:60%; border-radius:3px; border:1.5px solid; }
+    .net-bp-median { position:absolute; top:10%; height:80%; width:2px; border-radius:1px; background:rgba(255,255,255,0.9); }
+    .net-bp-dot { position:absolute; width:5px; height:5px; border-radius:50%; top:50%; transform:translate(-50%,-50%); }
+    .net-bp-axis { display:flex; justify-content:space-between; padding:0 0; margin-top:2px; position:relative; height:10px; }
+    .net-bp-axis-tick { position:absolute; font-size:8px; color:var(--muted); font-variant-numeric:tabular-nums; transform:translateX(-50%); }
+    .net-bp-axis-tick:first-child { transform:translateX(0); }
+    .net-bp-axis-tick:last-child { transform:translateX(-100%); }
     .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
     .f-left { display:flex; align-items:center; gap:20px; }
     .f-meta { font-size:12px; color:var(--muted); }
@@ -956,6 +971,60 @@ function runAlertTest(){
   queueAlert({name:'Test Service 3', label:'Operational'}, 'restored');
 }
 
+// ─── Box-plot helpers ─────────────────────────────────────────────────────────
+function boxStats(times){
+  if(!times||!times.length) return null;
+  const s=[...times].sort((a,b)=>a-b);
+  const n=s.length;
+  const q=(p)=>s[Math.min(Math.floor(n*p),n-1)];
+  return {min:s[0],q1:q(0.25),med:q(0.5),q3:q(0.75),max:s[n-1],n,sorted:s};
+}
+
+// Deterministic y-jitter so dots don't jump on re-render
+function dotJitter(v){ return ((v*7919)%37)/37*50+25; } // 25–75% of chart height
+
+function renderNetBoxPlot(times, label, colorRgb, axisMax){
+  const st=boxStats(times);
+  const count=st?`(${st.n}/${st.n})`:'(0)';
+  if(!st) return `<div class="net-bp-row"><div class="net-bp-header"><span class="net-bp-label">${label}</span><span class="net-bp-count">${count}</span></div><div style="font-size:9px;color:var(--muted);padding:4px 0">No data</div></div>`;
+
+  const aMax=axisMax||Math.max(st.max,50);
+  const pad=0.04; // 4% left/right padding
+  const pct=(v)=>Math.min(98,Math.max(2,(v/aMax)*(1-2*pad)+pad)*100);
+
+  // Whisker and box positions
+  const wL=pct(st.min), wR=pct(st.max);
+  const bL=pct(st.q1), bW=Math.max(pct(st.q3)-pct(st.q1),1);
+  const mPos=pct(st.med);
+
+  // Individual dots
+  const dots=st.sorted.map((t,i)=>{
+    const x=pct(t);
+    const y=dotJitter(t+(i*31));
+    return `<div class="net-bp-dot" style="left:${x.toFixed(1)}%;top:${y.toFixed(0)}%;background:rgb(${colorRgb})"></div>`;
+  }).join('');
+
+  // Axis ticks (0 + multiples of tickInterval up to aMax)
+  const ti=aMax<=100?25:aMax<=200?50:100;
+  const ticks=[];
+  for(let v=0;v<=aMax;v+=ti) ticks.push(v);
+  if(ticks[ticks.length-1]<aMax) ticks.push(aMax);
+  const ticksHtml=ticks.map(v=>`<div class="net-bp-axis-tick" style="left:${pct(v).toFixed(1)}%">${v}</div>`).join('');
+
+  return `<div class="net-bp-row">
+    <div class="net-bp-header"><span class="net-bp-label">${label}</span><span class="net-bp-count">${count}</span></div>
+    <div class="net-bp-chart">
+      <div class="net-bp-axis-line"></div>
+      <div class="net-bp-whisker" style="left:${wL.toFixed(1)}%;width:${(wR-wL).toFixed(1)}%;background:rgb(${colorRgb});opacity:0.35"></div>
+      <div class="net-bp-iqr" style="left:${bL.toFixed(1)}%;width:${bW.toFixed(1)}%;background:rgba(${colorRgb},0.15);border-color:rgb(${colorRgb})"></div>
+      <div class="net-bp-median" style="left:${mPos.toFixed(1)}%"></div>
+      ${dots}
+    </div>
+    <div class="net-bp-axis">${ticksHtml}</div>
+  </div>`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Net Connection Speed Test ───────────────────────────────────────────────
 let netConnCache=null;
 let netConnTesting=false;
@@ -984,6 +1053,59 @@ async function pingLatencies(count=10){
     } catch(e){ /* count as packet loss */ }
   }
   return times;
+}
+
+// Collect count latency pings staggered intervalMs apart (all fired concurrently)
+async function collectLatencyPings(count=20, intervalMs=350){
+  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
+  const tasks=Array.from({length:count},(_,i)=>
+    new Promise(resolve=>{
+      setTimeout(async()=>{
+        const t0=performance.now();
+        try{
+          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store'},5000);
+          await r.arrayBuffer();
+          resolve(performance.now()-t0);
+        }catch(e){ resolve(null); }
+      }, i*intervalMs);
+    })
+  );
+  return (await Promise.all(tasks)).filter(t=>t!=null);
+}
+
+// Download speed test with concurrent latency pings
+async function measureDownloadWithPings(){
+  const bytes=10*1024*1024;
+  const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
+  const t0=performance.now();
+  let mbps=null;
+  const dlTask=(async()=>{
+    try{
+      const r=await fetchWithOpts(url,{cache:'no-store'},40000);
+      const data=await r.arrayBuffer();
+      const elapsed=(performance.now()-t0)/1000;
+      mbps=(data.byteLength*8)/elapsed/1e6;
+    }catch(e){}
+  })();
+  const [,latencies]=await Promise.all([dlTask, collectLatencyPings(20,350)]);
+  return {downloadMbps:mbps, latencies};
+}
+
+// Upload speed test with concurrent latency pings
+async function measureUploadWithPings(){
+  const bytes=2*1024*1024;
+  const body=new Uint8Array(bytes);
+  const url='https://speed.cloudflare.com/__up?nc='+Date.now();
+  const t0=performance.now();
+  let mbps=null;
+  const ulTask=(async()=>{
+    try{
+      const r=await fetchWithOpts(url,{method:'POST',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},40000);
+      if(r.ok){ const elapsed=(performance.now()-t0)/1000; mbps=(bytes*8)/elapsed/1e6; }
+    }catch(e){}
+  })();
+  const [,latencies]=await Promise.all([ulTask, collectLatencyPings(20,350)]);
+  return {uploadMbps:mbps, latencies};
 }
 
 function calcJitter(times){
@@ -1030,17 +1152,31 @@ async function runNetConnectionTest(){
       if(r.ok) meta=await r.json();
     } catch(e){}
 
-    // 2. Latency measurements (10 pings)
-    const latencies=await pingLatencies(10);
-    const packetLoss=((10-latencies.length)/10)*100;
-    const avgLatency=latencies.length ? latencies.reduce((a,b)=>a+b,0)/latencies.length : null;
-    const jitter=calcJitter(latencies);
+    // 2. Unloaded latency (20 pings before any load)
+    const unloadedLatencies=await pingLatencies(20);
+    const packetLoss=((20-unloadedLatencies.length)/20)*100;
+    const avgLatency=unloadedLatencies.length ? unloadedLatencies.reduce((a,b)=>a+b,0)/unloadedLatencies.length : null;
+    const jitter=calcJitter(unloadedLatencies);
 
-    // 3. Download / Upload speed
-    const downloadMbps=await measureDownloadMbps();
-    const uploadMbps=await measureUploadMbps();
+    // 3. Download speed + concurrent latency during download
+    const dlResult=await measureDownloadWithPings();
+    const downloadMbps=dlResult.downloadMbps;
+    const downloadLatencies=dlResult.latencies;
 
-    netConnCache={meta, latencies, avgLatency, jitter, packetLoss, downloadMbps, uploadMbps, timestamp:Date.now(), error:false};
+    // 4. Upload speed + concurrent latency during upload
+    const ulResult=await measureUploadWithPings();
+    const uploadMbps=ulResult.uploadMbps;
+    const uploadLatencies=ulResult.latencies;
+
+    netConnCache={
+      meta,
+      latencies:unloadedLatencies,
+      downloadLatencies,
+      uploadLatencies,
+      avgLatency, jitter, packetLoss,
+      downloadMbps, uploadMbps,
+      timestamp:Date.now(), error:false
+    };
   } catch(e){
     netConnCache={error:true, timestamp:Date.now()};
   } finally {
@@ -1187,13 +1323,18 @@ async function fetchOne(s){
     const plPct=fmt(c.packetLoss,0);
     const dlMbps=fmt(c.downloadMbps);
     const ulMbps=fmt(c.uploadMbps);
-    const latArr=(c.latencies||[]).map(t=>t.toFixed(0)+'ms').join(' · ')||'—';
+
+    // Compute global axis max across all three latency sets
+    const allLat=[...(c.latencies||[]),...(c.downloadLatencies||[]),...(c.uploadLatencies||[])];
+    const rawMax=allLat.length ? Math.max(...allLat) : 200;
+    const axisMax=Math.ceil(rawMax/50)*50||200; // round up to nearest 50ms
+
     const body=`<div class="net-grid">
   <div class="net-info-rows">
     <div class="net-row"><span class="net-lbl">Connected via</span><span class="net-val">${connVia}</span></div>
-    <div class="net-row"><span class="net-lbl">Server location</span><span class="net-val">${serverLoc}</span></div>
-    <div class="net-row"><span class="net-lbl">Your network</span><span class="net-val">${network}</span></div>
-    <div class="net-row"><span class="net-lbl">Your IP address</span><span class="net-val">${ip}</span></div>
+    <div class="net-row"><span class="net-lbl">Server</span><span class="net-val">${serverLoc}</span></div>
+    <div class="net-row"><span class="net-lbl">Network</span><span class="net-val">${network}</span></div>
+    <div class="net-row"><span class="net-lbl">IP Address</span><span class="net-val">${ip}</span></div>
   </div>
   <div class="net-metrics">
     <div class="net-metric"><span class="net-metric-val">${dlMbps}</span><span class="net-metric-lbl">Download<br>Mbps</span></div>
@@ -1202,9 +1343,13 @@ async function fetchOne(s){
     <div class="net-metric"><span class="net-metric-val">${jitMs}</span><span class="net-metric-lbl">Jitter<br>ms</span></div>
     <div class="net-metric"><span class="net-metric-val">${plPct}%</span><span class="net-metric-lbl">Packet<br>Loss</span></div>
   </div>
-  <div class="net-latencies">
-    <div class="net-lat-label">All Latency Measurements</div>
-    <div class="net-lat-vals">${latArr}</div>
+  <div class="net-lat-section">
+    <div class="net-lat-section-hdr">Latency Measurements</div>
+    <div class="net-bp-rows">
+      ${renderNetBoxPlot(c.latencies,'Unloaded latency','59,130,246',axisMax)}
+      ${renderNetBoxPlot(c.downloadLatencies,'Latency during download','245,158,11',axisMax)}
+      ${renderNetBoxPlot(c.uploadLatencies,'Latency during upload','139,92,246',axisMax)}
+    </div>
   </div>
 </div>`;
     const result=mk(s.name,'none','Net Connection',body,new Date(c.timestamp).toLocaleString(),s.hu);
@@ -1634,8 +1779,8 @@ function nextLogo(img){
 // Grid uses 4 rows per page so mini (no-incident) = 1 row ≈ half the old normal height.
 // Sizes: 1×1 mini (no incidents), 1×2 normal, 2×2 expanded-wide, 1×3 expanded-tall, 2×4 large.
 function getCardSize(svc, cols){
-  // Special widget (e.g. Net Connection): always 2-wide × 2-tall (normal footprint)
-  if(svc.noMini && svc.ind==='none') return {spanCol:Math.min(2,cols), spanRow:2};
+  // Special widget (e.g. Net Connection): 2-wide × 3-tall to fit box-plot latency data
+  if(svc.noMini && svc.ind==='none') return {spanCol:Math.min(2,cols), spanRow:3};
   // No incidents, not a special widget → mini half-size card
   if(svc.ind==='none') return {spanCol:1, spanRow:1};
   const score=(svc.title||'').length+(svc.body||'').length+(svc.label||'').length*0.7+(svc.labels||[]).join(' ').length*1.6;
