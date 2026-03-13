@@ -531,7 +531,7 @@ const SVCS=[
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
-  {name:'AWS',su:'https://health.aws.amazon.com/public/currentevents',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
+  {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
   {name:'Azure',su:'https://azurestatusprodscus2.azurewebsites.net/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
 ];
@@ -548,13 +548,6 @@ function normalizeIndicator(ind){
   if(['maintenance','under_maintenance','scheduled','scheduled_maintenance'].includes(val)) return 'maintenance';
   if(['major','critical','down','outage'].includes(val)) return 'major';
   return 'major';
-}
-
-function isNorthAmericaRegion(region){
-  const val=String(region||'').toLowerCase();
-  if(!val) return false;
-  return /\b(north america|na\b|united states|usa|u\.s\.|us-|ca-central|canada|mexico|north\s*america)\b/.test(val)
-    || /(us|ca|na)-(east|west|central|south|north)/.test(val);
 }
 
 function hasRerouteSignal(...parts){
@@ -601,6 +594,34 @@ function isAwsNorthAmericaEvent(event){
   ];
   if(directRegionMatchers.some(rx=>rx.test(region))||awsRegionMatchers.some(rx=>rx.test(region))) return true;
   return directRegionMatchers.some(rx=>rx.test(text))||awsRegionMatchers.some(rx=>rx.test(text));
+}
+
+const AWS_RSS_ACTIVE_WINDOW_MS=1000*60*60*72;
+
+function parseAwsRssItems(xmlText){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(String(xmlText||''), 'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('AWS RSS parse error');
+  return [...doc.querySelectorAll('channel > item')].map((item)=>({
+    title:stripHtml(item.querySelector('title')?.textContent||''),
+    description:stripHtml(item.querySelector('description')?.textContent||''),
+    pubDate:item.querySelector('pubDate')?.textContent||'',
+    guid:item.querySelector('guid')?.textContent||''
+  }));
+}
+
+function awsRssItemToIndicator(item){
+  const text=`${item?.title||''} ${item?.description||''}`.toLowerCase();
+  if(/resolved|complete(?:ly)? recovered|recovered|restored|no longer impacted|fully operational/.test(text)) return 'none';
+  if(/service disruption|outage|critical|unavailable|severe/.test(text)) return 'major';
+  if(/service impact|degraded|increased error rates|latency|connectivity issues/.test(text)) return 'minor';
+  return 'minor';
+}
+
+function isAwsRssItemFresh(pubDateText){
+  const published=Date.parse(pubDateText||'');
+  if(!Number.isFinite(published)) return true;
+  return (Date.now()-published)<=AWS_RSS_ACTIVE_WINDOW_MS;
 }
 
 function extractAzureAmericasTable(html){
@@ -857,49 +878,6 @@ async function getJson(url, provider){
   return JSON.parse(t.replace(/^﻿/,''));
 }
 
-// Some APIs (e.g. AWS health) return UTF-16 LE encoded responses.
-// response.text() defaults to UTF-8 and produces garbled output, so we
-// read the raw bytes and detect the BOM to pick the right decoder.
-async function getJsonEncoded(url, provider){
-  let err;
-  const attempts=provider==='aws' ? 3 : 1;
-  for(let attempt=0; attempt<attempts; attempt++){
-    for(const idx of proxyOrder(provider)){
-      try {
-        const r=await fetchWithTimeout(PROXIES[idx](url));
-        if(!r.ok) throw new Error(String(r.status));
-        const buf=await r.arrayBuffer();
-        const bytes=new Uint8Array(buf);
-        let text;
-        if(bytes[0]===0xFF && bytes[1]===0xFE){
-          // UTF-16 LE BOM
-          text=new TextDecoder('utf-16le').decode(buf).replace(/^﻿/,'');
-        } else if(bytes[0]===0xFE && bytes[1]===0xFF){
-          // UTF-16 BE BOM
-          text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
-        } else {
-          // Heuristic for UTF-16 payloads where a proxy strips the BOM.
-          const sampleLen=Math.min(bytes.length, 200);
-          let nulls=0;
-          for(let i=0;i<sampleLen;i++) if(bytes[i]===0) nulls++;
-          if(nulls > sampleLen*0.2) text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
-          else text=new TextDecoder('utf-8').decode(buf).replace(/^﻿/,'');
-        }
-
-        const parsed=JSON.parse(text);
-        if(provider==='aws'){
-          if(!Array.isArray(parsed)) throw new Error('Unexpected AWS response shape');
-          if(parsed.length && !parsed.some(item=>item && (item.service_name || item.summary || item.status))){
-            throw new Error('Unexpected AWS event payload');
-          }
-        }
-        return parsed;
-      } catch(e){ err=e; }
-    }
-  }
-  throw err;
-}
-
 function stripHtml(txt){
   return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
@@ -1049,17 +1027,20 @@ async function fetchOne(s){
 
   if(s.p==='aws'){
     try {
-      // AWS health API returns UTF-16 LE JSON; use encoding-aware fetcher
-      const d=await getJsonEncoded(s.su, s.p);
-      // Response is a plain array of current events
-      const items=Array.isArray(d) ? d : (d?.current||[]);
-      const current=items.filter(x=>parseInt(x.status||'0')>0 && isNorthAmericaRegion(x.region_name||x.region||''));
-      if(!current.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const worst=current.reduce((a,b)=>parseInt(b.status||'0')>parseInt(a.status||'0')?b:a,current[0]);
-      const ind=parseInt(worst.status||'0')>=2 ? 'major' : 'minor';
-      const title=(worst.service_name||'AWS Issue')+(worst.region_name ? ` (${worst.region_name})` : '');
-      const body=stripHtml(worst.summary||worst.description||'');
-      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+      const rss=await getText(s.su, s.p);
+      const items=parseAwsRssItems(rss)
+        .filter(item=>isAwsNorthAmericaEvent({region_name:'', service_name:item.title, summary:item.description, description:item.description}))
+        .filter(item=>isAwsRssItemFresh(item.pubDate));
+      if(!items.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+
+      const latest=items[0];
+      const ind=awsRssItemToIndicator(latest);
+      if(ind==='none') return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+
+      const title=latest.title||'AWS Service Issue';
+      const body=latest.description||'';
+      const updated=latest.pubDate ? new Date(latest.pubDate).toLocaleString() : new Date().toLocaleString();
+      return mk(s.name,ind,title,body,updated,s.hu);
     } catch { return errSvc(s); }
   }
 
