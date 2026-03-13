@@ -750,6 +750,7 @@ const PROXIES=[
 ];
 
 function proxyOrder(provider){
+  if(provider==='aws') return [2,0,3,1];
   return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
 
@@ -785,24 +786,40 @@ async function getJson(url, provider){
 // read the raw bytes and detect the BOM to pick the right decoder.
 async function getJsonEncoded(url, provider){
   let err;
-  for(const idx of proxyOrder(provider)){
-    try {
-      const r=await fetchWithTimeout(PROXIES[idx](url));
-      if(!r.ok) throw new Error(String(r.status));
-      const buf=await r.arrayBuffer();
-      const bytes=new Uint8Array(buf);
-      let text;
-      if(bytes[0]===0xFF && bytes[1]===0xFE){
-        // UTF-16 LE BOM
-        text=new TextDecoder('utf-16le').decode(buf).replace(/^\uFEFF/,'');
-      } else if(bytes[0]===0xFE && bytes[1]===0xFF){
-        // UTF-16 BE BOM
-        text=new TextDecoder('utf-16be').decode(buf).replace(/^\uFEFF/,'');
-      } else {
-        text=new TextDecoder('utf-8').decode(buf).replace(/^\uFEFF/,'');
-      }
-      return JSON.parse(text);
-    } catch(e){ err=e; }
+  const attempts=provider==='aws' ? 3 : 1;
+  for(let attempt=0; attempt<attempts; attempt++){
+    for(const idx of proxyOrder(provider)){
+      try {
+        const r=await fetchWithTimeout(PROXIES[idx](url));
+        if(!r.ok) throw new Error(String(r.status));
+        const buf=await r.arrayBuffer();
+        const bytes=new Uint8Array(buf);
+        let text;
+        if(bytes[0]===0xFF && bytes[1]===0xFE){
+          // UTF-16 LE BOM
+          text=new TextDecoder('utf-16le').decode(buf).replace(/^﻿/,'');
+        } else if(bytes[0]===0xFE && bytes[1]===0xFF){
+          // UTF-16 BE BOM
+          text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
+        } else {
+          // Heuristic for UTF-16 payloads where a proxy strips the BOM.
+          const sampleLen=Math.min(bytes.length, 200);
+          let nulls=0;
+          for(let i=0;i<sampleLen;i++) if(bytes[i]===0) nulls++;
+          if(nulls > sampleLen*0.2) text=new TextDecoder('utf-16be').decode(buf).replace(/^﻿/,'');
+          else text=new TextDecoder('utf-8').decode(buf).replace(/^﻿/,'');
+        }
+
+        const parsed=JSON.parse(text);
+        if(provider==='aws'){
+          if(!Array.isArray(parsed)) throw new Error('Unexpected AWS response shape');
+          if(parsed.length && !parsed.some(item=>item && (item.service_name || item.summary || item.status))){
+            throw new Error('Unexpected AWS event payload');
+          }
+        }
+        return parsed;
+      } catch(e){ err=e; }
+    }
   }
   throw err;
 }
