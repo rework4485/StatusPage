@@ -253,26 +253,23 @@
     .inc-label { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .inc-label-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:18px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:6px; }
-    .inc-body { font-size:15px; color:var(--sub); line-height:1.5; display:-webkit-box; -webkit-line-clamp:var(--body-lines, 4); -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; min-height:0; }
+    .inc-body { font-size:15px; color:var(--sub); line-height:1.5; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card.compact .status-label { font-size:10px; padding:2px 6px; }
     .card.dense .inc-title { font-size:16px; }
-    .card.dense .inc-body { font-size:13px; --body-lines:4; }
+    .card.dense .inc-body { font-size:13px; }
     .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
     .meta-updated { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .meta-updated svg { width:14px; height:14px; opacity:0.6; }
     .meta-tag { font-size:12px; font-weight:500; color:var(--muted); padding:4px 9px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
 
     .card.compact .inc-title { font-size:16px; margin-bottom:3px; }
-    .card.compact .inc-body { font-size:14px; --body-lines:3; }
+    .card.compact .inc-body { font-size:14px; }
     .card.compact .meta-updated { font-size:12px; }
     .card.compact .meta-tag { font-size:11px; }
 
     /* iOS-style widget snap sizes */
-    .card.span-wide .inc-body { --body-lines:5; }
-    .card.span-tall .inc-body { --body-lines:10; }
-    .card.span-large .inc-body { --body-lines:16; }
     .card.span-tall .inc-title,
     .card.span-large .inc-title { font-size:20px; }
     .card.span-large .c-icon { width:60px; height:60px; font-size:28px; }
@@ -1183,22 +1180,34 @@ async function fetchOne(s){
           const impact=normalizeIndicator(a.impact||'none');
           if(impact!=='none') ind=impact;
         }
-        if(hasRerouteSignal(a.name, a.impact, a.status, a.description, a.incident_updates?.[0]?.body)){
+        const incidentSummaries=active.map(evt=>{
+          let desc=stripHtml(evt.description||'');
+          if(!desc && evt.incident_updates?.[0]?.body) desc=stripHtml(evt.incident_updates[0].body);
+          return {name:evt.name||'Service Disruption', desc};
+        });
+        if(active.some(evt=>hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, evt.incident_updates?.[0]?.body))){
           hasRerouteNotice=true;
           if(ind==='minor') ind='none';
         }
-        title=a.name||'Service Disruption';
-        let desc=stripHtml(a.description||'');
-        if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
-        body=desc;
+        title=incidentSummaries[0].name;
+        body=incidentSummaries[0].desc;
+        if(incidentSummaries.length>1){
+          const rest=incidentSummaries.slice(1).map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('<br>');
+          body=`${body ? `${body}<br><br>` : ''}<strong>Additional active incidents:</strong><br>${rest}`;
+        }
       }
 
       if(activeMaintenance.length){
         extraStatuses.push('Maintenance');
-        const m=activeMaintenance[0];
+        const maintSummaries=activeMaintenance.map(evt=>{
+          const desc=stripHtml(evt.incident_updates?.[0]?.body || evt.body || 'Cloudflare is performing ongoing maintenance.');
+          return {name:evt.name||'Ongoing maintenance', desc};
+        });
         if(ind!=='major') ind='maintenance';
-        if(!title) title=m.name||'Ongoing maintenance';
-        if(!body) body=stripHtml(m.incident_updates?.[0]?.body || m.body || 'Cloudflare is performing ongoing maintenance.');
+        if(!title) title=maintSummaries[0].name;
+        if(!body) body=maintSummaries[0].desc;
+        const maintLines=maintSummaries.map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('<br>');
+        body=`${body ? `${body}<br><br>` : ''}<strong>Active maintenance events:</strong><br>${maintLines}`;
       }
 
       if(affectedNorthAmerica.length){
@@ -1329,9 +1338,9 @@ function getCardSize(svc, cols){
   const score=(svc.title||'').length+(svc.body||'').length+(svc.label||'').length*0.7+(svc.labels||[]).join(' ').length*1.6;
   const hasExtraLabels=(svc.labels||[]).length>1;
   if(svc.ind==='none' && !hasExtraLabels && score<120) return {spanCol:1, spanRow:1};
-  if(score<150 || cols<2) return {spanCol:1, spanRow:1};
-  if(score<360) return {spanCol:2, spanRow:1};  // medium — wide
-  if(score<720) return {spanCol:1, spanRow:2};  // long — tall
+  if(score<130 || cols<2) return {spanCol:1, spanRow:1};
+  if(score<320) return {spanCol:2, spanRow:1};  // medium — wide
+  if(score<620) return {spanCol:1, spanRow:2};  // long — tall
   return {spanCol:2, spanRow:2};                // very long — 2×2
 }
 
