@@ -662,9 +662,6 @@
       <div class="incident-pin" id="incident-pin" aria-live="polite"></div>
     </div>
     <div class="hdr-right">
-      <div class="nav-tabs">
-        <button class="nav-tab active" id="tab-svc" onclick="showView('services')">Services</button>
-      </div>
       <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
       <div class="refresh-spinner" id="refresh-spinner" title="Refreshing…"></div>
       <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
@@ -1303,9 +1300,10 @@ function calcAvg(arr){ return (!arr||!arr.length)?null:arr.reduce((a,b)=>a+b,0)/
 function pct90(arr){ if(!arr||!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*0.9)]||s[s.length-1]; }
 
 // ─── Download phase: streams bytes and fires concurrent pings ─────────────────
-async function runDownloadPhase(onProgress){
+async function runDownloadPhase(){
   const sizes=[1*1024*1024, 10*1024*1024, 25*1024*1024];
-  const allSamples=[]; let cumulativeT=0; let allLat=[]; let finalMbps=null;
+  const allSamples=[]; let cumulativeT=0; let allLat=[];
+  let totalBits=0, totalSecs=0;
   for(const bytes of sizes){
     const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
     const t0=performance.now();
@@ -1314,7 +1312,7 @@ async function runDownloadPhase(onProgress){
     const pingTask=collectLatencyPings(pingCount, Math.floor(7000/pingCount));
     const dlTask=(async()=>{
       try{
-        const resp=await fetchWithOpts(url,{cache:'no-store'},60000);
+        const resp=await fetchWithOpts(url,{cache:'no-store'},65000);
         if(!resp||!resp.ok) return null;
         if(resp.body&&typeof resp.body.getReader==='function'){
           const reader=resp.body.getReader();
@@ -1323,14 +1321,13 @@ async function runDownloadPhase(onProgress){
             if(done) break;
             received+=value.byteLength;
             const now=performance.now();
-            if(now-lastSampleT>=150){
+            if(now-lastSampleT>=180){
               const dt=(now-lastSampleT)/1000;
               const db=received-lastSampleBytes;
               const mbps=(db*8)/dt/1e6;
               const t=cumulativeT+(now-t0)/1000;
               allSamples.push({t,mbps});
               lastSampleT=now; lastSampleBytes=received;
-              onProgress&&onProgress({mbps,samples:allSamples});
             }
           }
         } else {
@@ -1338,52 +1335,54 @@ async function runDownloadPhase(onProgress){
           received=data.byteLength;
         }
         const elapsed=(performance.now()-t0)/1000;
-        return (received*8)/elapsed/1e6;
+        return elapsed>0 ? {mbps:(received*8)/elapsed/1e6, bits:received*8, secs:elapsed} : null;
       }catch(e){ return null; }
     })();
-    const[mbps,pings]=await Promise.all([dlTask,pingTask]);
+    const[result,pings]=await Promise.all([dlTask,pingTask]);
     cumulativeT+=(performance.now()-t0)/1000;
     allLat=[...allLat,...pings];
-    if(mbps!=null){
-      finalMbps=mbps;
-      if(!allSamples.length||allSamples[allSamples.length-1].t<cumulativeT-0.1){
-        allSamples.push({t:cumulativeT,mbps});
-        onProgress&&onProgress({mbps,samples:allSamples});
+    if(result&&result.mbps!=null){
+      totalBits+=result.bits;
+      totalSecs+=result.secs;
+      if(!allSamples.length||allSamples[allSamples.length-1].t<cumulativeT-0.08){
+        allSamples.push({t:cumulativeT,mbps:result.mbps});
       }
     }
   }
+  const finalMbps=totalSecs>0 ? (totalBits/totalSecs)/1e6 : (allSamples.length?calcAvg(allSamples.map(s=>s.mbps)):null);
   return{mbps:finalMbps,samples:allSamples,latencies:allLat};
 }
 
 // ─── Upload phase: sequential chunk uploads with concurrent pings ─────────────
-async function runUploadPhase(onProgress){
-  const sizes=[256*1024, 1*1024*1024, 5*1024*1024];
-  const allSamples=[]; let cumulativeT=0; let allLat=[]; let finalMbps=null;
+async function runUploadPhase(){
+  const sizes=[512*1024, 2*1024*1024, 8*1024*1024];
+  const allSamples=[]; let cumulativeT=0; let allLat=[];
+  let totalBits=0, totalSecs=0;
   for(const bytes of sizes){
     const body=new Uint8Array(bytes);
-    if(bytes>=65536) try{ crypto.getRandomValues(body.subarray(0,65536)); }catch(e){}
     const url='https://speed.cloudflare.com/__up?nc='+Date.now();
     const t0=performance.now();
-    const pingCount=bytes>=1*1024*1024?8:4;
-    const[mbps,pings]=await Promise.all([
+    const pingCount=bytes>=2*1024*1024?8:5;
+    const[result,pings]=await Promise.all([
       (async()=>{
         try{
-          const r=await fetchWithOpts(url,{method:'POST',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},30000);
-          if(!r.ok) return null;
+          const r=await fetchWithOpts(url,{method:'POST',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
+          if(!r || !r.ok) return null;
           const elapsed=(performance.now()-t0)/1000;
-          return(bytes*8)/elapsed/1e6;
+          return elapsed>0 ? {mbps:(bytes*8)/elapsed/1e6, bits:bytes*8, secs:elapsed} : null;
         }catch(e){ return null; }
       })(),
-      collectLatencyPings(pingCount, Math.floor(4000/pingCount))
+      collectLatencyPings(pingCount, Math.floor(4500/pingCount))
     ]);
     cumulativeT+=(performance.now()-t0)/1000;
     allLat=[...allLat,...pings];
-    if(mbps!=null){
-      finalMbps=mbps;
-      allSamples.push({t:cumulativeT,mbps});
-      onProgress&&onProgress({mbps,samples:allSamples});
+    if(result&&result.mbps!=null){
+      totalBits+=result.bits;
+      totalSecs+=result.secs;
+      allSamples.push({t:cumulativeT,mbps:result.mbps});
     }
   }
+  const finalMbps=totalSecs>0 ? (totalBits/totalSecs)/1e6 : (allSamples.length?calcAvg(allSamples.map(s=>s.mbps)):null);
   return{mbps:finalMbps,samples:allSamples,latencies:allLat};
 }
 
@@ -1569,33 +1568,31 @@ async function runFullSpeedTest(){
     const jit=calcJitter(unloadedLat);
     const loss=((20-unloadedLat.length)/20)*100;
     const fmtMs=v=>v!=null?Math.round(v):'—';
-    const lv=el('net-lat-val'); if(lv) lv.textContent=fmtMs(avgLat);
-    const jv=el('net-jit-val'); if(jv) jv.textContent=fmtMs(jit);
-    const lsv=el('net-loss-val'); if(lsv) lsv.textContent=loss.toFixed(0);
 
     // 3. Download
     setNetPhase('Testing download speed…');
-    const dlResult=await runDownloadPhase(prog=>{
-      const dv=el('net-dl-val'); if(dv) dv.textContent=prog.mbps.toFixed(0);
-      updateSpeedChart('net-dl-chart',prog.samples,'#f59e0b');
-    });
-    const dv=el('net-dl-val'); if(dv) dv.textContent=dlResult.mbps!=null?dlResult.mbps.toFixed(0):'—';
+    const dlResult=await runDownloadPhase();
     const dlAvgLat=calcAvg(dlResult.latencies);
     const dlJit=calcJitter(dlResult.latencies);
-    const ldl=el('net-lat-dl'); if(ldl) ldl.textContent=fmtMs(dlAvgLat);
-    const jdl=el('net-jit-dl'); if(jdl) jdl.textContent=fmtMs(dlJit);
 
     // 4. Upload
     setNetPhase('Testing upload speed…');
-    const ulResult=await runUploadPhase(prog=>{
-      const uv=el('net-ul-val'); if(uv) uv.textContent=prog.mbps.toFixed(0);
-      updateSpeedChart('net-ul-chart',prog.samples,'#8b5cf6');
-    });
-    const uv=el('net-ul-val'); if(uv) uv.textContent=ulResult.mbps!=null?ulResult.mbps.toFixed(0):'—';
+    const ulResult=await runUploadPhase();
     const ulAvgLat=calcAvg(ulResult.latencies);
     const ulJit=calcJitter(ulResult.latencies);
+
+    // Populate all values only after test completion for stable display
+    const dv=el('net-dl-val'); if(dv) dv.textContent=dlResult.mbps!=null?dlResult.mbps.toFixed(0):'—';
+    const uv=el('net-ul-val'); if(uv) uv.textContent=ulResult.mbps!=null?ulResult.mbps.toFixed(0):'—';
+    const lv=el('net-lat-val'); if(lv) lv.textContent=fmtMs(avgLat);
+    const jv=el('net-jit-val'); if(jv) jv.textContent=fmtMs(jit);
+    const lsv=el('net-loss-val'); if(lsv) lsv.textContent=loss.toFixed(0);
+    const ldl=el('net-lat-dl'); if(ldl) ldl.textContent=fmtMs(dlAvgLat);
+    const jdl=el('net-jit-dl'); if(jdl) jdl.textContent=fmtMs(dlJit);
     const lul=el('net-lat-ul'); if(lul) lul.textContent=fmtMs(ulAvgLat);
     const jul=el('net-jit-ul'); if(jul) jul.textContent=fmtMs(ulJit);
+    updateSpeedChart('net-dl-chart',dlResult.samples,'#f59e0b');
+    updateSpeedChart('net-ul-chart',ulResult.samples,'#8b5cf6');
 
     // 5. Box plots
     const allLat=[...unloadedLat,...dlResult.latencies,...ulResult.latencies];
@@ -1634,24 +1631,18 @@ async function runFullSpeedTest(){
 function showView(view){
   const svcView=document.getElementById('grid-wrap');
   const netView=document.getElementById('net-view');
-  const footer=document.querySelector('.footer');
-  const tabSvc=document.getElementById('tab-svc');
   if(view==='network'){
     currentView='network';
     if(svcView){svcView.style.display='none';}
     if(netView){netView.style.display='flex';}
-    if(footer){footer.style.display='none';}
-    if(tabSvc) tabSvc.classList.remove('active');
-    // Auto-start test on first visit
     if(!netTestRunning&&!netTestResults) runFullSpeedTest();
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),120);
   }else{
     currentView='services';
     if(svcView){svcView.style.display='';}
     if(netView){netView.style.display='none';}
-    if(footer){footer.style.display='';}
-    if(tabSvc) tabSvc.classList.add('active');
   }
+  syncViewDots();
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2308,9 +2299,8 @@ function goPage(idx){
   if(pageAnimating) return;
   idx=((idx%pages.length)+pages.length)%pages.length;
 
-  [...document.querySelectorAll('.pdot')].forEach((d,i)=>d.classList.toggle('active',i===idx));
-
   if(idx===cur){
+    syncViewDots();
     resetProg();
     return;
   }
@@ -2342,6 +2332,7 @@ function goPage(idx){
   }, 620);
 
   cur=idx;
+  syncViewDots();
   resetProg();
 }
 
@@ -2351,6 +2342,14 @@ function resetProg(){
   pStart=Date.now();
   fill.style.width='0%';
   pTimer=setInterval(()=>{ fill.style.width=Math.min(100,(Date.now()-pStart)/ROT_MS*100)+'%'; },300);
+}
+
+function syncViewDots(){
+  const dots=[...document.querySelectorAll('.pdot')];
+  if(!dots.length) return;
+  const servicePages=document.querySelectorAll('.page').length;
+  const activeIdx=currentView==='network'?servicePages:Math.min(cur,Math.max(servicePages-1,0));
+  dots.forEach((d,i)=>d.classList.toggle('active',i===activeIdx));
 }
 
 function startRot(n){
@@ -2558,18 +2557,31 @@ async function init(){
     });
     wrap.appendChild(pg);
 
-    if(totalPages>1){
-      const dot=document.createElement('div');
-      dot.className=`pdot ${p===0?'active':''}`;
-      dot.title=`Page ${p+1} of ${totalPages}`;
-      dot.addEventListener('click',()=>{ clearInterval(rTimer); goPage(p); startRot(totalPages); });
-      dotsEl.appendChild(dot);
-    }
   });
 
-  document.getElementById('prog-track').style.display=totalPages>1 ? '' : 'none';
+  const totalViews=totalPages+1; // service pages + network page
+  for(let p=0;p<totalViews;p++){
+    const dot=document.createElement('div');
+    dot.className=`pdot ${p===0?'active':''}`;
+    dot.title=p<totalPages?`Page ${p+1} of ${totalPages}`:'Network';
+    dot.addEventListener('click',()=>{
+      clearInterval(rTimer);
+      if(p<totalPages){
+        showView('services');
+        goPage(p);
+      }else{
+        showView('network');
+      }
+      startRot(totalPages);
+      resetProg();
+    });
+    dotsEl.appendChild(dot);
+  }
+
+  document.getElementById('prog-track').style.display=totalViews>1 ? '' : 'none';
+  showView('services');
   startRot(totalPages);
-  if(totalPages>1) resetProg();
+  if(totalViews>1) resetProg();
 }
 
 // Retry every 30s when stale; no-ops immediately when data is fresh
@@ -2613,14 +2625,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('keydown', (e) => {
     if(e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       const pages = document.querySelectorAll('.page');
-      if(pages.length > 1) {
+      if(currentView==='services' && pages.length > 1) {
         clearInterval(rTimer);
         goPage(cur + 1);
         startRot(pages.length);
       }
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       const pages = document.querySelectorAll('.page');
-      if(pages.length > 1) {
+      if(currentView==='services' && pages.length > 1) {
         clearInterval(rTimer);
         goPage(cur - 1);
         startRot(pages.length);
