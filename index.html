@@ -104,6 +104,8 @@
     .stat { display:flex; align-items:center; gap:6px; font-size:14px; color:var(--sub); }
     .sdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
     .stat strong { color:var(--text); font-weight:700; font-size:17px; }
+    .stat.reroute-stat { display: none; }
+    .stat.reroute-stat.show { display: flex; }
     .stat.unknown-stat { display: none; }
     .stat.unknown-stat.show { display: flex; }
     .clock {
@@ -405,10 +407,18 @@
     .section-hdr {
       grid-column: 1 / -1;
       display: flex; align-items: center; gap: 10px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--muted); padding: 0 2px; pointer-events: none; user-select: none;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--sub); padding: 0 2px; pointer-events: none; user-select: none;
     }
     .section-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .section-hdr-badge {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: none;
+      padding: 2px 9px; border-radius: 6px; white-space: nowrap;
+    }
+    .section-hdr-badge.ok { color: var(--ok); background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.18); }
+    .section-hdr-badge.degraded { color: var(--warn); background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .section-hdr-badge.outage { color: var(--bad); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+    .section-hdr-badge.maint { color: var(--maint); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
   </style>
 </head>
 <body>
@@ -432,6 +442,7 @@
         <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
         <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
         <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
+        <div class="stat reroute-stat" id="stat-reroute"><span class="sdot" style="background:var(--reroute)"></span><strong id="n-reroute">—</strong>&nbsp;Rerouted</div>
         <div class="stat unknown-stat" id="stat-unknown"><span class="sdot" style="background:var(--unknown)"></span><strong id="n-unknown">—</strong>&nbsp;Unknown</div>
       </div>
       <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
@@ -1035,7 +1046,6 @@ const LOGO_DOMAINS={
   'Google Workspace':'workspace.google.com',
   'Cloudflare':'cloudflare.com',
   'DNSFilter':'dnsfilter.com',
-  'Meraki':'meraki.com',
   'AWS':'aws.amazon.com',
   'Azure':'microsoft.com',
   'Google Cloud':'cloud.google.com'
@@ -1192,12 +1202,18 @@ function updateStats(data){
   const wn=data.filter(s=>s.ind==='minor').length;
   const bd=data.filter(s=>s.ind==='major').length;
   const mt=data.filter(s=>s.ind==='maintenance').length;
+  const rt=data.filter(s=>s.ind==='rerouting').length;
   const un=data.filter(s=>s.ind==='unknown').length;
   document.getElementById('n-ok').textContent=ok;
   document.getElementById('n-warn').textContent=wn;
   document.getElementById('n-bad').textContent=bd;
   document.getElementById('n-maint').textContent=mt;
+  document.getElementById('n-reroute').textContent=rt;
   document.getElementById('n-unknown').textContent=un;
+
+  const statReroute = document.getElementById('stat-reroute');
+  if(rt>0) statReroute.classList.add('show');
+  else statReroute.classList.remove('show');
 
   const statUnknown = document.getElementById('stat-unknown');
   if(un>0) statUnknown.classList.add('show');
@@ -1257,33 +1273,42 @@ async function init(){
   const GAP=12;
   const SECTION_HDR_H=32;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const desiredRows=W>=960 ? 2 : 1;
-  const minCardHeight=W>=1600 ? 320 : W>=960 ? 260 : 220;
-  const maxRowsThatFit=Math.max(1, Math.floor((H + GAP) / (minCardHeight + GAP)));
-  const CARD_H=Math.floor((H - GAP*(desiredRows-1))/desiredRows);
+  const rowsPerPage=2; // always 2 rows
+  const CARD_H=Math.floor((H - GAP*(rowsPerPage-1)) / rowsPerPage);
+  // Header pages: same row count, cards slightly shorter to fit the section label
+  const hdrAvailH=H - SECTION_HDR_H - GAP;
+  const CARD_H_HDR=Math.floor((hdrAvailH - GAP*(rowsPerPage-1)) / rowsPerPage);
   const compactCards=CARD_H<290;
-  const perPageFull=cols*Math.min(desiredRows, maxRowsThatFit);
-  // First page of each section has a header row, so fits fewer cards
-  const perPageWithHdr=cols*Math.max(1, Math.min(desiredRows, maxRowsThatFit)-1);
+  const perPage=cols*rowsPerPage; // same card count on all pages
 
   // Group and sort each category independently
-  const sort=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9));
+  const sort=(arr)=>[...arr].sort((a,b)=>{
+    const pd=(PRI[a.ind]||9)-(PRI[b.ind]||9);
+    return pd!==0 ? pd : a.name.localeCompare(b.name);
+  });
+  const makeGroup=(label, items)=>{
+    const sorted=sort(items);
+    const issues=sorted.filter(s=>s.ind!=='none' && s.ind!=='unknown').length;
+    const hasOutage=sorted.some(s=>s.ind==='major');
+    const hasDegraded=sorted.some(s=>s.ind==='minor' || s.ind==='rerouting');
+    return {label, items:sorted, issues, hasOutage, hasDegraded};
+  };
   const groups=[
-    {label:'Applications & Platforms', items: sort(results.filter(s=>s.cat==='app'))},
-    {label:'Infrastructure',           items: sort(results.filter(s=>s.cat==='infra'))}
+    makeGroup('Applications & Platforms', results.filter(s=>s.cat==='app')),
+    makeGroup('Infrastructure',           results.filter(s=>s.cat==='infra'))
   ].filter(g=>g.items.length);
 
-  // Build flat page list
+  // Build flat page list; avoid single-card last pages by borrowing one card from the prior page
   const pages=[];
   for(const group of groups){
     let rem=[...group.items];
     let first=true;
-    while(rem.length || first){
-      const pp=first ? perPageWithHdr : perPageFull;
-      const cards=rem.splice(0, pp);
-      pages.push({header: first ? group.label : null, cards});
+    while(rem.length){
+      // If taking a full page would leave exactly 1 card stranded, take one fewer now
+      const take=(rem.length > perPage && rem.length - perPage === 1) ? perPage - 1 : Math.min(perPage, rem.length);
+      const cards=rem.splice(0, take);
+      pages.push({header: first ? group.label : null, headerMeta: first ? {issues:group.issues, hasOutage:group.hasOutage, hasDegraded:group.hasDegraded} : null, cards});
       first=false;
-      if(!rem.length) break;
     }
   }
   const totalPages=pages.length;
@@ -1299,12 +1324,20 @@ async function init(){
     pg.style.gridTemplateColumns=`repeat(${c}, 1fr)`;
 
     if(pageData.header){
-      // Explicit rows: header row (auto) + card row(s) (CARD_H each)
+      // Explicit rows: header row (auto) + card row(s) (CARD_H_HDR each — slightly shorter to fit header)
       const cardRows=Math.max(1, Math.ceil(cardCount/cols));
-      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(cardRows).fill(CARD_H+'px').join(' ')}`;
+      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(cardRows).fill(CARD_H_HDR+'px').join(' ')}`;
       const hdr=document.createElement('div');
       hdr.className='section-hdr';
-      hdr.textContent=pageData.header;
+      const meta=pageData.headerMeta||{};
+      let badge='';
+      if(meta.issues>0){
+        const cls=meta.hasOutage?'outage':meta.hasDegraded?'degraded':'maint';
+        badge=`<span class="section-hdr-badge ${cls}">${meta.issues} issue${meta.issues!==1?'s':''}</span>`;
+      } else {
+        badge=`<span class="section-hdr-badge ok">All clear</span>`;
+      }
+      hdr.innerHTML=`<span>${pageData.header}</span>${badge}`;
       pg.appendChild(hdr);
     } else {
       pg.style.gridAutoRows=CARD_H+'px';
