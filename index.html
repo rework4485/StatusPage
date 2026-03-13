@@ -74,7 +74,7 @@
       padding:6px 0 18px;
       border-bottom:1px solid rgba(255,255,255,0.07);
     }
-    .brand { display:flex; align-items:center; gap:11px; }
+    .brand { display:flex; align-items:flex-start; gap:11px; }
     .brand-icon {
       width:34px; height:34px; border-radius:9px; flex-shrink:0;
       background:linear-gradient(135deg,#1d4ed8,#7c3aed);
@@ -83,12 +83,13 @@
     .brand-icon svg { width:17px; height:17px; }
     .brand-name { font-size:18px; font-weight:700; letter-spacing:-0.025em; }
     .brand-sub { font-size:12px; color:var(--muted); margin-top:2px; letter-spacing:0.01em; }
+    .brand-meta { display:flex; flex-direction:column; gap:8px; }
     .incident-pin {
-      display:none;
+      display:flex;
       align-items:center;
       gap:6px;
-      min-width:240px;
-      max-width:min(46vw, 620px);
+      min-width:320px;
+      max-width:min(48vw, 720px);
       padding:7px 14px;
       border-radius:8px;
       border:1px solid rgba(245,158,11,0.28);
@@ -97,9 +98,8 @@
       font-size:14px;
       font-weight:600;
       letter-spacing:0.01em;
-      white-space:nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;
+      line-height:1.35;
     }
     .incident-pin.show { display:inline-flex; }
     .incident-pin.dot-none { border-color:rgba(34,197,94,0.28); background:rgba(34,197,94,0.09); color:#86efac; }
@@ -108,7 +108,7 @@
     .incident-pin.dot-maintenance { border-color:rgba(59,130,246,0.28); background:rgba(59,130,246,0.09); color:#93c5fd; }
     .incident-pin.dot-rerouting { border-color:rgba(20,184,166,0.32); background:rgba(20,184,166,0.1); color:#5eead4; }
     .incident-pin.dot-unknown { border-color:rgba(107,114,128,0.32); background:rgba(107,114,128,0.12); color:#d4d4d8; }
-    .incident-pin-text { overflow:hidden; text-overflow:ellipsis; }
+    .incident-pin-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .hdr-left { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-right:auto; }
     .hdr-right { display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:flex-end; }
     .stats { display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-start; }
@@ -282,6 +282,11 @@
     /* iOS-style widget snap sizes */
     .card.span-tall .inc-title,
     .card.span-large .inc-title { font-size:20px; }
+    @media (min-width: 1400px) {
+      .inc-body { font-size:clamp(19px, 1vw + 0.25rem, 27px); }
+      .card.compact .inc-body,
+      .card.dense .inc-body { font-size:18px; }
+    }
     .card.span-large .c-icon { width:60px; height:60px; font-size:28px; }
     .card.span-large .c-name { font-size:24px; }
     .card.span-large .c-badge { font-size:15px; padding:7px 16px; }
@@ -464,20 +469,20 @@
             <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
           </svg>
         </div>
-        <div>
+        <div class="brand-meta">
           <div class="brand-name">Service Status</div>
           <div class="brand-sub">Live monitoring · auto-refresh every 2 min</div>
+          <div class="stats">
+            <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
+            <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
+            <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
+            <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
+            <div class="stat reroute-stat" id="stat-reroute"><span class="sdot" style="background:var(--reroute)"></span><strong id="n-reroute">—</strong>&nbsp;Rerouted</div>
+            <div class="stat unknown-stat" id="stat-unknown"><span class="sdot" style="background:var(--unknown)"></span><strong id="n-unknown">—</strong>&nbsp;Unknown</div>
+          </div>
         </div>
       </div>
-      <div class="stats">
-        <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
-        <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
-        <div class="stat"><span class="sdot" style="background:var(--bad)"></span><strong id="n-bad">—</strong>&nbsp;Down</div>
-        <div class="stat"><span class="sdot" style="background:var(--maint)"></span><strong id="n-maint">—</strong>&nbsp;Maintenance</div>
-        <div class="stat reroute-stat" id="stat-reroute"><span class="sdot" style="background:var(--reroute)"></span><strong id="n-reroute">—</strong>&nbsp;Rerouted</div>
-        <div class="stat unknown-stat" id="stat-unknown"><span class="sdot" style="background:var(--unknown)"></span><strong id="n-unknown">—</strong>&nbsp;Unknown</div>
-      </div>
-      <div class="incident-pin" id="incident-pin" aria-live="polite"><span class="incident-pin-text" id="incident-pin-text">—</span></div>
+      <div class="incident-pin" id="incident-pin" aria-live="polite"><span class="incident-pin-text" id="incident-pin-text">Pinned services: —</span></div>
     </div>
     <div class="hdr-right">
       <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
@@ -610,13 +615,15 @@ function formatGoogleWorkspaceMarkdown(raw){
   if(!text) return {summary:'', body:''};
 
   const normalized=text.replace(/\r\n?/g,'\n');
-  const summaryMatch=normalized.match(/\*\*Summary\*\*\s*([\s\S]*?)(?=\n\*\*Description\*\*|$)/i);
-  const descriptionMatch=normalized.match(/\*\*Description\*\*\s*([\s\S]*)$/i);
+  const summaryMatch=normalized.match(/(?:\*\*Summary\*\*|##\s*Summary)\s*([\s\S]*?)(?=\n(?:\*\*Description\*\*|##\s*Description)|$)/i);
+  const descriptionMatch=normalized.match(/(?:\*\*Description\*\*|##\s*Description)\s*([\s\S]*)$/i);
 
   const summary=(summaryMatch?.[1]||'').trim();
   const description=(descriptionMatch?.[1]||'').trim();
   const fallback=normalized
+    .replace(/^#\s+.*$/gm,'')
     .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/^##\s+/gm,'')
     .replace(/\n{3,}/g,'\n\n')
     .trim();
 
@@ -624,10 +631,12 @@ function formatGoogleWorkspaceMarkdown(raw){
     summary: summary || fallback.split('\n')[0] || '',
     body: (description || fallback)
       .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^##\s+/gm,'')
       .replace(/\n{2,}/g,'<br><br>')
       .replace(/\n/g,'<br>')
   };
 }
+
 
 function isAwsNorthAmericaEvent(event){
   const region=normalizeRegionText(event?.region_name);
@@ -955,11 +964,25 @@ function eventTimeValue(item){
 }
 
 function latestUpdateBody(event){
-  const updates=Array.isArray(event?.incident_updates) ? [...event.incident_updates] : [];
+  const updates=[
+    ...(Array.isArray(event?.incident_updates) ? event.incident_updates : []),
+    ...(Array.isArray(event?.updates) ? event.updates : [])
+  ];
   if(!updates.length) return '';
   updates.sort((a,b)=>eventTimeValue(a)-eventTimeValue(b));
   const latest=updates[updates.length-1] || {};
-  return stripHtml(latest.body || latest.text || latest.description || '');
+  return stripHtml(latest.body || latest.text || latest.description || latest.summary || '');
+}
+
+function latestUpdateRawText(event){
+  const updates=[
+    ...(Array.isArray(event?.incident_updates) ? event.incident_updates : []),
+    ...(Array.isArray(event?.updates) ? event.updates : [])
+  ];
+  if(!updates.length) return '';
+  updates.sort((a,b)=>eventTimeValue(a)-eventTimeValue(b));
+  const latest=updates[updates.length-1] || {};
+  return String(latest.text || latest.body || latest.description || latest.summary || '').trim();
 }
 
 function mostRecentEvent(events){
@@ -1138,8 +1161,10 @@ async function fetchOne(s){
       const top=mostRecentEvent(active) || active[0];
       const sev=top.severity||'low';
       const ind=/high|critical/.test(sev.toLowerCase()) ? 'major' : 'minor';
-      const title=top.external_desc||top.service_name||'Google Cloud Incident';
-      const body=latestUpdateBody(top)||stripHtml(top.external_desc||'');
+      const latestText=latestUpdateRawText(top)||top.external_desc||'';
+      const formatted=formatGoogleWorkspaceMarkdown(latestText);
+      const title=formatted.summary||top.service_name||'Google Cloud Incident';
+      const body=formatted.body||stripHtml(top.external_desc||'');
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -1153,7 +1178,7 @@ async function fetchOne(s){
       const hasHigh=active.some(x=>/high/i.test(x.severity||'')||/outage/i.test(x.status_impact||''));
       const ind=hasHigh ? 'major' : 'minor';
       const top=mostRecentEvent(active) || active[0];
-      const latestText=latestUpdateBody(top)||top.external_desc||'';
+      const latestText=latestUpdateRawText(top)||top.external_desc||'';
       const formatted=formatGoogleWorkspaceMarkdown(latestText);
       const title=formatted.summary||'Service Disruption';
       const affectedNames=active.map(x=>x.service_name||'').filter(Boolean).join(', ');
@@ -1584,15 +1609,16 @@ function updateIncidentPin(data){
       return pd!==0 ? pd : a.name.localeCompare(b.name);
     });
 
-  const top=active[0] || data.find(s=>s.ind!=='unknown') || data[0];
-  if(!top){
-    pin.className='incident-pin';
-    pinText.textContent='—';
+  if(!active.length){
+    pin.className='incident-pin show dot-none';
+    pinText.textContent='Pinned services: None';
     return;
   }
 
+  const top=active[0];
+  const pinnedNames=active.map(s=>s.name).join(' · ');
   pin.className=`incident-pin show dot-${top.ind||'unknown'}`;
-  pinText.textContent=top.name;
+  pinText.textContent=`Pinned services: ${pinnedNames}`;
 }
 
 
