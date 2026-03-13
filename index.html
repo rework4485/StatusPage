@@ -236,8 +236,8 @@
     .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
     .card-title-row { display:flex; align-items:center; gap:12px; min-width:0; }
     .c-icon {
-      width:52px; height:52px; border-radius:11px; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center; font-size:24px;
+      width:42px; height:42px; border-radius:10px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:20px;
     }
     .c-icon.ok { background:rgba(34,197,94,0.1); color:var(--ok); }
     .c-icon.warn { background:rgba(245,158,11,0.1); color:var(--warn); }
@@ -245,14 +245,14 @@
     .c-icon.maint { background:rgba(59,130,246,0.1); color:var(--maint); }
     .c-icon.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); }
     .c-icon.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); }
-    .c-logo { width:32px; height:32px; border-radius:6px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
-    .c-fallback { font-size:22px; font-weight:700; line-height:1; }
-    .c-name { font-size:clamp(20px, 1.7vw, 38px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+    .c-logo { width:26px; height:26px; border-radius:5px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
+    .c-fallback { font-size:18px; font-weight:700; line-height:1; }
+    .c-name { font-size:clamp(14px, 1.2vw, 24px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
     .c-url { font-size:13px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
     .c-badge {
-      flex-shrink:0; font-size:14px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase;
-      padding:6px 14px; border-radius:7px; margin-top:2px;
+      flex-shrink:0; font-size:11px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase;
+      padding:4px 10px; border-radius:7px; margin-top:2px;
     }
     .c-badge.ok { background:rgba(34,197,94,0.1); color:var(--ok); border:1px solid rgba(34,197,94,0.2); }
     .c-badge.warn { background:rgba(245,158,11,0.1); color:var(--warn); border:1px solid rgba(245,158,11,0.22); }
@@ -270,34 +270,67 @@
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
     .inc-label { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .inc-label-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(20px, 1.7vw, 40px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:6px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(17px, 1.35vw, 32px); color:var(--sub); line-height:1.55; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
+    .inc-title { font-size:clamp(14px, 1.2vw, 26px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card.compact .status-label { font-size:10px; padding:2px 6px; }
-    .card.dense .inc-title { font-size:clamp(19px, 1.5vw, 34px); }
-    .card.dense .inc-body { font-size:clamp(16px, 1.2vw, 28px); }
+    .card.dense .inc-title { font-size:clamp(13px, 1.05vw, 22px); }
+    .card.dense .inc-body { font-size:clamp(11px, 0.88vw, 18px); }
     .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
-    .meta-updated { font-size:clamp(13px, 0.82vw, 16px); color:var(--muted); display:flex; align-items:center; gap:5px; }
-    .meta-updated svg { width:14px; height:14px; opacity:0.6; }
-    .meta-tag { font-size:clamp(12px, 0.78vw, 15px); font-weight:500; color:var(--muted); padding:4px 9px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+    .meta-updated { font-size:clamp(11px, 0.7vw, 14px); color:var(--muted); display:flex; align-items:center; gap:5px; }
+    .meta-updated svg { width:12px; height:12px; opacity:0.6; }
+    .meta-tag { font-size:clamp(10px, 0.65vw, 13px); font-weight:500; color:var(--muted); padding:3px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
 
-    .card.compact .inc-title { font-size:clamp(18px, 1.4vw, 32px); margin-bottom:3px; }
-    .card.compact .inc-body { font-size:clamp(15px, 1.15vw, 26px); }
-    .card.compact .meta-updated { font-size:clamp(12px, 0.8vw, 15px); }
-    .card.compact .meta-tag { font-size:clamp(11px, 0.75vw, 14px); }
+    .card.compact .inc-title { font-size:clamp(13px, 1.05vw, 22px); margin-bottom:3px; }
+    .card.compact .inc-body { font-size:clamp(11px, 0.85vw, 18px); }
+    .card.compact .meta-updated { font-size:clamp(10px, 0.65vw, 13px); }
+    .card.compact .meta-tag { font-size:clamp(10px, 0.62vw, 12px); }
 
     /* iOS-style widget snap sizes */
     .card.span-tall .inc-title,
-    .card.span-large .inc-title { font-size:clamp(22px, 1.9vw, 44px); }
+    .card.span-large .inc-title { font-size:clamp(16px, 1.4vw, 30px); }
     @media (min-width: 1400px) {
-      .inc-body { font-size:clamp(20px, 1.35vw + 0.2rem, 34px); }
-      .card.compact .inc-body { font-size:clamp(16px, 1.15vw, 26px); }
-      .card.dense .inc-body { font-size:clamp(17px, 1.2vw, 28px); }
+      .inc-body { font-size:clamp(13px, 0.95vw + 0.1rem, 22px); }
+      .card.compact .inc-body { font-size:clamp(11px, 0.82vw, 18px); }
+      .card.dense .inc-body { font-size:clamp(12px, 0.88vw, 20px); }
     }
-    .card.span-large .c-icon { width:60px; height:60px; font-size:28px; }
-    .card.span-large .c-name { font-size:clamp(24px, 2vw, 44px); }
-    .card.span-large .c-badge { font-size:clamp(14px, 0.9vw, 18px); padding:7px 16px; }
+    .card.span-large .c-icon { width:50px; height:50px; font-size:24px; }
+    .card.span-large .c-name { font-size:clamp(16px, 1.5vw, 30px); }
+    .card.span-large .c-badge { font-size:clamp(11px, 0.78vw, 15px); padding:4px 11px; }
+
+    /* Mini cards (no-incident half-size widgets) */
+    .card.mini {
+      padding:10px 14px;
+      justify-content:center;
+    }
+    .card.mini .card-div,
+    .card.mini .inc-block,
+    .card.mini .card-meta { display:none; }
+    .card.mini .card-top { margin-bottom:0; align-items:center; }
+    .card.mini .c-icon { width:32px; height:32px; border-radius:8px; font-size:16px; }
+    .card.mini .c-logo { width:20px; height:20px; }
+    .card.mini .c-fallback { font-size:14px; }
+    .card.mini .c-name { font-size:clamp(11px, 0.88vw, 16px); }
+    .card.mini .c-url { display:none; }
+    .card.mini .c-badge { font-size:10px; padding:3px 7px; }
+    .card.mini .c-name-block { min-width:0; }
+
+    /* Net Connection widget metrics */
+    .net-grid { display:flex; flex-direction:column; gap:6px; }
+    .net-info-rows { display:flex; flex-direction:column; gap:3px; }
+    .net-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:2px 0; }
+    .net-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; flex-shrink:0; }
+    .net-val { font-size:11px; color:var(--text); font-weight:600; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .net-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
+    .net-metric { display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:6px 4px; }
+    .net-metric-val { font-size:clamp(12px,1.1vw,18px); font-weight:700; color:var(--ok); line-height:1.1; }
+    .net-metric-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; text-align:center; margin-top:2px; line-height:1.2; }
+    .net-latencies { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:7px; padding:6px 8px; }
+    .net-lat-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:3px; }
+    .net-lat-vals { font-size:10px; color:var(--sub); font-variant-numeric:tabular-nums; line-height:1.6; word-break:break-all; }
+    .net-testing { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
+    .net-spinner { width:12px; height:12px; border:2px solid rgba(255,255,255,0.1); border-top-color:rgba(59,130,246,0.7); border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0; }
     .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
     .f-left { display:flex; align-items:center; gap:20px; }
     .f-meta { font-size:12px; color:var(--muted); }
@@ -569,6 +602,7 @@ const SVCS=[
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
   {name:'Azure',su:'https://azurestatusprodscus2.azurewebsites.net/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
+  {name:'Net Connection',su:null,iu:null,hu:'https://speed.cloudflare.com/',p:'netconnection',cat:'infra',noMini:true},
 ];
 
 window._pi = window._pi || {};
@@ -902,6 +936,99 @@ function runAlertTest(){
   queueAlert({name:'Test Service 3', label:'Operational'}, 'restored');
 }
 
+// ─── Net Connection Speed Test ───────────────────────────────────────────────
+let netConnCache=null;
+let netConnTesting=false;
+let netConnLastRun=0;
+const NET_CONN_INTERVAL_MS=10*60*1000; // 10 minutes
+
+async function fetchWithOpts(url, opts={}, timeout=20000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(), timeout);
+  try {
+    return await fetch(url, {...opts, signal:controller.signal});
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function pingLatencies(count=10){
+  const times=[];
+  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
+  for(let i=0;i<count;i++){
+    const t0=performance.now();
+    try {
+      const r=await fetchWithOpts(base+Date.now()+i, {cache:'no-store'}, 5000);
+      await r.arrayBuffer();
+      times.push(performance.now()-t0);
+    } catch(e){ /* count as packet loss */ }
+  }
+  return times;
+}
+
+function calcJitter(times){
+  if(times.length<2) return 0;
+  let sum=0;
+  for(let i=1;i<times.length;i++) sum+=Math.abs(times[i]-times[i-1]);
+  return sum/(times.length-1);
+}
+
+async function measureDownloadMbps(){
+  const bytes=10*1024*1024; // 10 MB
+  const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
+  const t0=performance.now();
+  try {
+    const r=await fetchWithOpts(url, {cache:'no-store'}, 40000);
+    const data=await r.arrayBuffer();
+    const elapsed=(performance.now()-t0)/1000;
+    return (data.byteLength*8)/elapsed/1e6; // Mbps
+  } catch(e){ return null; }
+}
+
+async function measureUploadMbps(){
+  const bytes=2*1024*1024; // 2 MB
+  const body=new Uint8Array(bytes);
+  const url='https://speed.cloudflare.com/__up?nc='+Date.now();
+  const t0=performance.now();
+  try {
+    const r=await fetchWithOpts(url, {method:'POST',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}}, 40000);
+    if(!r.ok) return null;
+    const elapsed=(performance.now()-t0)/1000;
+    return (bytes*8)/elapsed/1e6; // Mbps
+  } catch(e){ return null; }
+}
+
+async function runNetConnectionTest(){
+  if(netConnTesting) return;
+  netConnTesting=true;
+  netConnLastRun=Date.now();
+  try {
+    // 1. Fetch metadata (IP, ISP, server location, HTTP protocol)
+    let meta={};
+    try {
+      const r=await fetchWithOpts('https://speed.cloudflare.com/meta', {cache:'no-store'}, 10000);
+      if(r.ok) meta=await r.json();
+    } catch(e){}
+
+    // 2. Latency measurements (10 pings)
+    const latencies=await pingLatencies(10);
+    const packetLoss=((10-latencies.length)/10)*100;
+    const avgLatency=latencies.length ? latencies.reduce((a,b)=>a+b,0)/latencies.length : null;
+    const jitter=calcJitter(latencies);
+
+    // 3. Download / Upload speed
+    const downloadMbps=await measureDownloadMbps();
+    const uploadMbps=await measureUploadMbps();
+
+    netConnCache={meta, latencies, avgLatency, jitter, packetLoss, downloadMbps, uploadMbps, timestamp:Date.now(), error:false};
+  } catch(e){
+    netConnCache={error:true, timestamp:Date.now()};
+  } finally {
+    netConnTesting=false;
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const PROXIES=[
   u=>u,
   u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
@@ -1016,6 +1143,55 @@ function isOpenAdobeStatus(status){
 }
 
 async function fetchOne(s){
+  if(s.p==='netconnection'){
+    // Return cached speed test results; actual test runs on its own 10-min schedule
+    if(netConnTesting || !netConnCache){
+      const result=mk(s.name,'none','Testing Network Connection…','<div class="net-testing"><div class="net-spinner"></div>Running speed test — results will appear shortly.</div>',new Date().toLocaleString(),s.hu);
+      result.noMini=true;
+      return result;
+    }
+    if(netConnCache.error){
+      const result=errSvc(s);
+      result.noMini=true;
+      return result;
+    }
+    const c=netConnCache;
+    const m=c.meta||{};
+    const fmt=(n,dec=1)=>n!=null ? n.toFixed(dec) : '—';
+    const connVia=m.httpProtocol||'Unknown';
+    const serverLoc=[m.city, m.region, m.country].filter(Boolean).join(', ')||m.colo||'Unknown';
+    const network=m.asOrganization||(m.asn ? `ASN ${m.asn}` : 'Unknown');
+    const ip=m.clientIp||'Unknown';
+    const latMs=fmt(c.avgLatency,0);
+    const jitMs=fmt(c.jitter,0);
+    const plPct=fmt(c.packetLoss,0);
+    const dlMbps=fmt(c.downloadMbps);
+    const ulMbps=fmt(c.uploadMbps);
+    const latArr=(c.latencies||[]).map(t=>t.toFixed(0)+'ms').join(' · ')||'—';
+    const body=`<div class="net-grid">
+  <div class="net-info-rows">
+    <div class="net-row"><span class="net-lbl">Connected via</span><span class="net-val">${connVia}</span></div>
+    <div class="net-row"><span class="net-lbl">Server location</span><span class="net-val">${serverLoc}</span></div>
+    <div class="net-row"><span class="net-lbl">Your network</span><span class="net-val">${network}</span></div>
+    <div class="net-row"><span class="net-lbl">Your IP address</span><span class="net-val">${ip}</span></div>
+  </div>
+  <div class="net-metrics">
+    <div class="net-metric"><span class="net-metric-val">${dlMbps}</span><span class="net-metric-lbl">Download<br>Mbps</span></div>
+    <div class="net-metric"><span class="net-metric-val">${ulMbps}</span><span class="net-metric-lbl">Upload<br>Mbps</span></div>
+    <div class="net-metric"><span class="net-metric-val">${latMs}</span><span class="net-metric-lbl">Latency<br>ms</span></div>
+    <div class="net-metric"><span class="net-metric-val">${jitMs}</span><span class="net-metric-lbl">Jitter<br>ms</span></div>
+    <div class="net-metric"><span class="net-metric-val">${plPct}%</span><span class="net-metric-lbl">Packet<br>Loss</span></div>
+  </div>
+  <div class="net-latencies">
+    <div class="net-lat-label">All Latency Measurements</div>
+    <div class="net-lat-vals">${latArr}</div>
+  </div>
+</div>`;
+    const result=mk(s.name,'none','Net Connection',body,new Date(c.timestamp).toLocaleString(),s.hu);
+    result.noMini=true;
+    return result;
+  }
+
   if(s.p==='adobe'){
     try {
       const [registry, events]=await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
@@ -1397,7 +1573,8 @@ const LOGO_DOMAINS={
   'DNSFilter':'dnsfilter.com',
   'AWS':'aws.amazon.com',
   'Azure':'microsoft.com',
-  'Google Cloud':'cloud.google.com'
+  'Google Cloud':'cloud.google.com',
+  'Net Connection':'speed.cloudflare.com'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
@@ -1434,15 +1611,18 @@ function nextLogo(img){
 }
 
 // Returns the iOS-style snap size for a widget based on incident text volume.
-// Sizes: 1×1 (default), 2×1 wide, 1×2 tall, 2×2 large.
+// Grid uses 4 rows per page so mini (no-incident) = 1 row ≈ half the old normal height.
+// Sizes: 1×1 mini (no incidents), 1×2 normal, 2×2 expanded-wide, 1×3 expanded-tall, 2×4 large.
 function getCardSize(svc, cols){
+  // Special widget (e.g. Net Connection): always 2-wide × 2-tall (normal footprint)
+  if(svc.noMini && svc.ind==='none') return {spanCol:Math.min(2,cols), spanRow:2};
+  // No incidents, not a special widget → mini half-size card
+  if(svc.ind==='none') return {spanCol:1, spanRow:1};
   const score=(svc.title||'').length+(svc.body||'').length+(svc.label||'').length*0.7+(svc.labels||[]).join(' ').length*1.6;
-  const hasExtraLabels=(svc.labels||[]).length>1;
-  if(svc.ind==='none' && !hasExtraLabels && score<120) return {spanCol:1, spanRow:1};
-  if(score<130 || cols<2) return {spanCol:1, spanRow:1};
-  if(score<320) return {spanCol:2, spanRow:1};  // medium — wide
-  if(score<620) return {spanCol:1, spanRow:2};  // long — tall
-  return {spanCol:2, spanRow:2};                // very long — 2×2
+  if(score<130 || cols<2) return {spanCol:1, spanRow:2};  // normal
+  if(score<320) return {spanCol:2, spanRow:2};             // expanded wide
+  if(score<620) return {spanCol:1, spanRow:3};             // expanded tall
+  return {spanCol:2, spanRow:4};                           // large — full page column
 }
 
 // Pack items into pages of `cols × rows` cells, respecting each item's span.
@@ -1484,15 +1664,16 @@ function packToPages(items, cols, rows){
 
 function mkCard(svc, delay){
   const d=document.createElement('div');
-  d.className=`card ${CC[svc.ind]||''}`;
+  const isMini=svc.ind==='none' && !svc.noMini;
+  d.className=`card ${CC[svc.ind]||''}${isMini?' mini':''}`;
   d.style.animationDelay=delay+'ms';
   d.style.setProperty('--tile-delay', delay+'ms');
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
 
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
-  const incTitle=svc.ind==='none' ? 'No incidents reported' : (svc.title||svc.label);
-  const incBody=svc.ind==='none' ? 'All systems are operating normally.' : (svc.body||'See the status page for full details.');
+  const incTitle=svc.ind==='none' ? (svc.title||'No incidents') : (svc.title||svc.label);
+  const incBody=svc.ind==='none' ? (svc.body||'All systems operating normally.') : (svc.body||'See the status page for full details.');
   const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
@@ -1501,17 +1682,19 @@ function mkCard(svc, delay){
   const densityScore=(incTitle.length*1.5)+(incBody.length)+(labels.join(' ').length*1.2);
   if(densityScore>320) d.classList.add('dense');
 
+  // Mini cards only show the top bar (icon + name + badge); incident block is hidden via CSS
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
         <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
-          ${urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
+          ${!isMini && urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
         </div>
       </div>
       <div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div>
     </div>
+    ${isMini ? '' : `
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${svc.ind==='none'?'Current Status':svc.ind==='rerouting'?'Traffic Notice':'Active Incident'}</div>
@@ -1522,7 +1705,7 @@ function mkCard(svc, delay){
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated ${svc.updated}</div>
       <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : svc.ind==='rerouting' ? 'Rerouted' : 'Investigating'}${(svc.labels||[]).length>1 ? ' · Multi-status' : ''}</div>
-    </div>`;
+    </div>`}`;
   return d;
 }
 
@@ -1671,10 +1854,12 @@ async function init(){
   setStale(false);
   setRefreshing(false);
 
-  // Attach category from SVCS and alert on status changes
+  // Attach category and flags from SVCS and alert on status changes
   const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
+  const svcNoMiniMap=Object.fromEntries(SVCS.map(s=>[s.name, !!(s.noMini)]));
   results.forEach(s=>{
     s.cat=svcCatMap[s.name]||'app';
+    s.noMini=svcNoMiniMap[s.name]||false;
     const prev=window._pi[s.name];
     // don't alert for unknown transitions
     if(prev && prev==='none' && (s.ind==='minor' || s.ind==='major')){
@@ -1693,12 +1878,14 @@ async function init(){
   const GAP=12;
   const SECTION_HDR_H=32;
   const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const rowsPerPage=2; // always 2 rows
+  const rowsPerPage=4; // 4 rows: mini (no-incident) cards = 1 row, normal = 2 rows, expanded = 3, large = 4
   const CARD_H=Math.floor((H - GAP*(rowsPerPage-1)) / rowsPerPage);
   // Header pages: same row count, cards slightly shorter to fit the section label
   const hdrAvailH=H - SECTION_HDR_H - GAP;
   const CARD_H_HDR=Math.floor((hdrAvailH - GAP*(rowsPerPage-1)) / rowsPerPage);
-  const compactCards=CARD_H<290;
+  // A "normal" card occupies 2 rows; compact if that height is small
+  const normalCardH=CARD_H*2+GAP;
+  const compactCards=normalCardH<260;
   const perPage=cols*rowsPerPage; // same card count on all pages
 
   // Group and sort each category independently
@@ -1865,6 +2052,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   // Request wake lock on load
   requestWakeLock();
+
+  // Start net connection speed test immediately, then repeat every 10 minutes
+  runNetConnectionTest();
+  setInterval(()=>{
+    if(!netConnTesting && Date.now()-netConnLastRun>=NET_CONN_INTERVAL_MS) runNetConnectionTest();
+  }, 60000); // check every minute whether it's time to re-run
 
   init();
   setInterval(init, 120000); // normal 2-minute refresh cycle
