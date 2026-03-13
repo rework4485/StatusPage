@@ -933,6 +933,40 @@ function stripHtml(txt){
   return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
 
+function eventTimeValue(item){
+  const candidates=[
+    item?.updated_at,
+    item?.created_at,
+    item?.display_at,
+    item?.started_at,
+    item?.start,
+    item?.start_time,
+    item?.timestamp,
+    item?.time,
+    item?.date
+  ];
+  for(const value of candidates){
+    if(value==null) continue;
+    if(typeof value==='number' && Number.isFinite(value)) return value>1e12 ? value : value*1000;
+    const parsed=Date.parse(String(value));
+    if(Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function latestUpdateBody(event){
+  const updates=Array.isArray(event?.incident_updates) ? [...event.incident_updates] : [];
+  if(!updates.length) return '';
+  updates.sort((a,b)=>eventTimeValue(a)-eventTimeValue(b));
+  const latest=updates[updates.length-1] || {};
+  return stripHtml(latest.body || latest.text || latest.description || '');
+}
+
+function mostRecentEvent(events){
+  if(!Array.isArray(events) || !events.length) return null;
+  return [...events].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a))[0] || events[0];
+}
+
 function mk(name,ind,title,body,updated,url,labelOverride,labels=[]){
   return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[]};
 }
@@ -1062,14 +1096,15 @@ async function fetchOne(s){
       });
       let title='', body='';
       if(active.length){
-        const a=active[0];
+        const sortedActive=[...active].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a));
+        const a=sortedActive[0];
         if(ind==='none'){
           const impact=normalizeIndicator(a.impact||'none');
           if(impact!=='none') ind=impact;
         }
         title=a.name||'';
-        let desc=stripHtml(a.description||'');
-        if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
+        let desc=latestUpdateBody(a);
+        if(!desc) desc=stripHtml(a.description||'');
         body=desc;
       }
       return mk(s.name,ind,title,body,updated,s.hu);
@@ -1100,10 +1135,11 @@ async function fetchOne(s){
       const incidents=await getJson(s.su, s.p);
       const active=(incidents||[]).filter(x=>!x.end);
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const sev=active[0].severity||'low';
+      const top=mostRecentEvent(active) || active[0];
+      const sev=top.severity||'low';
       const ind=/high|critical/.test(sev.toLowerCase()) ? 'major' : 'minor';
-      const title=active[0].external_desc||'Google Cloud Incident';
-      const body=stripHtml((active[0].updates||[])[0]?.text||'');
+      const title=top.external_desc||top.service_name||'Google Cloud Incident';
+      const body=latestUpdateBody(top)||stripHtml(top.external_desc||'');
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -1116,8 +1152,9 @@ async function fetchOne(s){
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
       const hasHigh=active.some(x=>/high/i.test(x.severity||'')||/outage/i.test(x.status_impact||''));
       const ind=hasHigh ? 'major' : 'minor';
-      const top=active[0];
-      const formatted=formatGoogleWorkspaceMarkdown(top.external_desc||'');
+      const top=mostRecentEvent(active) || active[0];
+      const latestText=latestUpdateBody(top)||top.external_desc||'';
+      const formatted=formatGoogleWorkspaceMarkdown(latestText);
       const title=formatted.summary||'Service Disruption';
       const affectedNames=active.map(x=>x.service_name||'').filter(Boolean).join(', ');
       const affectedLine=affectedNames ? `<strong>Affected:</strong> ${affectedNames}` : '';
@@ -1210,17 +1247,18 @@ async function fetchOne(s){
       let hasRerouteNotice=false;
       const extraStatuses=[];
       if(active.length){
-        const a=active[0];
+        const sortedActive=[...active].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a));
+        const a=sortedActive[0];
         if(ind==='none'){
           const impact=normalizeIndicator(a.impact||'none');
           if(impact!=='none') ind=impact;
         }
-        const incidentSummaries=active.map(evt=>{
-          let desc=stripHtml(evt.description||'');
-          if(!desc && evt.incident_updates?.[0]?.body) desc=stripHtml(evt.incident_updates[0].body);
+        const incidentSummaries=sortedActive.map(evt=>{
+          let desc=latestUpdateBody(evt);
+          if(!desc) desc=stripHtml(evt.description||'');
           return {name:evt.name||'Service Disruption', desc};
         });
-        if(active.some(evt=>hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, evt.incident_updates?.[0]?.body))){
+        if(sortedActive.some(evt=>hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt)))){
           hasRerouteNotice=true;
           if(ind==='minor') ind='none';
         }
@@ -1234,8 +1272,8 @@ async function fetchOne(s){
 
       if(activeMaintenance.length){
         extraStatuses.push('Maintenance');
-        const maintSummaries=activeMaintenance.map(evt=>{
-          const desc=stripHtml(evt.incident_updates?.[0]?.body || evt.body || 'Cloudflare is performing ongoing maintenance.');
+        const maintSummaries=[...activeMaintenance].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a)).map(evt=>{
+          const desc=latestUpdateBody(evt) || stripHtml(evt.body || 'Cloudflare is performing ongoing maintenance.');
           return {name:evt.name||'Ongoing maintenance', desc};
         });
         if(ind!=='major') ind='maintenance';
@@ -1297,14 +1335,14 @@ async function fetchOne(s){
     const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
     let title='', body='';
     if(active.length){
-      const a=active[0];
+      const a=mostRecentEvent(active) || active[0];
       if(ind==='none'){
         const impact=normalizeIndicator(a.impact||'none');
         if(impact!=='none') ind=impact;
       }
       title=a.name||'';
-      let desc=stripHtml(a.description||'');
-      if(!desc && a.incident_updates?.[0]?.body) desc=stripHtml(a.incident_updates[0].body);
+      let desc=latestUpdateBody(a);
+      if(!desc) desc=stripHtml(a.description||'');
       body=desc;
     }
     return mk(s.name,ind,title,body,updated,s.hu);
