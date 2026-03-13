@@ -205,7 +205,7 @@
     .card {
       background:linear-gradient(170deg, rgba(255,255,255,0.02), transparent 44%), var(--card);
       border:1px solid var(--border); border-radius:16px;
-      padding:20px 22px; display:flex; flex-direction:column; position:relative; overflow:hidden;
+      padding:16px 18px; display:flex; flex-direction:column; position:relative; overflow:hidden;
       transition:border-color 0.3s, box-shadow 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1); cursor:pointer; animation:cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
       will-change:transform;
     }
@@ -233,8 +233,8 @@
     .card.cb { border-color:rgba(239,68,68,0.16); background:linear-gradient(160deg, #111113, rgba(239,68,68,0.04)); box-shadow:0 0 32px rgba(239,68,68,0.08); }
     .card.cw { border-color:rgba(245,158,11,0.13); }
     .card.cu { border-color:rgba(107,114,128,0.16); background:linear-gradient(160deg, #111113, rgba(107,114,128,0.04)); }
-    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
-    .card-title-row { display:flex; align-items:center; gap:12px; min-width:0; }
+    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .card-title-row { display:flex; align-items:center; gap:10px; min-width:0; }
     .c-icon {
       width:42px; height:42px; border-radius:10px; flex-shrink:0;
       display:flex; align-items:center; justify-content:center; font-size:20px;
@@ -260,18 +260,18 @@
     .c-badge.maint { background:rgba(59,130,246,0.1); color:var(--maint); border:1px solid rgba(59,130,246,0.22); }
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
-    .card-div { height:1px; background:var(--border); margin-bottom:14px; }
-    .inc-block { border-radius:10px; padding:12px 14px; margin-bottom:12px; display:flex; flex-direction:column; flex:1; min-height:0; }
+    .card-div { height:1px; background:var(--border); margin-bottom:10px; }
+    .inc-block { border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; flex-direction:column; flex:1; min-height:0; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
     .inc-block.maint-block { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15); }
     .inc-block.reroute-block { background:rgba(20,184,166,0.06); border:1px solid rgba(20,184,166,0.15); }
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
-    .inc-label { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-    .inc-label-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(14px, 1.2vw, 26px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:auto; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
+    .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+    .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .inc-title { font-size:clamp(13px, 1.15vw, 24px); font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:hidden; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card.compact .status-label { font-size:10px; padding:2px 6px; }
@@ -282,38 +282,53 @@
     .meta-updated svg { width:12px; height:12px; opacity:0.6; }
     .meta-tag { font-size:clamp(10px, 0.65vw, 13px); font-weight:500; color:var(--muted); padding:3px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
 
-    .card.compact .inc-title { font-size:clamp(13px, 1.05vw, 22px); margin-bottom:3px; }
+    .card.compact .card-top { margin-bottom:7px; }
+    .card.compact .card-div { margin-bottom:7px; }
+    .card.compact .inc-block { padding:8px 10px; margin-bottom:6px; }
+    .card.compact .inc-label { margin-bottom:3px; }
+    .card.compact .inc-title { font-size:clamp(12px, 1.0vw, 20px); margin-bottom:2px; }
     .card.compact .inc-body { font-size:clamp(11px, 0.85vw, 18px); }
     .card.compact .meta-updated { font-size:clamp(10px, 0.65vw, 13px); }
     .card.compact .meta-tag { font-size:clamp(10px, 0.62vw, 12px); }
 
-    /* iOS-style widget snap sizes */
-    .card.span-tall .inc-title,
-    .card.span-large .inc-title { font-size:clamp(16px, 1.4vw, 30px); }
+    /* iOS-style widget snap sizes — title/body scale up as cards get bigger */
+    .card.span-wide .inc-title  { font-size:clamp(14px, 1.25vw, 26px); }
+    .card.span-tall .inc-title  { font-size:clamp(15px, 1.35vw, 28px); }
+    .card.span-large .inc-title { font-size:clamp(16px, 1.5vw, 32px); }
+
+    .card.span-wide .inc-body   { font-size:clamp(13px, 1.0vw, 21px); }
+    .card.span-tall .inc-body   { font-size:clamp(13px, 1.05vw, 22px); }
+    .card.span-large .inc-body  { font-size:clamp(14px, 1.15vw, 24px); }
+
+    .card.span-wide .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
+    .card.span-tall .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
+    .card.span-large .c-icon    { width:50px; height:50px; font-size:24px; }
+    .card.span-large .c-logo    { width:30px; height:30px; }
+    .card.span-large .c-name    { font-size:clamp(17px, 1.5vw, 30px); }
+    .card.span-large .c-badge   { font-size:clamp(11px, 0.78vw, 14px); padding:4px 10px; }
+
     @media (min-width: 1400px) {
       .inc-body { font-size:clamp(13px, 0.95vw + 0.1rem, 22px); }
       .card.compact .inc-body { font-size:clamp(11px, 0.82vw, 18px); }
       .card.dense .inc-body { font-size:clamp(12px, 0.88vw, 20px); }
     }
-    .card.span-large .c-icon { width:50px; height:50px; font-size:24px; }
-    .card.span-large .c-name { font-size:clamp(16px, 1.5vw, 30px); }
-    .card.span-large .c-badge { font-size:clamp(11px, 0.78vw, 15px); padding:4px 11px; }
 
     /* Mini cards (no-incident half-size widgets) */
     .card.mini {
-      padding:10px 14px;
+      padding:12px 16px;
       justify-content:center;
     }
     .card.mini .card-div,
     .card.mini .inc-block,
     .card.mini .card-meta { display:none; }
-    .card.mini .card-top { margin-bottom:0; align-items:center; }
-    .card.mini .c-icon { width:32px; height:32px; border-radius:8px; font-size:16px; }
-    .card.mini .c-logo { width:20px; height:20px; }
-    .card.mini .c-fallback { font-size:14px; }
-    .card.mini .c-name { font-size:clamp(11px, 0.88vw, 16px); }
+    .card.mini .card-top { margin-bottom:0; align-items:center; gap:10px; }
+    .card.mini .card-title-row { gap:10px; }
+    .card.mini .c-icon { width:40px; height:40px; border-radius:9px; font-size:20px; }
+    .card.mini .c-logo { width:26px; height:26px; }
+    .card.mini .c-fallback { font-size:18px; }
+    .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .card.mini .c-url { display:none; }
-    .card.mini .c-badge { font-size:10px; padding:3px 7px; }
+    .card.mini .c-badge { font-size:12px; padding:4px 10px; }
     .card.mini .c-name-block { min-width:0; }
 
     /* Net Connection widget metrics */
@@ -430,14 +445,19 @@
     body.idle { cursor: none; }
 
     @media (max-height: 720px) {
-      .shell { padding:14px 16px 10px; gap:10px; }
-      .hdr { gap:14px; padding:4px 0 12px; }
+      .shell { padding:12px 14px 8px; gap:8px; }
+      .hdr { gap:12px; padding:4px 0 10px; }
       .test-btn { padding:5px 9px; font-size:10px; }
-      .card { padding:14px 16px; }
-      .card-top { margin-bottom:10px; }
-      .card-div { margin-bottom:10px; }
-      .inc-block { padding:10px 12px; margin-bottom:8px; }
-      .inc-body { font-size:15px; --body-lines:3; }
+      .card { padding:12px 14px; }
+      .card-top { margin-bottom:8px; }
+      .card-div { margin-bottom:8px; }
+      .inc-block { padding:8px 10px; margin-bottom:6px; }
+      .inc-body { font-size:13px; }
+      .card.mini { padding:8px 12px; }
+      .card.mini .c-icon { width:34px; height:34px; font-size:17px; }
+      .card.mini .c-logo { width:22px; height:22px; }
+      .card.mini .c-fallback { font-size:15px; }
+      .card.mini .c-name { font-size:13px; }
     }
 
     @media (min-width: 1600px) {
@@ -1959,10 +1979,12 @@ async function init(){
       // Place card at its packed position and apply CSS span
       card.style.gridColumn=`${s.gridCol} / span ${s.spanCol}`;
       card.style.gridRow=`${s.gridRow+rowOffset} / span ${s.spanRow}`;
-      // Add iOS-style size class for body-line and typography overrides
-      if(s.spanCol===2 && s.spanRow===2) card.classList.add('span-large');
-      else if(s.spanRow===2) card.classList.add('span-tall');
-      else if(s.spanCol===2) card.classList.add('span-wide');
+      // Size classes keyed to the 4-row grid
+      // spanRow 1 = mini (handled by .mini), 2 = normal, 3 = tall, 4 = large
+      if(s.spanRow>=4)                           card.classList.add('span-large');
+      else if(s.spanRow>=3)                      card.classList.add('span-tall');
+      else if(s.spanRow>=2 && s.spanCol>=2)      card.classList.add('span-wide');
+      // spanRow=2 spanCol=1 → base styles (no extra class needed)
       if(compactCards) card.classList.add('compact');
       pg.appendChild(card);
     });
