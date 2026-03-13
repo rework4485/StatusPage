@@ -526,7 +526,7 @@ const SVCS=[
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   // Infrastructure Providers
-  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
+  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://health.aws.amazon.com/public/currentevents',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
@@ -1118,10 +1118,11 @@ async function fetchOne(s){
 
   if(s.p==='cloudflare'){
     try {
-      const [sd,id,cd]=await Promise.all([
+      const [sd,id,cd,md]=await Promise.all([
         getJson(s.su, s.p),
         s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]})
+        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
+        s.mu ? getJson(s.mu, s.p).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
       ]);
       let ind='none';
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -1138,7 +1139,7 @@ async function fetchOne(s){
       const watchedIds=new Set(watched.map(c=>c.id));
       const cloudflareComponentIndicator=(component)=>{
         const base=componentStatusToIndicator(component?.status);
-        if(base!=='minor') return base;
+        if(base==='none' || base==='maintenance' || base==='unknown') return base;
         const isNorthAmericaChild=!!northAmericaGroupId && component?.group_id===northAmericaGroupId;
         if(isNorthAmericaChild || hasRerouteSignal(component?.name, component?.description)) return 'rerouting';
         return base;
@@ -1162,8 +1163,14 @@ async function fetchOne(s){
         if(!x.components?.length) return true;
         return x.components.some(c=>watchedIds.has(c.id));
       });
+      const activeMaintenance=(md?.scheduled_maintenances||[]).filter(x=>{
+        if(!['in_progress','verifying','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!x.components?.length) return true;
+        return x.components.some(c=>watchedIds.has(c.id));
+      });
 
       let title='', body='', labelOverride='';
+      let hasRerouteNotice=false;
       if(active.length){
         const a=active[0];
         if(ind==='none'){
@@ -1171,7 +1178,8 @@ async function fetchOne(s){
           if(impact!=='none') ind=impact;
         }
         if(hasRerouteSignal(a.name, a.impact, a.status, a.description, a.incident_updates?.[0]?.body)){
-          ind='rerouting';
+          hasRerouteNotice=true;
+          if(ind==='minor') ind='none';
         }
         title=a.name||'Service Disruption';
         let desc=stripHtml(a.description||'');
@@ -1179,9 +1187,17 @@ async function fetchOne(s){
         body=desc;
       }
 
+      if(activeMaintenance.length && !active.length){
+        const m=activeMaintenance[0];
+        ind='maintenance';
+        title=m.name||'Ongoing maintenance';
+        body=stripHtml(m.incident_updates?.[0]?.body || m.body || 'Cloudflare is performing ongoing maintenance.');
+      }
+
       if(affectedNorthAmerica.length){
         if(ind==='minor' && affectedNorthAmerica.every(c=>cloudflareComponentIndicator(c)==='minor') && hasRerouteSignal(title, body)){
-          ind='rerouting';
+          hasRerouteNotice=true;
+          ind='none';
         }
         const impactsList=affectedNorthAmerica
           .map(c=>`• ${c.name}: ${LABELS[cloudflareComponentIndicator(c)]||'Impacted'}`)
@@ -1201,11 +1217,18 @@ async function fetchOne(s){
           labelOverride=cloudflareStatusLabel(topIssue.status);
         }
       }
+      if(ind==='rerouting'){
+        hasRerouteNotice=true;
+        ind='none';
+      }
       if(!labelOverride && watched.length){
         const top=watched
           .filter(c=>componentStatusToIndicator(c.status)!=='none')
           .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
         if(top) labelOverride=cloudflareStatusLabel(top.status);
+      }
+      if(hasRerouteNotice && !labelOverride){
+        labelOverride='Re-routed';
       }
       return mk(s.name,ind,title,body,updated,s.hu,labelOverride);
     } catch { return errSvc(s); }
