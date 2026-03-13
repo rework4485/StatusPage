@@ -1064,15 +1064,23 @@ async function fetchOne(s){
           .filter(c=>c.group && targetGroups.includes(String(c.name||'').toLowerCase().trim()))
           .map(c=>c.id)
       );
+      const northAmericaGroupId=components.find(c=>c.group && String(c.name||'').toLowerCase().trim()==='north america')?.id;
       const watched=components.filter(c=>targetGroupIds.has(c.id) || targetGroupIds.has(c.group_id));
       const watchedIds=new Set(watched.map(c=>c.id));
+      const cloudflareComponentIndicator=(component)=>{
+        const base=componentStatusToIndicator(component?.status);
+        if(base!=='minor') return base;
+        const isNorthAmericaChild=!!northAmericaGroupId && component?.group_id===northAmericaGroupId;
+        if(isNorthAmericaChild || hasRerouteSignal(component?.name, component?.description)) return 'rerouting';
+        return base;
+      };
       const affectedNorthAmerica=watched
-        .filter(c=>c.group_id && componentStatusToIndicator(c.status)!=='none')
-        .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name));
+        .filter(c=>c.group_id===northAmericaGroupId && cloudflareComponentIndicator(c)!=='none')
+        .sort((a,b)=>((PRI[cloudflareComponentIndicator(a)]||9)-(PRI[cloudflareComponentIndicator(b)]||9)) || a.name.localeCompare(b.name));
 
       if(watched.length){
         const worst=watched.reduce((max,c)=>{
-          const ci=componentStatusToIndicator(c.status);
+          const ci=cloudflareComponentIndicator(c);
           return (PRI[ci]||9) < (PRI[max]||9) ? ci : max;
         }, 'none');
         ind=worst;
@@ -1103,11 +1111,11 @@ async function fetchOne(s){
       }
 
       if(affectedNorthAmerica.length){
-        if(ind==='minor' && affectedNorthAmerica.every(c=>componentStatusToIndicator(c.status)==='minor') && hasRerouteSignal(title, body)){
+        if(ind==='minor' && affectedNorthAmerica.every(c=>cloudflareComponentIndicator(c)==='minor') && hasRerouteSignal(title, body)){
           ind='rerouting';
         }
         const impactsList=affectedNorthAmerica
-          .map(c=>`• ${c.name}: ${LABELS[componentStatusToIndicator(c.status)]||'Impacted'}`)
+          .map(c=>`• ${c.name}: ${LABELS[cloudflareComponentIndicator(c)]||'Impacted'}`)
           .join('<br>');
 
         if(!title){
@@ -1116,10 +1124,10 @@ async function fetchOne(s){
         body=`${body ? `${body}<br><br>` : ''}<strong>North America affected areas:</strong><br>${impactsList}`;
       } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
-          .filter(c=>componentStatusToIndicator(c.status)!=='none')
-          .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
+          .filter(c=>cloudflareComponentIndicator(c)!=='none')
+          .sort((a,b)=>((PRI[cloudflareComponentIndicator(a)]||9)-(PRI[cloudflareComponentIndicator(b)]||9)) || a.name.localeCompare(b.name))[0];
         if(topIssue){
-          title=`${topIssue.name} is ${LABELS[componentStatusToIndicator(topIssue.status)]||'impacted'}`;
+          title=`${topIssue.name} is ${LABELS[cloudflareComponentIndicator(topIssue)]||'impacted'}`;
           body='Monitoring Cloudflare Sites and Services + North America categories only.';
         }
       }
