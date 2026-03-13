@@ -254,6 +254,11 @@
     .inc-label-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:18px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:6px; }
     .inc-body { font-size:15px; color:var(--sub); line-height:1.5; display:-webkit-box; -webkit-line-clamp:var(--body-lines, 4); -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; min-height:0; }
+    .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+    .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
+    .card.compact .status-label { font-size:10px; padding:2px 6px; }
+    .card.dense .inc-title { font-size:16px; }
+    .card.dense .inc-body { font-size:13px; --body-lines:4; }
     .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
     .meta-updated { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .meta-updated svg { width:14px; height:14px; opacity:0.6; }
@@ -902,8 +907,8 @@ function stripHtml(txt){
   return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
 
-function mk(name,ind,title,body,updated,url,labelOverride){
-  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url};
+function mk(name,ind,title,body,updated,url,labelOverride,labels=[]){
+  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[]};
 }
 
 function errSvc(s){
@@ -1171,6 +1176,7 @@ async function fetchOne(s){
 
       let title='', body='', labelOverride='';
       let hasRerouteNotice=false;
+      const extraStatuses=[];
       if(active.length){
         const a=active[0];
         if(ind==='none'){
@@ -1187,11 +1193,12 @@ async function fetchOne(s){
         body=desc;
       }
 
-      if(activeMaintenance.length && !active.length){
+      if(activeMaintenance.length){
+        extraStatuses.push('Maintenance');
         const m=activeMaintenance[0];
-        ind='maintenance';
-        title=m.name||'Ongoing maintenance';
-        body=stripHtml(m.incident_updates?.[0]?.body || m.body || 'Cloudflare is performing ongoing maintenance.');
+        if(ind!=='major') ind='maintenance';
+        if(!title) title=m.name||'Ongoing maintenance';
+        if(!body) body=stripHtml(m.incident_updates?.[0]?.body || m.body || 'Cloudflare is performing ongoing maintenance.');
       }
 
       if(affectedNorthAmerica.length){
@@ -1227,10 +1234,12 @@ async function fetchOne(s){
           .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
-      if(hasRerouteNotice && !labelOverride){
-        labelOverride='Re-routed';
+      if(hasRerouteNotice){
+        extraStatuses.push('Re-routed');
+        if(!labelOverride && ind==='none') labelOverride='Operational';
       }
-      return mk(s.name,ind,title,body,updated,s.hu,labelOverride);
+      const statusLabels=[...new Set(extraStatuses.filter(Boolean))];
+      return mk(s.name,ind,title,body,updated,s.hu,labelOverride,statusLabels);
     } catch { return errSvc(s); }
   }
 
@@ -1317,11 +1326,12 @@ function nextLogo(img){
 // Returns the iOS-style snap size for a widget based on incident text volume.
 // Sizes: 1×1 (default), 2×1 wide, 1×2 tall, 2×2 large.
 function getCardSize(svc, cols){
-  if(svc.ind==='none') return {spanCol:1, spanRow:1};
-  const score=(svc.title||'').length+(svc.body||'').length;
-  if(score<100 || cols<2) return {spanCol:1, spanRow:1};
-  if(score<300) return {spanCol:2, spanRow:1};  // medium — wide
-  if(score<600) return {spanCol:1, spanRow:2};  // long — tall
+  const score=(svc.title||'').length+(svc.body||'').length+(svc.label||'').length*0.7+(svc.labels||[]).join(' ').length*1.6;
+  const hasExtraLabels=(svc.labels||[]).length>1;
+  if(svc.ind==='none' && !hasExtraLabels && score<120) return {spanCol:1, spanRow:1};
+  if(score<150 || cols<2) return {spanCol:1, spanRow:1};
+  if(score<360) return {spanCol:2, spanRow:1};  // medium — wide
+  if(score<720) return {spanCol:1, spanRow:2};  // long — tall
   return {spanCol:2, spanRow:2};                // very long — 2×2
 }
 
@@ -1376,6 +1386,10 @@ function mkCard(svc, delay){
   const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+  const labels=[svc.label, ...(svc.labels||[])].filter((v,i,a)=>v && a.indexOf(v)===i);
+  const statusLabels=labels.length>1 ? `<div class="status-labels">${labels.map(label=>`<span class="status-label">${label}</span>`).join('')}</div>` : '';
+  const densityScore=(incTitle.length*1.5)+(incBody.length)+(labels.join(' ').length*1.2);
+  if(densityScore>320) d.classList.add('dense');
 
   d.innerHTML=`
     <div class="card-top">
@@ -1391,12 +1405,13 @@ function mkCard(svc, delay){
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${svc.ind==='none'?'Current Status':svc.ind==='rerouting'?'Traffic Notice':'Active Incident'}</div>
+      ${statusLabels}
       <div class="inc-title">${incTitle}</div>
       <div class="inc-body">${incBody}</div>
     </div>
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated ${svc.updated}</div>
-      <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : svc.ind==='rerouting' ? 'Rerouted' : 'Investigating'}</div>
+      <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : svc.ind==='rerouting' ? 'Rerouted' : 'Investigating'}${(svc.labels||[]).length>1 ? ' · Multi-status' : ''}</div>
     </div>`;
   return d;
 }
