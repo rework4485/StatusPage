@@ -579,13 +579,14 @@
     .net-bp-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
     .net-bp-label { font-size:10px; font-weight:600; color:var(--text); }
     .net-bp-count { font-size:9px; color:var(--muted); }
-    .net-bp-chart { position:relative; height:26px; }
+    .net-bp-chart { position:relative; height:34px; }
     .net-bp-axis-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:rgba(255,255,255,0.07); }
     .net-bp-whisker { position:absolute; height:2px; top:50%; transform:translateY(-50%); border-radius:1px; }
     .net-bp-iqr { position:absolute; top:18%; height:64%; border-radius:3px; border:1.5px solid; }
     .net-bp-median { position:absolute; top:10%; height:80%; width:2px; border-radius:1px; background:rgba(255,255,255,0.88); }
     .net-bp-dot { position:absolute; width:5px; height:5px; border-radius:50%; top:50%; transform:translate(-50%,-50%); opacity:0.85; }
-    .net-bp-axis { position:relative; height:12px; margin-top:3px; }
+    .net-bp-axis-unit { font-size:9px; color:var(--muted); margin-top:1px; }
+    .net-bp-axis { position:relative; height:14px; margin-top:2px; }
     .net-bp-axis-tick { position:absolute; font-size:8px; color:var(--muted); font-variant-numeric:tabular-nums; transform:translateX(-50%); }
     .net-bp-axis-tick:first-child { transform:translateX(0); }
     .net-bp-axis-tick:last-child { transform:translateX(-100%); }
@@ -663,7 +664,6 @@
     <div class="hdr-right">
       <div class="nav-tabs">
         <button class="nav-tab active" id="tab-svc" onclick="showView('services')">Services</button>
-        <button class="nav-tab" id="tab-net" onclick="showView('network')">⚡ Network</button>
       </div>
       <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
       <div class="refresh-spinner" id="refresh-spinner" title="Refreshing…"></div>
@@ -1202,14 +1202,14 @@ function boxStats(times){
 // Deterministic y-jitter so dots don't jump on re-render
 function dotJitter(v){ return ((v*7919)%37)/37*50+25; } // 25–75% of chart height
 
-function renderNetBoxPlot(times, label, colorRgb, axisMax){
+function renderNetBoxPlot(times, label, colorRgb, axisMax, expectedCount){
   const st=boxStats(times);
-  const count=st?`(${st.n}/${st.n})`:'(0)';
+  const denom=expectedCount||((times&&times.length)||0);
+  const count=st?`(${st.n}/${Math.max(st.n,denom)})`:`(0/${Math.max(denom,0)})`;
   if(!st) return `<div class="net-bp-row"><div class="net-bp-header"><span class="net-bp-label">${label}</span><span class="net-bp-count">${count}</span></div><div style="font-size:9px;color:var(--muted);padding:4px 0">No data</div></div>`;
 
   const aMax=axisMax||Math.max(st.max,50);
-  const pad=0.04; // 4% left/right padding
-  const pct=(v)=>Math.min(98,Math.max(2,(v/aMax)*(1-2*pad)+pad)*100);
+  const pct=(v)=>Math.min(100,Math.max(0,(v/aMax)*100));
 
   // Whisker and box positions
   const wL=pct(st.min), wR=pct(st.max);
@@ -1224,7 +1224,7 @@ function renderNetBoxPlot(times, label, colorRgb, axisMax){
   }).join('');
 
   // Axis ticks (0 + multiples of tickInterval up to aMax)
-  const ti=aMax<=100?25:aMax<=200?50:100;
+  const ti=aMax<=100?20:aMax<=200?25:50;
   const ticks=[];
   for(let v=0;v<=aMax;v+=ti) ticks.push(v);
   if(ticks[ticks.length-1]<aMax) ticks.push(aMax);
@@ -1239,6 +1239,7 @@ function renderNetBoxPlot(times, label, colorRgb, axisMax){
       <div class="net-bp-median" style="left:${mPos.toFixed(1)}%"></div>
       ${dots}
     </div>
+    <div class="net-bp-axis-unit">ms</div>
     <div class="net-bp-axis">${ticksHtml}</div>
   </div>`;
 }
@@ -1282,7 +1283,7 @@ async function collectLatencyPings(count=20, intervalMs=350){
       setTimeout(async()=>{
         const t0=performance.now();
         try{
-          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store'},5000);
+          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store'},7000);
           await r.arrayBuffer();
           resolve(performance.now()-t0);
         }catch(e){ resolve(null); }
@@ -1309,7 +1310,7 @@ async function runDownloadPhase(onProgress){
     const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
     const t0=performance.now();
     let received=0, lastSampleT=t0, lastSampleBytes=0;
-    const pingCount=bytes>=10*1024*1024?10:5;
+    const pingCount=bytes>=10*1024*1024?10:6;
     const pingTask=collectLatencyPings(pingCount, Math.floor(7000/pingCount));
     const dlTask=(async()=>{
       try{
@@ -1363,7 +1364,7 @@ async function runUploadPhase(onProgress){
     if(bytes>=65536) try{ crypto.getRandomValues(body.subarray(0,65536)); }catch(e){}
     const url='https://speed.cloudflare.com/__up?nc='+Date.now();
     const t0=performance.now();
-    const pingCount=bytes>=1*1024*1024?6:3;
+    const pingCount=bytes>=1*1024*1024?8:4;
     const[mbps,pings]=await Promise.all([
       (async()=>{
         try{
@@ -1472,7 +1473,10 @@ function calcQuality(r){
 function updateServerInfo(meta){
   const el=document.getElementById('net-server-info');
   if(!el) return;
-  const serverCity=[meta.city,meta.colo].filter(Boolean).join(' / ')||'Unknown';
+  const coloCode=typeof meta.colo==='string'
+    ?meta.colo
+    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
+  const serverCity=[meta.city,coloCode].filter(Boolean).join(' / ')||'Unknown';
   el.innerHTML=`
     <div class="net-info-line"><span class="net-info-icon">🔗</span><span>Connected via <span class="net-info-val">${meta.httpProtocol||'Unknown'}</span></span></div>
     <div class="net-info-line"><span class="net-info-icon">📍</span><span>Server location: <span class="net-info-val">${serverCity}</span></span></div>
@@ -1481,14 +1485,20 @@ function updateServerInfo(meta){
 }
 
 function showNetMap(meta){
-  if(typeof L==='undefined') return;
+  if(typeof L==='undefined'){
+    setTimeout(()=>showNetMap(meta),350);
+    return;
+  }
   const mapEl=document.getElementById('net-map');
   if(!mapEl) return;
   const clientLat=parseFloat(meta.latitude);
   const clientLon=parseFloat(meta.longitude);
   if(!isFinite(clientLat)||!isFinite(clientLon)) return;
   if(netMapInstance){ netMapInstance.remove(); netMapInstance=null; }
-  const coloCords=CF_COLO[meta.colo]||null;
+  const coloCode=typeof meta.colo==='string'
+    ?meta.colo
+    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
+  const coloCords=CF_COLO[coloCode]||null;
   const center=coloCords
     ?[(clientLat+coloCords[0])/2,(clientLon+coloCords[1])/2]
     :[clientLat,clientLon];
@@ -1506,7 +1516,7 @@ function showNetMap(meta){
   if(coloCords){
     L.marker(coloCords,{icon:mkIcon('#ef4444',14)})
       .addTo(netMapInstance)
-      .bindPopup(`Cloudflare ${meta.colo}`);
+      .bindPopup(`Cloudflare ${coloCode||'colo'}`);
     L.polyline([[clientLat,clientLon],coloCords],{color:'#f59e0b',weight:1.5,opacity:0.55,dashArray:'5,5'}).addTo(netMapInstance);
     netMapInstance.fitBounds(L.latLngBounds([[clientLat,clientLon],coloCords]).pad(0.25));
   }
@@ -1592,9 +1602,9 @@ async function runFullSpeedTest(){
     const rawMax=allLat.length?Math.max(...allLat):200;
     const axisMax=Math.ceil(rawMax/50)*50||200;
     if(bpRows) bpRows.innerHTML=
-      renderNetBoxPlot(unloadedLat,'Unloaded latency','59,130,246',axisMax)+
-      renderNetBoxPlot(dlResult.latencies,'Latency during download','245,158,11',axisMax)+
-      renderNetBoxPlot(ulResult.latencies,'Latency during upload','139,92,246',axisMax);
+      renderNetBoxPlot(unloadedLat,'Unloaded latency','59,130,246',axisMax,20)+
+      renderNetBoxPlot(dlResult.latencies,'Latency during download','245,158,11',axisMax,26)+
+      renderNetBoxPlot(ulResult.latencies,'Latency during upload','139,92,246',axisMax,20);
 
     // 6. Quality scores
     const results={avgLatency:avgLat,jitter:jit,packetLoss:loss,downloadMbps:dlResult.mbps,uploadMbps:ulResult.mbps};
@@ -1626,22 +1636,21 @@ function showView(view){
   const netView=document.getElementById('net-view');
   const footer=document.querySelector('.footer');
   const tabSvc=document.getElementById('tab-svc');
-  const tabNet=document.getElementById('tab-net');
   if(view==='network'){
+    currentView='network';
     if(svcView){svcView.style.display='none';}
     if(netView){netView.style.display='flex';}
     if(footer){footer.style.display='none';}
     if(tabSvc) tabSvc.classList.remove('active');
-    if(tabNet) tabNet.classList.add('active');
     // Auto-start test on first visit
     if(!netTestRunning&&!netTestResults) runFullSpeedTest();
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),120);
   }else{
+    currentView='services';
     if(svcView){svcView.style.display='';}
     if(netView){netView.style.display='none';}
     if(footer){footer.style.display='';}
     if(tabSvc) tabSvc.classList.add('active');
-    if(tabNet) tabNet.classList.remove('active');
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2275,7 +2284,7 @@ function mkCard(svc, delay){
   return d;
 }
 
-let cur=0, rTimer=null, pTimer=null, pStart=0, pageAnimTimer=null, pageAnimating=false;
+let cur=0, rTimer=null, pTimer=null, pStart=0, pageAnimTimer=null, pageAnimating=false, currentView='services';
 const ROT_MS=60000;
 
 let refreshFailCount=0;
@@ -2346,7 +2355,20 @@ function resetProg(){
 
 function startRot(n){
   clearInterval(rTimer);
-  if(n>1) rTimer=setInterval(()=>goPage((cur+1)%n),ROT_MS);
+  if(n>0) rTimer=setInterval(()=>rotateViews(n),ROT_MS);
+}
+
+function rotateViews(totalPages){
+  if(currentView==='services'){
+    if(totalPages>1 && cur<totalPages-1){
+      goPage(cur+1);
+      return;
+    }
+    showView('network');
+    return;
+  }
+  showView('services');
+  goPage(0);
 }
 
 function updateIncidentPin(data){
