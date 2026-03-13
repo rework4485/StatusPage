@@ -520,7 +520,7 @@ const SVCS=[
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://health.aws.amazon.com/public/currentevents',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azure.status.microsoft/en-us/status',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
+  {name:'Azure',su:'https://azurestatusprodscus2.azurewebsites.net/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
 ];
 
@@ -557,6 +557,62 @@ function componentStatusToIndicator(status){
   if(val==='major_outage') return 'major';
   if(val==='under_maintenance') return 'maintenance';
   return 'unknown';
+}
+
+function cloudflareStatusLabel(status){
+  const val=String(status||'').toLowerCase().trim();
+  if(val==='operational') return 'Operational';
+  if(val==='under_maintenance') return 'Maintenance';
+  if(val==='degraded_performance') return 'Partially Re-routed';
+  if(val==='partial_outage') return 'Partially Re-routed';
+  if(val==='major_outage') return 'Re-routed';
+  return 'Unknown';
+}
+
+function normalizeRegionText(value){
+  return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function isAwsNorthAmericaEvent(event){
+  const region=normalizeRegionText(event?.region_name);
+  const text=normalizeRegionText(`${event?.service_name||''} ${event?.summary||''} ${event?.description||''}`);
+  const directRegionMatchers=[
+    /north america/,
+    /united states/,
+    /u s /,
+    /us gov/,
+    /canada/,
+    /mexico/
+  ];
+  const awsRegionMatchers=[
+    /us east/,/us west/,/us central/,/us gov/,/ca central/
+  ];
+  if(directRegionMatchers.some(rx=>rx.test(region))||awsRegionMatchers.some(rx=>rx.test(region))) return true;
+  return directRegionMatchers.some(rx=>rx.test(text))||awsRegionMatchers.some(rx=>rx.test(text));
+}
+
+function extractAzureAmericasTable(html){
+  const m=html.match(/<table[^>]*data-zone-name=["']americas["'][^>]*class=["'][^"']*region-status-table[^"']*["'][^>]*>[\s\S]*?<\/table>/i);
+  return m ? m[0] : '';
+}
+
+function parseAzureAmericasStatus(tableHtml){
+  const rowRegex=/<tr>([\s\S]*?)<\/tr>/gi;
+  const labels=[];
+  const impactedRows=[];
+  let rowMatch;
+  while((rowMatch=rowRegex.exec(tableHtml))!==null){
+    const row=rowMatch[1];
+    const nameMatch=row.match(/<td[^>]*>\s*([\s\S]*?)<\/td>/i);
+    const serviceName=nameMatch ? stripHtml(nameMatch[1]).replace(/\s+/g,' ').trim() : '';
+    const rowLabels=[...row.matchAll(/data-label=["']([^"']+)["']/gi)].map(m=>String(m[1]||'').trim());
+    if(!rowLabels.length) continue;
+    labels.push(...rowLabels);
+    if(rowLabels.some(label=>/critical|warning|degraded|disrupted/i.test(label))){
+      impactedRows.push({serviceName, labels:rowLabels});
+    }
+  }
+  return {labels, impactedRows};
 }
 
 let audioCtx;
@@ -836,8 +892,8 @@ function stripHtml(txt){
   return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
 
-function mk(name,ind,title,body,updated,url){
-  return {name,ind,label:LABELS[ind]||'Unknown',title,body,updated,url};
+function mk(name,ind,title,body,updated,url,labelOverride){
+  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url};
 }
 
 function errSvc(s){
@@ -1026,23 +1082,26 @@ async function fetchOne(s){
   if(s.p==='azure'){
     try {
       const html=await getText(s.su, s.p);
-      // The Azure status page is server-side rendered HTML.
-      // "There are currently no active events." appears when all systems are good.
-      if(/no active events/i.test(html)){
+      const americasTable=extractAzureAmericasTable(html);
+      if(!americasTable){
+        return mk(s.name,'unknown','Azure status format changed','Could not locate the Americas status table.',new Date().toLocaleString(),s.hu);
+      }
+      const {labels, impactedRows}=parseAzureAmericasStatus(americasTable);
+      if(!labels.length){
+        return mk(s.name,'unknown','Azure status format changed','No status labels found in the Americas table.',new Date().toLocaleString(),s.hu);
+      }
+      const hasCritical=labels.some(label=>/critical/i.test(label));
+      const hasWarning=labels.some(label=>/warning|degraded|disrupted/i.test(label));
+      if(!hasCritical && !hasWarning){
         return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
       }
-      // Detect severity from status text in the rendered table
-      const hasCritical=/\bCritical\b/.test(html);
-      const hasWarning=/\b(Warning|Disrupted|Degraded)\b/i.test(html);
       if(hasCritical||hasWarning){
         const ind=hasCritical ? 'major' : 'minor';
-        // Try to pull the first incident title from the page if present
-        const titleMatch=html.match(/class="[^"]*incident[^"]*"[^>]*>\s*([^<]{5,120})/i)||
-                         html.match(/<h[23][^>]*>\s*([^<]{5,120})/i);
-        const title=titleMatch ? stripHtml(titleMatch[1]).trim() : 'Service Issue Detected';
-        return mk(s.name,ind,title,'',new Date().toLocaleString(),s.hu);
+        const top=impactedRows[0];
+        const severity=top?.labels?.find(label=>/critical|warning|degraded|disrupted/i.test(label));
+        const title=top?.serviceName ? `${top.serviceName} (${severity||'Issue'})` : 'Americas Service Issue Detected';
+        return mk(s.name,ind,title,'Monitoring Azure Americas status table only.',new Date().toLocaleString(),s.hu);
       }
-      // Page loaded but neither "no active events" nor a known bad status found → treat as operational
       return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -1094,7 +1153,7 @@ async function fetchOne(s){
         return x.components.some(c=>watchedIds.has(c.id));
       });
 
-      let title='', body='';
+      let title='', body='', labelOverride='';
       if(active.length){
         const a=active[0];
         if(ind==='none'){
@@ -1129,9 +1188,16 @@ async function fetchOne(s){
         if(topIssue){
           title=`${topIssue.name} is ${LABELS[cloudflareComponentIndicator(topIssue)]||'impacted'}`;
           body='Monitoring Cloudflare Sites and Services + North America categories only.';
+          labelOverride=cloudflareStatusLabel(topIssue.status);
         }
       }
-      return mk(s.name,ind,title,body,updated,s.hu);
+      if(!labelOverride && watched.length){
+        const top=watched
+          .filter(c=>componentStatusToIndicator(c.status)!=='none')
+          .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
+        if(top) labelOverride=cloudflareStatusLabel(top.status);
+      }
+      return mk(s.name,ind,title,body,updated,s.hu,labelOverride);
     } catch { return errSvc(s); }
   }
 
