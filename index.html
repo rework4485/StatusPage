@@ -771,6 +771,33 @@ async function getJson(url, provider){
   return JSON.parse(t.replace(/^﻿/,''));
 }
 
+// Some APIs (e.g. AWS health) return UTF-16 LE encoded responses.
+// response.text() defaults to UTF-8 and produces garbled output, so we
+// read the raw bytes and detect the BOM to pick the right decoder.
+async function getJsonEncoded(url, provider){
+  let err;
+  for(const idx of proxyOrder(provider)){
+    try {
+      const r=await fetchWithTimeout(PROXIES[idx](url));
+      if(!r.ok) throw new Error(String(r.status));
+      const buf=await r.arrayBuffer();
+      const bytes=new Uint8Array(buf);
+      let text;
+      if(bytes[0]===0xFF && bytes[1]===0xFE){
+        // UTF-16 LE BOM
+        text=new TextDecoder('utf-16le').decode(buf).replace(/^\uFEFF/,'');
+      } else if(bytes[0]===0xFE && bytes[1]===0xFF){
+        // UTF-16 BE BOM
+        text=new TextDecoder('utf-16be').decode(buf).replace(/^\uFEFF/,'');
+      } else {
+        text=new TextDecoder('utf-8').decode(buf).replace(/^\uFEFF/,'');
+      }
+      return JSON.parse(text);
+    } catch(e){ err=e; }
+  }
+  throw err;
+}
+
 function stripHtml(txt){
   return String(txt||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
@@ -920,8 +947,9 @@ async function fetchOne(s){
 
   if(s.p==='aws'){
     try {
-      const d=await getJson(s.su, s.p);
-      // New API returns a plain array; old API wrapped in {current:[]}
+      // AWS health API returns UTF-16 LE JSON; use encoding-aware fetcher
+      const d=await getJsonEncoded(s.su, s.p);
+      // Response is a plain array of current events
       const items=Array.isArray(d) ? d : (d?.current||[]);
       const current=items.filter(x=>parseInt(x.status||'0')>0);
       if(!current.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
