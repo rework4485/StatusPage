@@ -325,7 +325,7 @@
     .card.mini .card-top { margin-bottom:0; align-items:center; gap:10px; }
     .card.mini .card-title-row { gap:10px; }
     .card.mini .c-icon { width:56px; height:56px; border-radius:12px; font-size:27px; }
-    .card.mini .c-logo { width:30px; height:30px; }
+    .card.mini .c-logo { width:40px; height:40px; }
     .card.mini .c-fallback { font-size:20px; }
     .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .card.mini .c-url { display:none; }
@@ -471,7 +471,7 @@
       .inc-body { font-size:13px; }
       .card.mini { padding:8px 12px; }
       .card.mini .c-icon { width:42px; height:42px; font-size:21px; }
-      .card.mini .c-logo { width:22px; height:22px; }
+      .card.mini .c-logo { width:30px; height:30px; }
       .card.mini .c-fallback { font-size:15px; }
       .card.mini .c-name { font-size:13px; }
     }
@@ -1247,6 +1247,8 @@ function renderNetBoxPlot(times, label, colorRgb, axisMax, expectedCount){
 let netTestRunning=false;
 let netTestResults=null;
 let netMapInstance=null;
+let netLastTestAt=0;
+const NET_TEST_INTERVAL_MS=30*60*1000;
 
 async function fetchWithOpts(url, opts={}, timeout=20000){
   const controller=new AbortController();
@@ -1621,6 +1623,7 @@ async function runFullSpeedTest(){
     if(ts) ts.textContent='Measured at '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
     setNetPhase('Test complete',  'done');
     netTestResults=results;
+    netLastTestAt=Date.now();
 
     // Re-invalidate map if just became visible
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),200);
@@ -1640,7 +1643,8 @@ function showView(view){
     currentView='network';
     if(svcView){svcView.style.display='none';}
     if(netView){netView.style.display='flex';}
-    if(!netTestRunning) runFullSpeedTest();
+    const shouldRun=!netTestResults || (Date.now()-netLastTestAt)>=NET_TEST_INTERVAL_MS;
+    if(!netTestRunning && shouldRun) runFullSpeedTest();
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),120);
   }else{
     currentView='services';
