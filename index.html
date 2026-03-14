@@ -433,6 +433,8 @@
     .net-title { font-size:18px; font-weight:700; letter-spacing:-0.02em; }
     .net-sub { font-size:13px; color:var(--sub); margin-top:3px; }
     .net-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; padding-bottom:28px; }
+    .net-section-hdr { grid-column:1/-1; padding:12px 0 4px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--sub); border-bottom:1px solid var(--border); margin-bottom:2px; }
+    .net-metric-date { font-weight:400; color:var(--sub); }
     .net-card-hdr { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
     .net-card-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); }
     .net-card-icon svg { width:17px; height:17px; }
@@ -2207,6 +2209,8 @@ const _netIcons = {
   server: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6" stroke-width="3"/><line x1="6" y1="18" x2="6.01" y2="18" stroke-width="3"/></svg>`,
   globe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
   gauge: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.38 16.75"/><path d="M12 2A10 10 0 0 0 4.62 18.75"/><line x1="12" y1="12" x2="16" y2="8"/><circle cx="12" cy="12" r="2"/></svg>`,
+  signal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  radar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><line x1="12" y1="12" x2="15" y2="9"/></svg>`,
 };
 
 function parseCFTrace(text) {
@@ -2234,6 +2238,13 @@ async function _netDirectText(url) {
 async function _netDirectJson(url) {
   const t = await _netDirectText(url);
   return JSON.parse(t.replace(/^\uFEFF/, ''));
+}
+// Proxy-only fetch for special server-side routes (IODA, Radar)
+async function _netProxyJson(key) {
+  if (!_IS_DEPLOYED) return null;
+  const r = await fetchWithTimeout('/proxy?svc=' + key, 15000);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
 }
 
 async function measureLatency(url, count, noCors) {
@@ -2335,7 +2346,7 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 let netDiagRan = false;
 let netDiagRunning = false;
 
-function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
+function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarData) {
   const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
   const warp = cf.warp === 'on';
   const publicIp = esc(cf.ip || ip.query || '—');
@@ -2384,11 +2395,23 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
   const resolverClassification = classifyResolver(resolverAddr);
   // Use geo org from edns.ip-api.com when CIDR match doesn't identify the provider
   // (e.g. Google's recursive resolver may use 192.178.x.x, not 8.8.x.x)
-  const geoOrg = resolverGeo ? resolverGeo.replace(/^[A-Z]{2}\s*-\s*/, '') : null;
+  // edns.ip-api.com returns geo as "Country Name - Org Name" (full country, not 2-letter code)
+  const geoOrg = resolverGeo
+    ? (resolverGeo.includes(' - ') ? resolverGeo.split(' - ').slice(1).join(' - ').trim() : resolverGeo)
+    : null;
+  // Map verbose org names to short display names for badge
+  const shortOrg = !geoOrg ? null
+    : /cloudflare/i.test(geoOrg)               ? 'Cloudflare'
+    : /\bgoogle\b/i.test(geoOrg)               ? 'Google'
+    : /quad9/i.test(geoOrg)                    ? 'Quad9'
+    : /nextdns/i.test(geoOrg)                  ? 'NextDNS'
+    : /adguard/i.test(geoOrg)                  ? 'AdGuard'
+    : /opendns|cisco umbrella/i.test(geoOrg)   ? 'OpenDNS'
+    : geoOrg.replace(/,?\s*(Inc|LLC|Ltd|Corp|GmbH)\.?\s*$/i, '').trim();
   const knownPublicDns = /cloudflare|google|quad9|nextdns|adguard|opendns|cisco umbrella/i.test(geoOrg || '');
   const resolverProvider = resolverClassification.isDoh
     ? resolverClassification.provider
-    : (geoOrg || resolverClassification.provider);
+    : (shortOrg || resolverClassification.provider);
   const resolverDisplay = resolverAddr ? mkNetMetricStack('DNS Resolver IP', esc(resolverAddr)) : mkNetMetric('DNS Resolver IP', '<span class="net-err">Unavailable</span>');
   const pubDnsBadge = resolverAddr
     ? (knownPublicDns || resolverClassification.isDoh
@@ -2406,6 +2429,62 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
 
   const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
 
+  // ── Internet Health cards ──────────────────────────────────────────────────
+  const COUNTRY_NAMES = {US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',CO:'Colombia',
+    AR:'Argentina',CL:'Chile',PE:'Peru',CR:'Costa Rica',PR:'Puerto Rico',DO:'Dominican Republic',
+    GT:'Guatemala',HN:'Honduras',PA:'Panama',JM:'Jamaica',TT:'Trinidad & Tobago',
+    BS:'Bahamas',BM:'Bermuda',GY:'Guyana',UY:'Uruguay',PY:'Paraguay',BO:'Bolivia',EC:'Ecuador'};
+  const DS_LABELS = {'ping-slash24':'Ping probes','bgp':'BGP routing','ucsd-nt':'Darknet'};
+
+  let iodaCard;
+  if (!iodaData) {
+    iodaCard = `<div class="net-note" style="margin:0">Internet health data is only available when deployed (not in local mode).</div>`;
+  } else if (iodaData._error) {
+    iodaCard = `<div class="net-err">Unable to fetch IODA data — ${esc(iodaData._error)}</div>`;
+  } else {
+    const events = Array.isArray(iodaData?.data) ? iodaData.data : [];
+    if (!events.length) {
+      iodaCard = mkNetMetric('Status', mkNetBadge('No anomalies detected', 'ok'))
+        + `<div class="net-note">IODA monitors BGP routing and active probing across North America over the last 24 hours.</div>`;
+    } else {
+      // Group by country, pick highest-score event per country
+      const byCountry = {};
+      for (const e of events) {
+        const code = e.entityCode || e.entity?.code || '??';
+        if (!byCountry[code] || (e.score || 0) > (byCountry[code].score || 0)) byCountry[code] = e;
+      }
+      const entries = Object.entries(byCountry).sort((a,b)=>(b[1].score||0)-(a[1].score||0)).slice(0,5);
+      iodaCard = entries.map(([code, e]) => {
+        const score = e.score || 0;
+        const badge = score > 0.7 ? 'bad' : score > 0.3 ? 'warn' : 'muted';
+        const dsLabel = DS_LABELS[e.datasource] || e.datasource || 'anomaly';
+        return mkNetMetric(esc(COUNTRY_NAMES[code] || code), mkNetBadge(esc(dsLabel), badge));
+      }).join('') + `<div class="net-note">Source: IODA (Georgia Tech) · Last 24 h · North America</div>`;
+    }
+  }
+
+  let radarCard;
+  if (radarData?.noToken) {
+    radarCard = `<div class="net-note" style="margin:0">Add a <code>CF_RADAR_TOKEN</code> Worker secret to enable Cloudflare Radar traffic anomaly data.</div>`;
+  } else if (!radarData || radarData._error) {
+    radarCard = radarData?._error
+      ? `<div class="net-err">Radar fetch failed — ${esc(radarData._error)}</div>`
+      : `<div class="net-note" style="margin:0">Radar data is only available when deployed.</div>`;
+  } else {
+    const anomalies = radarData?.result?.trafficAnomalies || [];
+    if (!anomalies.length) {
+      radarCard = mkNetMetric('Status', mkNetBadge('No traffic anomalies', 'ok'))
+        + `<div class="net-note">Cloudflare Radar monitors verified traffic anomalies for the US, Canada, and Mexico.</div>`;
+    } else {
+      radarCard = anomalies.slice(0,4).map(a => {
+        const loc = esc(a.location || '—');
+        const desc = a.description ? esc(a.description.slice(0,45) + (a.description.length>45?'…':'')) : 'anomaly';
+        const date = a.startDate ? new Date(a.startDate).toLocaleDateString() : '';
+        return mkNetMetric(loc + (date ? `<span class="net-metric-date"> · ${esc(date)}</span>` : ''), mkNetBadge(desc, 'warn'));
+      }).join('') + `<div class="net-note">Source: Cloudflare Radar · Verified anomalies · US, CA, MX</div>`;
+    }
+  }
+
   const container = document.getElementById('net-diag-container');
   if (!container) return;
   container.innerHTML = [
@@ -2415,6 +2494,9 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
     mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',   dnsCard),
     mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',       gLatCard),
     mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',        speedCard),
+    `<div class="net-section-hdr">Internet Health · North America</div>`,
+    mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', iodaCard),
+    mkNetCard('nc-radar',     _netIcons.radar,   'Cloudflare Radar',  radarCard),
   ].join('');
 
   document.getElementById('net-speed-run-btn')?.addEventListener('click', runSpeedTest);
@@ -2433,15 +2515,18 @@ async function runNetworkDiag() {
 
   // Show skeleton loading placeholders
   container.innerHTML = [
-    mkNetCard('nc-connection', _netIcons.wifi,  'Your Connection',  mkShimmer()),
-    mkNetCard('nc-cf-edge',   _netIcons.cloud,  'Cloudflare Edge',  mkShimmer()),
-    mkNetCard('nc-protocol',  _netIcons.lock,   'Protocol Support', mkShimmer()),
-    mkNetCard('nc-dns',       _netIcons.server, 'DNS Information',  mkShimmer()),
-    mkNetCard('nc-google',    _netIcons.globe,  'Google Edge',      mkShimmer()),
-    mkNetCard('nc-speed',     _netIcons.gauge,  'Speed Test',       mkShimmer()),
+    mkNetCard('nc-connection', _netIcons.wifi,   'Your Connection',  mkShimmer()),
+    mkNetCard('nc-cf-edge',   _netIcons.cloud,   'Cloudflare Edge',  mkShimmer()),
+    mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support', mkShimmer()),
+    mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',  mkShimmer()),
+    mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',      mkShimmer()),
+    mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',       mkShimmer()),
+    `<div class="net-section-hdr">Internet Health · North America</div>`,
+    mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', mkShimmer()),
+    mkNetCard('nc-radar',     _netIcons.radar,   'Cloudflare Radar', mkShimmer()),
   ].join('');
 
-  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR] = await Promise.allSettled([
+  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR, iodaR, radarR] = await Promise.allSettled([
     // Direct fetches — these endpoints support CORS and must bypass the proxy
     // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
     _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
@@ -2449,20 +2534,25 @@ async function runNetworkDiag() {
     // ip-api: direct-fetch only — proxy server IPs are blocked by ip-api as datacenter IPs.
     // Optional enrichment (city/country); failure is graceful since meta provides ISP/ASN.
     fetchWithTimeout('https://ip-api.com/json', 8000).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => ({})),
-    // DoH resolver check uses proxy — we're asking what DNS resolver Cloudflare sees
+    // DoH resolver check — asks what DNS resolver Cloudflare sees
     detectDohResolver(),
     // Latency pings are already direct (fetchWithTimeout, no proxy)
     measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
     measureLatency('https://dns.google/generate_204', 5, true),
+    // Internet health — server-side proxy routes (dynamic timestamps / auth)
+    _netProxyJson('ioda-na-outages').catch(e => ({ _error: String(e) })),
+    _netProxyJson('radar-us-anomalies').catch(e => ({ _error: String(e) })),
   ]);
 
   _renderNetCards(
-    cfTraceR.value  || {},
-    speedMetaR.value|| {},
-    ipInfoR.value   || {},
+    cfTraceR.value   || {},
+    speedMetaR.value || {},
+    ipInfoR.value    || {},
     resolverIpR.value || null,
-    cfLatR.value    || null,
-    gLatR.value     || null
+    cfLatR.value     || null,
+    gLatR.value      || null,
+    iodaR.value      || null,
+    radarR.value     || null
   );
 
   if (refreshBtn) refreshBtn.disabled = false;
