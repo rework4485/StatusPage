@@ -7,14 +7,13 @@ A real-time service status dashboard tracking cloud providers, SaaS apps, CDNs, 
 ### Cloudflare Pages (recommended)
 
 1. Push this repo to GitHub
-2. In Cloudflare Pages, connect the repo — build command: *(none)*, output directory: `.`
-3. The `/functions/proxy.js` Worker runs server-side, eliminating CORS proxy chains
-
-```bash
-# Or deploy via CLI
-npm install -g wrangler
-wrangler pages deploy . --project-name status-page
-```
+2. In the Cloudflare Dashboard, go to **Workers & Pages** → **Pages** → **Connect to Git**
+   - Do **not** use the "Create a Worker" flow — this is a Pages project
+3. Select the repository and configure the build settings:
+   - **Build command**: *(leave empty)*
+   - **Build output directory**: `.`
+   - **Deploy command**: *(leave empty)*
+4. Click **Deploy** — Cloudflare automatically serves `index.html` and deploys `/functions/proxy.js` as a serverless function
 
 ### Vercel
 
