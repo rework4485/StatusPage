@@ -230,7 +230,7 @@
     .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:clamp(13px, 1.15vw, 24px); font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:180px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; }
+    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:180px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
@@ -437,10 +437,10 @@
     .net-card-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); }
     .net-card-icon svg { width:17px; height:17px; }
     .net-card-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--sub); }
-    .net-metric { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .net-metric { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; flex-wrap:wrap; }
     .net-metric:last-child { border-bottom:none; }
     .net-metric-label { color:var(--sub); flex-shrink:0; }
-    .net-metric-val { color:var(--text); font-weight:600; text-align:right; word-break:break-all; }
+    .net-metric-val { color:var(--text); font-weight:600; text-align:right; word-break:break-all; flex:1; min-width:0; }
     .net-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:2px 8px; border-radius:5px; }
     .net-badge-ok   { background:rgba(34,197,94,0.1);  color:#86efac; border:1px solid rgba(34,197,94,0.2); }
     .net-badge-warn { background:rgba(245,158,11,0.1); color:#fcd34d; border:1px solid rgba(245,158,11,0.2); }
@@ -618,7 +618,7 @@ const SVCS=[
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
-  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',cat:'infra'},
+  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
   {name:'MBTA South Coast Rail',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/commuter-rail',p:'mbta',cat:'transit'},
@@ -686,10 +686,10 @@ function formatGoogleWorkspaceMarkdown(raw){
   return {
     summary: summary || fallback.split('\n')[0] || '',
     body: (description || fallback)
-      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*\*(.*?)\*\*/g,'$1')
       .replace(/^##\s+/gm,'')
-      .replace(/\n{2,}/g,'<br><br>')
-      .replace(/\n/g,'<br>')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim()
   };
 }
 
@@ -1325,8 +1325,8 @@ async function fetchOne(s){
       const formatted=formatGoogleWorkspaceMarkdown(latestText);
       const title=formatted.summary||'Service Disruption';
       const affectedNames=active.map(x=>x.service_name||'').filter(Boolean).join(', ');
-      const affectedLine=affectedNames ? `<strong>Affected:</strong> ${affectedNames}` : '';
-      const body=[formatted.body, affectedLine].filter(Boolean).join('<br><br>');
+      const affectedLine=affectedNames ? `Affected: ${affectedNames}` : '';
+      const body=[formatted.body, affectedLine].filter(Boolean).join('\n\n');
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     } catch { return errSvc(s); }
   }
@@ -1423,7 +1423,7 @@ async function fetchOne(s){
       const parts=[];
       const shortHdr=attr.short_header||attr.header||'';
       if(shortHdr) parts.push(shortHdr);
-      if(timeframe) parts.push('<strong>When:</strong> '+timeframe);
+      if(timeframe) parts.push('When: '+timeframe);
 
       // Affected route names from relationships
       const routeIds=(top.relationships?.routes?.data||[]).map(r=>r.id);
@@ -1434,7 +1434,7 @@ async function fetchOne(s){
           if(id.includes('FallRiver')) return 'Fall River';
           return id.replace('CR-','').replace(/-/g,' ');
         });
-        parts.push('<strong>Affected:</strong> '+routeNames.join(', '));
+        parts.push('Affected: '+routeNames.join(', '));
       }
 
       // Additional alerts summary
@@ -1444,10 +1444,10 @@ async function fetchOne(s){
           return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+
             (a.attributes?.short_header?' — '+a.attributes.short_header.substring(0,60):'');
         });
-        parts.push(extras.join('<br>'));
+        parts.push(extras.join('\n'));
       }
 
-      const body=parts.join('<br>');
+      const body=parts.join('\n');
       const updated=new Date(attr.updated_at||now).toLocaleString();
       return mk(s.name,ind,title,body,updated,s.hu);
     }catch{return errSvc(s);}
@@ -1529,8 +1529,8 @@ async function fetchOne(s){
         title=incidentSummaries[0].name;
         body=incidentSummaries[0].desc;
         if(incidentSummaries.length>1){
-          const rest=incidentSummaries.slice(1).map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('<br>');
-          body=`${body ? `${body}<br><br>` : ''}<strong>Additional active incidents:</strong><br>${rest}`;
+          const rest=incidentSummaries.slice(1).map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('\n');
+          body=`${body ? `${body}\n\n` : ''}Additional active incidents:\n${rest}`;
         }
       }
 
@@ -1543,8 +1543,8 @@ async function fetchOne(s){
         if(ind!=='major') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
         if(!body) body=maintSummaries[0].desc;
-        const maintLines=maintSummaries.map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('<br>');
-        body=`${body ? `${body}<br><br>` : ''}<strong>Active maintenance events:</strong><br>${maintLines}`;
+        const maintLines=maintSummaries.map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('\n');
+        body=`${body ? `${body}\n\n` : ''}Active maintenance events:\n${maintLines}`;
       }
 
       if(affectedNorthAmerica.length){
@@ -1562,11 +1562,11 @@ async function fetchOne(s){
         const n=affectedNorthAmerica.length;
         const numWord=['','one','two','three','four','five','six','seven','eight','nine','ten'];
         const nLabel=n<=10?numWord[n]:String(n);
-        const dcList=affectedNorthAmerica.map(c=>`• ${fmtDc(c.name)}`).join('<br>');
+        const dcList=affectedNorthAmerica.map(c=>`• ${fmtDc(c.name)}`).join('\n');
         if(!title){
           title=`Traffic re-routed at ${nLabel} Data Center${n===1?'':'s'} in North America`;
         }
-        body=`${body?`${body}<br><br>`:''}<strong>Affected Data Centers:</strong><br>${dcList}`;
+        body=`${body?`${body}\n\n`:''}Affected Data Centers:\n${dcList}`;
       } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
           .filter(c=>cloudflareComponentIndicator(c)!=='none')
@@ -1711,6 +1711,32 @@ async function fetchOne(s){
       else if(/re.?rout/i.test(tl)) ind='rerouting';
       else ind='maintenance'; // expansion, capacity, new DC, upcoming/scheduled maintenance, informational
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='quad9'){
+    // IATA codes of Quad9 PoPs in the United States
+    const US_IATA=new Set(['ABQ','ANC','ATL','AUS','BNA','BOS','BUF','BWI','CLT','CMH','CVG','DAL','DCA','DEN','DFW','DSM','DTW','EWR','FLL','HNL','HOU','IAD','IAH','IND','JAX','JFK','KCI','LAS','LAX','LGA','LGB','LIT','MCO','MDW','MEM','MIA','MKE','MSP','MSY','OAK','OGG','OKC','OMA','ONT','ORD','ORF','PAO','PDX','PBI','PHL','PHX','PIT','RDU','RIC','RSW','SAT','SAN','SEA','SFO','SJC','SLC','SMF','SNA','SRQ','STL','TPA','TUL','TUS']);
+    try{
+      const [sd,id]=await Promise.all([
+        getJson(s.su),
+        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+      ]);
+      const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const active=(id?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        // Include: incidents with no IATA code (global/network-wide) and US-specific ones
+        const m=/\(([A-Z]{3,4})\)/.exec(x.name||'');
+        return !m || US_IATA.has(m[1]);
+      });
+      // If no US-relevant active incidents, report operational regardless of global indicator
+      if(!active.length) return mk(s.name,'none','','',updated,s.hu);
+      const a=mostRecentEvent(active)||active[0];
+      const ind=normalizeIndicator(a.impact||'minor');
+      const title=a.name||'';
+      let body=latestUpdateBody(a);
+      if(!body) body=stripHtml(a.description||'');
+      return mk(s.name,ind,title,body,updated,s.hu);
     }catch{return errSvc(s);}
   }
 
@@ -2251,22 +2277,29 @@ function classifyResolver(ip) {
 
 async function detectDohResolver() {
   try {
-    const data = await getJson('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json');
-    const raw = (data && data.Answer && data.Answer[0] && data.Answer[0].data) || '';
+    // Direct browser fetch so the resolver IP reflects the *user's* DNS configuration, not the proxy's.
+    // Cloudflare's DoH endpoint supports CORS with Access-Control-Allow-Origin: *.
+    const data = await _netDirectJson('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json');
+    const raw = (data?.Answer?.[0]?.data) || '';
     return raw.replace(/"/g, '').trim() || null;
   } catch(e) { return null; }
 }
 
 async function measureDownloadSpeed() {
-  const SIZE = 10000000;
-  const url = 'https://speed.cloudflare.com/__down?bytes=' + SIZE;
+  // 4 parallel streams to saturate high-bandwidth connections (TCP slow-start limits single connections)
+  const STREAMS = 4;
+  const SIZE = 10000000; // 10 MB per stream = 40 MB total
   const start = performance.now();
   try {
-    const r = await fetchWithTimeout(url, 45000);
-    const buf = await r.arrayBuffer();
+    const downloads = Array.from({length: STREAMS}, (_, i) =>
+      fetchWithTimeout('https://speed.cloudflare.com/__down?bytes=' + SIZE + '&r=' + i, 45000)
+        .then(r => r.arrayBuffer())
+    );
+    const buffers = await Promise.all(downloads);
     const elapsed = (performance.now() - start) / 1000;
-    const mbps = (buf.byteLength * 8) / (elapsed * 1000000);
-    return { mbps: Math.round(mbps * 10) / 10, elapsed: Math.round(elapsed * 10) / 10, bytes: buf.byteLength };
+    const totalBytes = buffers.reduce((s, b) => s + b.byteLength, 0);
+    const mbps = (totalBytes * 8) / (elapsed * 1000000);
+    return { mbps: Math.round(mbps * 10) / 10, elapsed: Math.round(elapsed * 10) / 10, bytes: totalBytes };
   } catch(e) { return null; }
 }
 
@@ -2306,9 +2339,11 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
     + (warp ? mkNetMetric('VPN / Tunnel', mkNetBadge('Cloudflare WARP', 'ok')) : '')
     + connSaveRow;
 
-  const cfColo = esc(meta.colo || cf.colo || '—');
-  const cfCity = esc(meta.city || '—');
-  const cfCountry = esc(meta.country || cf.loc || '—');
+  // meta.colo is now a nested object {iata, lat, lon, cca2, region, city} from speed.cloudflare.com/meta
+  const metaColo = (meta.colo && typeof meta.colo === 'object') ? meta.colo : null;
+  const cfColo = esc(metaColo?.iata || (typeof meta.colo === 'string' ? meta.colo : null) || cf.colo || '—');
+  const cfCity = esc(metaColo?.city || '—');
+  const cfCountry = esc(metaColo?.cca2 || meta.country || cf.loc || '—');
   const cfHttpProto = esc(cf.http || meta.httpProtocol || '—');
   const httpBadge = /3/.test(cfHttpProto) ? mkNetBadge(cfHttpProto, 'ok') : mkNetBadge(cfHttpProto || '—', 'warn');
   const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg') : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
@@ -2344,7 +2379,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
       + `<div class="net-note">Google uses Anycast BGP routing. Latency reflects your nearest Google PoP via dns.google.</div>`
     : `<div class="net-err" style="padding:10px 0">Unable to reach dns.google — may be blocked by network policy or CORS.</div>`;
 
-  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed &amp; latency via Cloudflare's nearest edge server. Uses ~10 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
+  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
 
   const container = document.getElementById('net-diag-container');
   if (!container) return;
@@ -2411,7 +2446,7 @@ async function runNetworkDiag() {
 
 async function runSpeedTest() {
   const btn = document.getElementById('net-speed-run-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Testing… (downloads ~10 MB)'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Testing… (~40 MB, 4 streams)'; }
 
   const [speedResult, latResult] = await Promise.all([
     measureDownloadSpeed(),
@@ -2426,7 +2461,7 @@ async function runSpeedTest() {
   while (next) { const tmp = next.nextSibling; next.parentNode.removeChild(next); next = tmp; }
 
   if (speedResult) {
-    const pct = Math.min(speedResult.mbps / 150, 1) * 100;
+    const pct = Math.min(speedResult.mbps / 1000, 1) * 100;
     const qual = speedResult.mbps > 50 ? 'ok' : speedResult.mbps > 10 ? 'warn' : 'bad';
     const latStr = latResult ? latResult.min + ' ms min · ' + latResult.avg + ' ms avg' : '—';
     const html = `<div class="net-speed-row"><span class="net-speed-val">${speedResult.mbps}</span><span class="net-speed-unit">Mbps ↓</span></div>`
