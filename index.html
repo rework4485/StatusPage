@@ -604,7 +604,7 @@ const SVCS=[
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   {name:'Apple Services',su:'https://www.apple.com/support/systemstatus/data/system_status_en_US.js',hu:'https://www.apple.com/support/systemstatus/',p:'apple',cat:'app'},
-  {name:'Apple Developer',su:'https://developer.apple.com/tutorials/data/system-status.json',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
+  {name:'Apple Developer',su:'https://developer.apple.com/system-status/data/system_status_en_US.js',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
@@ -1592,9 +1592,17 @@ async function fetchOne(s){
 
   if(s.p==='appledeveloper'){
     try{
-      const data=await getJson(s.su);
-      const active=(data.services||[]).filter(sv=>sv.statusType&&sv.statusType!=='');
-      const ind=active.length?(active.some(sv=>sv.statusType==='Outage')?'major':'minor'):'none';
+      const raw=await getText(s.su);
+      // API returns JSONP: jsonCallback({...}) — strip wrapper if present
+      const jsonStr=/^\s*\w+\s*\(/.test(raw)?raw.replace(/^\s*\w+\s*\(/,'').replace(/\)\s*;?\s*$/,''):raw;
+      const data=JSON.parse(jsonStr);
+      // Support both old format (statusType field) and new format (events array)
+      const active=(data.services||[]).filter(sv=>
+        sv.statusType ? sv.statusType!=='' :
+        (sv.events||[]).some(ev=>ev.eventStatus&&ev.eventStatus!=='resolved')
+      );
+      const isOutage=active.some(sv=>sv.statusType==='Outage'||(sv.events||[]).some(ev=>/outage/i.test(ev.eventStatus||'')));
+      const ind=active.length?(isOutage?'major':'minor'):'none';
       const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
       const body=active.slice(0,3).map(sv=>sv.serviceName).join(', ');
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
@@ -1664,7 +1672,8 @@ const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maint
 function logoSources(svc){
   const sources=[];
   const companyDomain=LOGO_DOMAINS[svc.name] || '';
-  const statusHost=(svc.url||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
+  let statusHost='';
+  try { statusHost=new URL(svc.url||'').hostname; } catch(e) {}
 
   if(companyDomain){
     sources.push(`https://icons.duckduckgo.com/ip3/${companyDomain}.ico`);

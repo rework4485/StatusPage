@@ -41,6 +41,10 @@ const ALLOWED_HOSTS = new Set([
   'speed.cloudflare.com',
   'cloudflare-dns.com',
   'dns.google',
+  'status.duo.com',
+  'data.status.adobe.com',
+  'www.google.com',
+  'azure.status.microsoft',
 ]);
 
 export default async function handler(req, res) {
