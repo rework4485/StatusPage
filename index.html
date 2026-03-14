@@ -1759,7 +1759,7 @@ const PROXIES=[
 function proxyOrder(provider){
   if(provider==='aws')     return [2,0,3,1];
   if(provider==='azure')   return [1,2,3,0];
-  if(provider==='fastly')  return [1,2,3,0];
+  if(provider==='fastly'||provider==='apple'||provider==='appledeveloper'||provider==='ibm') return [1,2,3,0];
   if(provider==='akamai')  return [1,0,2,3];
   return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
