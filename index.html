@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#09090b">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2322c55e'/><circle cx='16' cy='16' r='7' fill='%23fff'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -851,7 +852,7 @@ const SVCS=[
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azurestatusprodscus2.azurewebsites.net/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
   // Net Connection is handled by the dedicated Network page (⚡ Network tab)
 ];
@@ -2012,6 +2013,7 @@ async function fetchOne(s){
       } else {
         ind=normalizeIndicator(sd?.status?.indicator||'none');
       }
+      const hasReroutingComponents=watched.some(c=>cloudflareComponentIndicator(c)==='rerouting');
 
       const active=(id?.incidents||[]).filter(x=>{
         if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
@@ -2091,6 +2093,10 @@ async function fetchOne(s){
         hasRerouteNotice=true;
         ind='none';
       }
+      if(!hasRerouteNotice && hasReroutingComponents && ind==='minor'){
+        hasRerouteNotice=true;
+        ind='none';
+      }
       if(!labelOverride && watched.length){
         const top=watched
           .filter(c=>componentStatusToIndicator(c.status)!=='none')
@@ -2165,7 +2171,6 @@ function logoSources(svc){
   const statusHost=(svc.url||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
 
   if(companyDomain){
-    sources.push(`https://logo.clearbit.com/${companyDomain}`);
     sources.push(`https://icons.duckduckgo.com/ip3/${companyDomain}.ico`);
     sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(companyDomain)}&sz=64`);
   }
