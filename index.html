@@ -2031,6 +2031,24 @@ function parseCFTrace(text) {
   return obj;
 }
 
+// Direct browser fetch (no proxy) — required for IP/ISP/colo data so results
+// reflect the *user's* connection, not the proxy server's.
+// Falls back to proxy only if direct fetch fails (e.g. in unusual environments).
+async function _netDirectText(url) {
+  try {
+    const r = await fetchWithTimeout(url, 12000);
+    if (!r.ok && r.status !== 204) throw new Error(r.status);
+    return await r.text();
+  } catch(e) {
+    // Fallback: try via proxy (data will reflect proxy location, not user)
+    return getText(url);
+  }
+}
+async function _netDirectJson(url) {
+  const t = await _netDirectText(url);
+  return JSON.parse(t.replace(/^\uFEFF/, ''));
+}
+
 async function measureLatency(url, count) {
   count = count || 5;
   const times = [];
@@ -2202,10 +2220,14 @@ async function runNetworkDiag() {
   ].join('');
 
   const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR] = await Promise.allSettled([
-    getText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
-    getJson('https://speed.cloudflare.com/meta'),
-    getJson('https://ip-api.com/json'),
+    // Direct fetches — these endpoints support CORS and must bypass the proxy
+    // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
+    _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
+    _netDirectJson('https://speed.cloudflare.com/meta'),
+    _netDirectJson('https://ip-api.com/json'),
+    // DoH resolver check uses proxy — we're asking what DNS resolver Cloudflare sees
     detectDohResolver(),
+    // Latency pings are already direct (fetchWithTimeout, no proxy)
     measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
     measureLatency('https://dns.google/generate_204', 5),
   ]);
