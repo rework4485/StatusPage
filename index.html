@@ -615,7 +615,7 @@ const SVCS=[
   {name:'Oracle Cloud',su:'https://ocistatus.oraclecloud.com/api/v2/status.json',cu:'https://ocistatus.oraclecloud.com/api/v2/components.json',hu:'https://ocistatus.oraclecloud.com',p:'oci',cat:'infra'},
   {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
   {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/status.json',iu:'https://www.akamaistatus.com/api/v2/incidents.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
-  {name:'Fastly',su:'https://www.fastlystatus.com/api/v2/status.json',iu:'https://www.fastlystatus.com/api/v2/incidents.json',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
+  {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',cat:'infra'},
@@ -965,8 +965,74 @@ function showView(view){
 // When deployed (Cloudflare Pages / Vercel), /proxy is a server-side function —
 // no CORS restrictions. Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
+
+// Maps upstream service URLs → Worker route keys (mirrors ROUTES in worker.js).
+// Used by getText() to build /proxy?svc=<key> requests instead of passing raw URLs.
+const ROUTE_KEYS={
+  'https://i-ready.status.io/':                                                                         'iready-status',
+  'https://status.hmhco.com/api/v2/status.json':                                                       'hmh-status',
+  'https://status.hmhco.com/api/v2/incidents.json':                                                    'hmh-incidents',
+  'https://status.follettsoftware.com/rest/systemstatus':                                              'follett-status',
+  'https://status.incidentiq.com/api/v2/status.json':                                                  'iiq-status',
+  'https://status.incidentiq.com/api/v2/incidents.json':                                               'iiq-incidents',
+  'https://status.clever.com/api/v2/status.json':                                                      'clever-status',
+  'https://status.clever.com/api/v2/incidents.json':                                                   'clever-incidents',
+  'https://status.seesaw.me/api/v2/status.json':                                                       'seesaw-status',
+  'https://status.seesaw.me/api/v2/incidents.json':                                                    'seesaw-incidents',
+  'https://status.jamf.com/api/v2/status.json':                                                        'jamf-status',
+  'https://status.jamf.com/api/v2/incidents.json':                                                     'jamf-incidents',
+  'https://status.duo.com/api/v2/status.json':                                                         'duo-status',
+  'https://status.duo.com/api/v2/incidents.json':                                                      'duo-incidents',
+  'https://status.duo.com/api/v2/components.json':                                                     'duo-components',
+  'https://status.imaginelearning.com/api/v2/status.json':                                             'imagine-status',
+  'https://status.imaginelearning.com/api/v2/incidents.json':                                          'imagine-incidents',
+  'https://status.finalsite.com/api/v2/status.json':                                                   'finalsite-status',
+  'https://status.finalsite.com/api/v2/incidents.json':                                                'finalsite-incidents',
+  'https://status.dexcom.com/api/v2/status.json':                                                      'dexcom-status',
+  'https://status.dexcom.com/api/v2/incidents.json':                                                   'dexcom-incidents',
+  'https://data.status.adobe.com/adobestatus/SnowServiceRegistry':                                     'adobe-registry',
+  'https://data.status.adobe.com/adobestatus/StatusEvents':                                            'adobe-events',
+  'https://www.google.com/appsstatus/dashboard/incidents.json':                                        'gworkspace-incidents',
+  'https://www.apple.com/support/systemstatus/data/system_status_en_US.js':                           'apple-status',
+  'https://developer.apple.com/system-status/data/system_status_en_US.js':                            'appledev-status',
+  'https://www.cloudflarestatus.com/api/v2/status.json':                                               'cf-status',
+  'https://www.cloudflarestatus.com/api/v2/incidents.json':                                            'cf-incidents',
+  'https://www.cloudflarestatus.com/api/v2/components.json':                                           'cf-components',
+  'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json':                        'cf-maintenances',
+  'https://status.dnsfilter.com/api/v2/status.json':                                                   'dnsfilter-status',
+  'https://status.dnsfilter.com/api/v2/incidents.json':                                                'dnsfilter-incidents',
+  'https://status.meraki.net/api/v2/status.json':                                                      'meraki-status',
+  'https://status.meraki.net/api/v2/incidents.json':                                                   'meraki-incidents',
+  'https://status.aws.amazon.com/rss/all.rss':                                                         'aws-rss',
+  'https://azure.status.microsoft/en-us/status/':                                                      'azure-status',
+  'https://status.cloud.google.com/incidents.json':                                                    'gcloud-incidents',
+  'https://ocistatus.oraclecloud.com/api/v2/status.json':                                              'oci-status',
+  'https://ocistatus.oraclecloud.com/api/v2/components.json':                                          'oci-components',
+  'https://cloud.ibm.com/status/api/notifications/feed.rss':                                           'ibm-rss',
+  'https://www.akamaistatus.com/api/v2/status.json':                                                   'akamai-status',
+  'https://www.akamaistatus.com/api/v2/incidents.json':                                                'akamai-incidents',
+  'https://www.fastlystatus.com/rss/':                                                                  'fastly-rss',
+  'https://status.bunny.net/api/v2/status.json':                                                       'bunny-status',
+  'https://status.bunny.net/api/v2/incidents.json':                                                    'bunny-incidents',
+  'https://www.cacheflystatus.com/api/v2/status.json':                                                 'cachefly-status',
+  'https://www.cacheflystatus.com/api/v2/incidents.json':                                              'cachefly-incidents',
+  'https://uptime.quad9.net/api/v2/status.json':                                                       'quad9-status',
+  'https://uptime.quad9.net/api/v2/incidents.json':                                                    'quad9-incidents',
+  'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE':       'mbta-providence',
+  'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE': 'mbta-southcoast',
+  'https://cloudflare.com/cdn-cgi/trace':                                                              'cf-trace',
+  'https://speed.cloudflare.com/meta':                                                                 'speed-meta',
+  'https://ip-api.com/json':                                                                           'ip-api',
+  'https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json':     'doh-cloudflare',
+  'https://dns.google/generate_204':                                                                   'google-204',
+};
+
+// Populated by /events SSE stream before parsers run; getText() checks here first.
+const _svcDataCache={};
+
+// Build proxy URL using route key if available; unknown URLs fall back to direct fetch.
 const PROXIES=_IS_DEPLOYED
-  ?[u=>`/proxy?url=${encodeURIComponent(u)}`,u=>u]
+  ?[u=>{ const k=ROUTE_KEYS[u]; return k?`/proxy?svc=${k}`:undefined; }, u=>u]
   :[u=>u];
 
 async function fetchWithTimeout(url, timeout=15000){
@@ -980,10 +1046,16 @@ async function fetchWithTimeout(url, timeout=15000){
 }
 
 async function getText(url){
+  // Return SSE-prefetched data instantly when available
+  const key=ROUTE_KEYS[url];
+  if(key!==undefined && _svcDataCache[key]!==undefined) return _svcDataCache[key];
+
   let err;
   for(const proxy of PROXIES){
+    const proxyUrl=proxy(url);
+    if(proxyUrl===undefined) continue; // this strategy has no proxy for this URL
     try {
-      const r=await fetchWithTimeout(proxy(url));
+      const r=await fetchWithTimeout(proxyUrl);
       if(!r.ok) throw new Error(String(r.status));
       return await r.text();
     } catch(e){ err=e; }
@@ -1609,6 +1681,27 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
+  if(s.p==='fastly'){
+    try{
+      const xml=await getText(s.su);
+      const doc=new DOMParser().parseFromString(xml,'text/xml');
+      const items=Array.from(doc.querySelectorAll('item'));
+      const now=Date.now();
+      const active=items.filter(item=>{
+        const pub=item.querySelector('pubDate')?.textContent;
+        if(!pub || now-Date.parse(pub)>24*3600000) return false;
+        const t=(item.querySelector('title')?.textContent||'').toLowerCase();
+        return !/resolv|complet|restor|postmortem/i.test(t);
+      });
+      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const latest=active[0];
+      const title=latest.querySelector('title')?.textContent||'';
+      const body=stripHtml(latest.querySelector('description')?.textContent||'');
+      const ind=/outage|down|major/i.test(title)?'major':'minor';
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const [sd,id]=await Promise.all([
       getJson(s.su),
@@ -2013,7 +2106,43 @@ function startPerServicePolling(){
 let refreshInterval = null;
 function scheduleRefresh(){
   clearInterval(refreshInterval);
-  refreshInterval = setInterval(()=>{ if(refreshFailCount>=2) init(); }, 30000);
+  refreshInterval = setInterval(()=>{ if(refreshFailCount>=2) _startRefresh(); }, 30000);
+}
+
+// ── SSE client ────────────────────────────────────────────────────────────────
+// Connects to /events, populates _svcDataCache with the Worker's cached
+// responses, then calls init() so all parsers run instantly from memory.
+// On cache-miss events the parser falls through to /proxy?svc= as normal.
+let _sseEs=null, _sseTimer=null;
+
+function startSSE(){
+  clearTimeout(_sseTimer);
+  if(_sseEs){ _sseEs.close(); _sseEs=null; }
+
+  const es=new EventSource('/events');
+  _sseEs=es;
+
+  es.addEventListener('svc', e=>{
+    try{ const {key,body}=JSON.parse(e.data); _svcDataCache[key]=body; }catch{}
+  });
+
+  es.addEventListener('done', ()=>{
+    es.close(); _sseEs=null;
+    init();
+    // Refresh cache every 50 s (Worker TTL is 60 s)
+    _sseTimer=setTimeout(startSSE, 50000);
+  });
+
+  es.onerror=()=>{
+    es.close(); _sseEs=null;
+    // SSE unavailable — fall back to direct proxy polling
+    init().then(()=>startPerServicePolling());
+    _sseTimer=setTimeout(startSSE, 90000);
+  };
+}
+
+function _startRefresh(){
+  if(_IS_DEPLOYED) startSSE(); else init();
 }
 
 
@@ -2310,18 +2439,28 @@ window.addEventListener('DOMContentLoaded',()=>{
   });
 
   // Footer refresh button
-  document.getElementById('f-refresh-btn')?.addEventListener('click',()=>{ if(!isRefreshing) init(); });
+  document.getElementById('f-refresh-btn')?.addEventListener('click',()=>{
+    if(!isRefreshing){
+      // Clear SSE cache so next init() fetches fresh data via proxy
+      Object.keys(_svcDataCache).forEach(k=>delete _svcDataCache[k]);
+      _startRefresh();
+    }
+  });
 
   // Refresh data when the tab/window becomes visible again
   document.addEventListener('visibilitychange', ()=>{
     if(document.hidden) return;
     const staleThreshold = 3 * 60 * 1000;
     if(!lastSuccessfulRefresh || Date.now() - lastSuccessfulRefresh > staleThreshold){
-      init();
+      _startRefresh();
     }
   });
 
-  init().then(()=>startPerServicePolling());
+  if(_IS_DEPLOYED){
+    startSSE();
+  } else {
+    init().then(()=>startPerServicePolling());
+  }
   scheduleRefresh();
 });
 </script>
