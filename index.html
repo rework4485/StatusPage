@@ -8,11 +8,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#09090b">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2322c55e'/><circle cx='16' cy='16' r='7' fill='%23fff'/></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" fetchpriority="high">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'"/>
+  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/></noscript>
   <style>
     :root {
       --ok: #22c55e;
@@ -230,7 +233,10 @@
     .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:clamp(13px, 1.15vw, 24px); font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:hidden; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
+    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:180px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; }
+    .inc-body::-webkit-scrollbar { width:4px; }
+    .inc-body::-webkit-scrollbar-track { background:transparent; }
+    .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card.compact .status-label { font-size:10px; padding:2px 6px; }
@@ -660,7 +666,7 @@
         </div>
         <div class="brand-meta">
           <div class="brand-name">Service Status</div>
-          <div class="brand-sub">Live monitoring · auto-refresh every 2 min</div>
+          <div class="brand-sub">Live monitoring · per-service updates</div>
           <div class="stats">
             <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
             <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
@@ -856,6 +862,9 @@ const SVCS=[
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',cat:'infra'},
+  // Transit
+  {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
+  {name:'MBTA South Coast Rail',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/commuter-rail',p:'mbta',cat:'transit'},
   // Net Connection is handled by the dedicated Network page (⚡ Network tab)
 ];
 
@@ -1799,19 +1808,20 @@ function showView(view){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PROXIES=[
-  u=>u,
-  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://cors.isomorphic-git.org/'+u
-];
+// When deployed to Cloudflare Pages or Vercel, /proxy handles CORS server-side
+const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
+const PROXIES=_IS_DEPLOYED
+  ?[u=>`/proxy?url=${encodeURIComponent(u)}`,u=>u,u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://cors.isomorphic-git.org/'+u]
+  :[u=>u,u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://cors.isomorphic-git.org/'+u];
 
 function proxyOrder(provider){
+  // When deployed, index 0 is the serverless /proxy endpoint — always try it first
+  if(_IS_DEPLOYED) return [0,1,2,3,4];
   if(provider==='aws')     return [2,0,3,1];
   if(provider==='azure')   return [1,2,3,0];
   if(provider==='fastly'||provider==='apple'||provider==='appledeveloper'||provider==='ibm') return [1,2,3,0];
   if(provider==='akamai')  return [1,0,2,3];
-  return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
+  return (provider==='adobe'||provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
 
 async function fetchWithTimeout(url, timeout=15000){
@@ -2118,6 +2128,29 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
+  if(s.p==='mbta'){
+    try{
+      const data=await getJson(s.su,s.p);
+      const alerts=(data?.data||[]).filter(a=>{
+        const lc=(a.attributes?.lifecycle||'').toUpperCase();
+        return lc==='NEW'||lc==='ONGOING';
+      });
+      const EFFECT_IND={SUSPENSION:'major',SHUTTLE:'major',NO_SERVICE:'major',SIGNIFICANT_DELAYS:'minor',DETOUR:'minor',STOP_CLOSURE:'minor',DELAY:'minor',SERVICE_CHANGE:'minor'};
+      const serviceAlerts=alerts.filter(a=>{
+        const sev=a.attributes?.severity||0;
+        const eff=a.attributes?.effect||'';
+        return sev>=3&&EFFECT_IND[eff]!=null;
+      }).sort((a,b)=>(b.attributes?.severity||0)-(a.attributes?.severity||0));
+      if(!serviceAlerts.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const top=serviceAlerts[0];
+      const eff=top.attributes?.effect||'';
+      const ind=EFFECT_IND[eff]||'minor';
+      const header=top.attributes?.header||top.attributes?.short_header||eff.replace(/_/g,' ');
+      const extras=serviceAlerts.slice(1).map(a=>`• ${a.attributes?.header||a.attributes?.effect||'Alert'}`).join('<br>');
+      return mk(s.name,ind,header,extras,new Date(top.attributes?.updated_at||Date.now()).toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
   if(s.p==='cloudflare'){
     try {
       const [sd,id,cd,md]=await Promise.all([
@@ -2217,14 +2250,21 @@ async function fetchOne(s){
           hasRerouteNotice=true;
           ind='none';
         }
-        const impactsList=affectedNorthAmerica
-          .map(c=>`• ${c.name}: ${LABELS[cloudflareComponentIndicator(c)]||'Impacted'}`)
-          .join('<br>');
-
+        // Format DC names compactly: "CLT · Charlotte, NC" instead of full verbose name
+        const fmtDc=n=>{
+          const codeM=/\(([A-Z]{3,4})\)/.exec(n);
+          const code=codeM?codeM[1]:'';
+          const city=n.replace(/,?\s*[\w\s]+-\s*\([A-Z]{3,4}\)/,'').replace(/,\s*(United States|Canada|Mexico)$/i,'').trim();
+          return code?`${code} · ${city}`:(city||n);
+        };
+        const n=affectedNorthAmerica.length;
+        const numWord=['','one','two','three','four','five','six','seven','eight','nine','ten'];
+        const nLabel=n<=10?numWord[n]:String(n);
+        const dcList=affectedNorthAmerica.map(c=>`• ${fmtDc(c.name)}`).join('<br>');
         if(!title){
-          title=`${affectedNorthAmerica.length} non-operational North America status${affectedNorthAmerica.length===1?'':'es'}`;
+          title=`Traffic re-routed at ${nLabel} Data Center${n===1?'':'s'} in North America`;
         }
-        body=`${body ? `${body}<br><br>` : ''}<strong>North America affected areas:</strong><br>${impactsList}`;
+        body=`${body?`${body}<br><br>`:''}<strong>Affected Data Centers:</strong><br>${dcList}`;
       } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
           .filter(c=>cloudflareComponentIndicator(c)!=='none')
@@ -2444,6 +2484,7 @@ function renderServices(results){
   };
   addGroup('Applications & Platforms', results.filter(s=>s.cat==='app'));
   addGroup('Infrastructure', results.filter(s=>s.cat==='infra'));
+  addGroup('Transit', results.filter(s=>s.cat==='transit'));
   // Update overall status summary banner
   const summary=document.getElementById('status-summary');
   if(summary){
@@ -2461,6 +2502,7 @@ function mkCard(svc, delay){
   const d=document.createElement('div');
   const isMini=svc.ind==='none' && !svc.noMini;
   d.className=`card ${CC[svc.ind]||''}${isMini?' mini':''}`;
+  d.dataset.svc=svc.name;
   d.style.animationDelay=delay+'ms';
   d.style.setProperty('--tile-delay', delay+'ms');
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
@@ -2481,7 +2523,7 @@ function mkCard(svc, delay){
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" loading="lazy" decoding="async" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
           ${!isMini && urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
@@ -2571,12 +2613,15 @@ function updateStats(data){
 }
 
 
+const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
+window._lastResults=window._lastResults||{};
+
 async function init(){
   if(isRefreshing) return;
   setRefreshing(true);
   let results;
   try{
-    results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))),i*120))));
+    results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))),i*80))));
   }catch(e){
     refreshFailCount++;
     if(refreshFailCount>=2) setStale(true);
@@ -2587,7 +2632,6 @@ async function init(){
   lastSuccessfulRefresh=Date.now();
   setStale(false);
   setRefreshing(false);
-  const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
   results.forEach(s=>{
     s.cat=svcCatMap[s.name]||'app';
     const prev=window._pi[s.name];
@@ -2597,10 +2641,64 @@ async function init(){
       queueAlert(s,'restored');
     }
     window._pi[s.name]=s.ind;
+    window._lastResults[s.name]=s;
   });
   updateStats(results);
   updateIncidentPin(results);
   renderServices(results);
+}
+
+// Per-service background polling — only re-renders what changed
+async function pollService(svc){
+  try{
+    const result=await fetchOne(svc);
+    result.cat=svcCatMap[result.name]||'app';
+    const prev=window._pi[result.name];
+    const prevResult=window._lastResults[result.name];
+    const changed=!prevResult||prev!==result.ind||prevResult.title!==result.title||prevResult.body!==result.body;
+    if(changed){
+      if(prev && prev==='none' && (result.ind==='minor'||result.ind==='major')) queueAlert(result, result.ind==='major'?'outage':'degraded');
+      else if(prev && (prev==='minor'||prev==='major') && result.ind==='none') queueAlert(result,'restored');
+      window._pi[result.name]=result.ind;
+      window._lastResults[result.name]=result;
+      // Patch just the changed card in the DOM
+      const existing=document.querySelector(`[data-svc="${CSS.escape(result.name)}"]`);
+      if(existing){
+        const newCard=mkCard(result,0);
+        newCard.style.animationDelay='0ms';
+        newCard.style.setProperty('--tile-delay','0ms');
+        existing.replaceWith(newCard);
+      }
+      // Update header stats and incident pin
+      const allResults=Object.values(window._lastResults);
+      updateStats(allResults);
+      updateIncidentPin(allResults);
+      // Update status summary banner
+      const summary=document.getElementById('status-summary');
+      if(summary){
+        const total=allResults.length;
+        const issues=allResults.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+        const hasOutage=allResults.some(s=>s.ind==='major');
+        const cls=hasOutage?'bad':issues>0?'warn':'ok';
+        const msg=issues===0?'All Systems Operational':issues+' Issue'+(issues>1?'s':'')+' Detected';
+        summary.className='status-summary show '+cls;
+        summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
+      }
+      lastSuccessfulRefresh=Date.now();
+      setStale(false);
+    }
+  }catch(e){}
+}
+
+function startPerServicePolling(){
+  SVCS.forEach((s,i)=>{
+    // Stagger so they don't all hit simultaneously, spread over the 2-min window
+    const offset=Math.round((i/SVCS.length)*110000)+5000;
+    setTimeout(()=>{
+      pollService(s);
+      setInterval(()=>pollService(s), 120000);
+    }, offset);
+  });
 }
 
 // Retry every 30s when stale; no-ops immediately when data is fresh
@@ -2634,11 +2732,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     }
   });
 
-  init();
-  setInterval(init, 120000);
+  init().then(()=>startPerServicePolling());
   scheduleRefresh();
 });
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 </body>
 </html>
