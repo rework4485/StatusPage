@@ -43,6 +43,8 @@ const ALLOWED_HOSTS = new Set([
   'free.freeipapi.com',
   'ipinfo.io',
   'speed.cloudflare.com',
+  'cloudflare-dns.com',
+  'dns.google',
 ]);
 
 export async function onRequest(context) {

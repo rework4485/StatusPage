@@ -422,8 +422,48 @@
     .section-hdr-badge.outage { color: var(--bad); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
     .section-hdr-badge.maint { color: var(--maint); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
 
-    /* ── Nav tabs (hidden — single view) ─────────────────────────────────────── */
-    .nav-tabs { display:none; }
+    /* ── Nav tabs ────────────────────────────────────────────────────────────── */
+    .nav-tabs { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .nav-tab { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.01em; font-family:var(--font); }
+    .nav-tab.active { background:rgba(255,255,255,0.1); color:var(--text); border-color:rgba(255,255,255,0.2); }
+    .nav-tab:hover:not(.active) { background:rgba(255,255,255,0.07); color:var(--text); }
+
+    /* ── Network diagnostics view ─────────────────────────────────────────── */
+    .net-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:4px 0 20px; }
+    .net-title { font-size:18px; font-weight:700; letter-spacing:-0.02em; }
+    .net-sub { font-size:13px; color:var(--sub); margin-top:3px; }
+    .net-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; padding-bottom:28px; }
+    .net-card-hdr { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .net-card-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); }
+    .net-card-icon svg { width:17px; height:17px; }
+    .net-card-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--sub); }
+    .net-metric { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .net-metric:last-child { border-bottom:none; }
+    .net-metric-label { color:var(--sub); flex-shrink:0; }
+    .net-metric-val { color:var(--text); font-weight:600; text-align:right; word-break:break-all; }
+    .net-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:2px 8px; border-radius:5px; }
+    .net-badge-ok   { background:rgba(34,197,94,0.1);  color:#86efac; border:1px solid rgba(34,197,94,0.2); }
+    .net-badge-warn { background:rgba(245,158,11,0.1); color:#fcd34d; border:1px solid rgba(245,158,11,0.2); }
+    .net-badge-bad  { background:rgba(239,68,68,0.1);  color:#fda4af; border:1px solid rgba(239,68,68,0.2); }
+    .net-badge-muted{ background:rgba(255,255,255,0.05); color:var(--sub); border:1px solid var(--border); }
+    .speed-bar { height:6px; border-radius:3px; background:rgba(255,255,255,0.07); margin:10px 0 4px; overflow:hidden; }
+    .speed-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--ok), #16a34a); transition:width 0.5s ease; width:0%; }
+    .net-run-btn { width:100%; margin-top:12px; padding:9px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--text); font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all 0.2s; }
+    .net-run-btn:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); }
+    .net-run-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .net-shimmer { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:4px; height:14px; margin:8px 0; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .net-shimmer-wide  { width:100%; }
+    .net-shimmer-mid   { width:70%; }
+    .net-shimmer-short { width:45%; }
+    .net-refresh-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:7px; padding:6px 12px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
+    .net-refresh-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
+    .net-refresh-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .net-note { font-size:11px; color:var(--muted); margin-top:10px; line-height:1.5; }
+    .net-speed-val { font-size:28px; font-weight:800; letter-spacing:-0.03em; color:var(--text); line-height:1; }
+    .net-speed-unit { font-size:13px; color:var(--sub); margin-left:4px; font-weight:500; }
+    .net-speed-row { display:flex; align-items:baseline; gap:0; margin:4px 0 2px; }
+    .net-err { color:var(--warn); font-size:12px; padding:6px 0; }
 
 
     /* Issues grid responsive */
@@ -516,6 +556,7 @@
       <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
       <div class="nav-tabs">
         <button class="nav-tab active" data-view="services" type="button">Services</button>
+        <button class="nav-tab" data-view="network" type="button">Network</button>
       </div>
     </div>
   </div>
@@ -526,6 +567,16 @@
       <div class="load-t">Fetching service status…</div>
     </div>
     <div id="services-grid"></div>
+  </div>
+  <div class="view" id="view-network">
+    <div class="net-header">
+      <div>
+        <div class="net-title">Network Diagnostics</div>
+        <div class="net-sub">Connection analysis for this browser &amp; network</div>
+      </div>
+      <button id="net-refresh-btn" class="net-refresh-btn" type="button">↻ Refresh</button>
+    </div>
+    <div id="net-diag-container" class="net-grid"></div>
   </div>
 <div class="footer">
     <div class="f-left">
@@ -1957,6 +2008,257 @@ function scheduleRefresh(){
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Network Diagnostics
+// ─────────────────────────────────────────────────────────────────────────────
+
+// SVG icon strings for each card
+const _netIcons = {
+  wifi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>`,
+  cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
+  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  server: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6" stroke-width="3"/><line x1="6" y1="18" x2="6.01" y2="18" stroke-width="3"/></svg>`,
+  globe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  gauge: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 7.38 16.75"/><path d="M12 2A10 10 0 0 0 4.62 18.75"/><line x1="12" y1="12" x2="16" y2="8"/><circle cx="12" cy="12" r="2"/></svg>`,
+};
+
+function parseCFTrace(text) {
+  const obj = {};
+  for (const line of text.trim().split('\n')) {
+    const eq = line.indexOf('=');
+    if (eq > 0) obj[line.slice(0, eq).trim()] = line.slice(eq + 1).trim();
+  }
+  return obj;
+}
+
+async function measureLatency(url, count) {
+  count = count || 5;
+  const times = [];
+  for (let i = 0; i < count; i++) {
+    const sep = url.includes('?') ? '&' : '?';
+    const t = performance.now();
+    try {
+      await fetchWithTimeout(url + sep + '_t=' + Date.now(), 6000);
+      times.push(performance.now() - t);
+    } catch(e) {}
+    if (i < count - 1) await new Promise(r => setTimeout(r, 80));
+  }
+  if (!times.length) return null;
+  times.sort((a, b) => a - b);
+  return {
+    min: Math.round(times[0]),
+    avg: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+  };
+}
+
+const _DOH_PROVIDERS = [
+  { name: 'Cloudflare (1.1.1.1)',  cidrs: ['1.1.1.', '1.0.0.'] },
+  { name: 'Google DNS (8.8.8.8)',  cidrs: ['8.8.8.', '8.8.4.'] },
+  { name: 'Quad9 (9.9.9.9)',       cidrs: ['9.9.9.', '149.112.112.'] },
+  { name: 'NextDNS',               cidrs: ['45.90.28.', '45.90.30.'] },
+  { name: 'AdGuard DNS',           cidrs: ['94.140.14.', '94.140.15.'] },
+  { name: 'OpenDNS',               cidrs: ['208.67.222.', '208.67.220.'] },
+  { name: 'Cloudflare WARP',       cidrs: ['162.159.', '172.64.', '104.16.', '104.17.', '104.18.', '104.19.', '104.20.', '104.21.'] },
+];
+
+function classifyResolver(ip) {
+  if (!ip) return { isDoh: false, provider: 'Unknown' };
+  for (const p of _DOH_PROVIDERS) {
+    if (p.cidrs.some(c => ip.startsWith(c))) return { isDoh: true, provider: p.name };
+  }
+  return { isDoh: false, provider: 'ISP / Private DNS' };
+}
+
+async function detectDohResolver() {
+  try {
+    const data = await getJson('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json');
+    const raw = (data && data.Answer && data.Answer[0] && data.Answer[0].data) || '';
+    return raw.replace(/"/g, '').trim() || null;
+  } catch(e) { return null; }
+}
+
+async function measureDownloadSpeed() {
+  const SIZE = 10000000;
+  const url = 'https://speed.cloudflare.com/__down?bytes=' + SIZE;
+  const start = performance.now();
+  try {
+    const r = await fetchWithTimeout(url, 45000);
+    const buf = await r.arrayBuffer();
+    const elapsed = (performance.now() - start) / 1000;
+    const mbps = (buf.byteLength * 8) / (elapsed * 1000000);
+    return { mbps: Math.round(mbps * 10) / 10, elapsed: Math.round(elapsed * 10) / 10, bytes: buf.byteLength };
+  } catch(e) { return null; }
+}
+
+function mkNetCard(id, iconSvg, title, body) {
+  return `<div class="card net-card" id="${id}"><div class="net-card-hdr"><div class="net-card-icon">${iconSvg}</div><span class="net-card-title">${title}</span></div>${body}</div>`;
+}
+function mkNetMetric(label, val) {
+  return `<div class="net-metric"><span class="net-metric-label">${label}</span><span class="net-metric-val">${val}</span></div>`;
+}
+function mkNetBadge(label, type) {
+  const sym = type === 'ok' ? '✓' : type === 'bad' ? '✗' : type === 'warn' ? '⚠' : '–';
+  return `<span class="net-badge net-badge-${type}">${sym} ${label}</span>`;
+}
+function mkShimmer() {
+  return '<div class="net-shimmer net-shimmer-wide"></div><div class="net-shimmer net-shimmer-mid"></div><div class="net-shimmer net-shimmer-short"></div>';
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let netDiagRan = false;
+let netDiagRunning = false;
+
+function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
+  const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+  const warp = cf.warp === 'on';
+  const publicIp = esc(cf.ip || ip.query || '—');
+  const isp = esc(ip.isp || meta.asOrganization || '—');
+  const loc = ip.city && ip.country ? esc(ip.city + ', ' + ip.country) : esc(ip.country || '—');
+  const asn = esc(ip.as || (meta.asn ? 'AS' + meta.asn : '—'));
+  const connSpeedRow = navConn
+    ? mkNetMetric('Browser Est.', navConn.downlink ? '~' + navConn.downlink + ' Mbps · ' + esc(navConn.effectiveType || '') : esc(navConn.effectiveType || '—'))
+    : '';
+  const connSaveRow = (navConn && navConn.saveData) ? mkNetMetric('Data Saver', mkNetBadge('Enabled', 'warn')) : '';
+  const connCard = mkNetMetric('Public IP', publicIp)
+    + mkNetMetric('ISP', isp)
+    + mkNetMetric('Location', loc)
+    + mkNetMetric('ASN', asn)
+    + (warp ? mkNetMetric('VPN / Tunnel', mkNetBadge('Cloudflare WARP', 'ok')) : '')
+    + connSpeedRow + connSaveRow;
+
+  const cfColo = esc(meta.colo || cf.colo || '—');
+  const cfCity = esc(meta.city || '—');
+  const cfCountry = esc(meta.country || cf.loc || '—');
+  const cfHttpProto = esc(cf.http || meta.httpProtocol || '—');
+  const httpBadge = /3/.test(cfHttpProto) ? mkNetBadge(cfHttpProto, 'ok') : mkNetBadge(cfHttpProto || '—', 'warn');
+  const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg') : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
+  const cfCard = mkNetMetric('Data Center', cfColo + ' · ' + cfCity)
+    + mkNetMetric('Country', cfCountry)
+    + mkNetMetric('HTTP Protocol', httpBadge)
+    + cfLatRow;
+
+  const tlsStr = esc(cf.tls || '—');
+  const tlsBadge = cf.tls === 'TLSv1.3' ? mkNetBadge('TLS 1.3', 'ok')
+    : cf.tls === 'TLSv1.2' ? mkNetBadge('TLS 1.2', 'warn')
+    : cf.tls ? mkNetBadge(tlsStr, 'bad') : '<span class="net-err">—</span>';
+  const h3Badge = /3/.test(cf.http || '') ? mkNetBadge('HTTP/3 (QUIC)', 'ok') : mkNetBadge('HTTP/2 only', 'warn');
+  const ipv6Badge = (cf.ip || '').includes(':') ? mkNetBadge('IPv6', 'ok') : mkNetBadge('IPv4 only', 'muted');
+  const warpBadge = warp ? mkNetBadge('Active', 'ok') : mkNetBadge('Off', 'muted');
+  const protoCard = mkNetMetric('TLS Version', tlsBadge)
+    + mkNetMetric('HTTP Version', h3Badge)
+    + mkNetMetric('IP Protocol', ipv6Badge)
+    + mkNetMetric('Cloudflare WARP', warpBadge);
+
+  const resolverClassification = classifyResolver(resolverIp);
+  const resolverDisplay = resolverIp ? esc(resolverIp) : '<span class="net-err">Unavailable</span>';
+  const dohBadge = resolverIp
+    ? (resolverClassification.isDoh ? mkNetBadge('Detected · ' + esc(resolverClassification.provider), 'ok') : mkNetBadge('Not detected · ' + esc(resolverClassification.provider), 'muted'))
+    : '<span class="net-err">Could not determine</span>';
+  const dnsCard = mkNetMetric('DNS Resolver IP', resolverDisplay)
+    + mkNetMetric('Resolver', esc(resolverClassification.provider))
+    + mkNetMetric('DNS over HTTPS', dohBadge)
+    + `<div class="net-note">The resolver IP shows which DNS server forwards your queries. Known DoH providers (Cloudflare, Google, Quad9 etc.) are detected automatically.</div>`;
+
+  const gLatCard = gLat
+    ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg')
+      + `<div class="net-note">Google uses Anycast BGP routing. Latency reflects your nearest Google PoP via dns.google.</div>`
+    : `<div class="net-err" style="padding:10px 0">Unable to reach dns.google — may be blocked by network policy or CORS.</div>`;
+
+  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed &amp; latency via Cloudflare's nearest edge server. Uses ~10 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
+
+  const container = document.getElementById('net-diag-container');
+  if (!container) return;
+  container.innerHTML = [
+    mkNetCard('nc-connection', _netIcons.wifi,   'Your Connection',   connCard),
+    mkNetCard('nc-cf-edge',   _netIcons.cloud,   'Cloudflare Edge',   cfCard),
+    mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support',  protoCard),
+    mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',   dnsCard),
+    mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',       gLatCard),
+    mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',        speedCard),
+  ].join('');
+
+  document.getElementById('net-speed-run-btn')?.addEventListener('click', runSpeedTest);
+}
+
+async function runNetworkDiag() {
+  if (netDiagRunning) return;
+  netDiagRunning = true;
+  netDiagRan = true;
+
+  const refreshBtn = document.getElementById('net-refresh-btn');
+  if (refreshBtn) refreshBtn.disabled = true;
+
+  const container = document.getElementById('net-diag-container');
+  if (!container) { netDiagRunning = false; return; }
+
+  // Show skeleton loading placeholders
+  container.innerHTML = [
+    mkNetCard('nc-connection', _netIcons.wifi,  'Your Connection',  mkShimmer()),
+    mkNetCard('nc-cf-edge',   _netIcons.cloud,  'Cloudflare Edge',  mkShimmer()),
+    mkNetCard('nc-protocol',  _netIcons.lock,   'Protocol Support', mkShimmer()),
+    mkNetCard('nc-dns',       _netIcons.server, 'DNS Information',  mkShimmer()),
+    mkNetCard('nc-google',    _netIcons.globe,  'Google Edge',      mkShimmer()),
+    mkNetCard('nc-speed',     _netIcons.gauge,  'Speed Test',       mkShimmer()),
+  ].join('');
+
+  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR] = await Promise.allSettled([
+    getText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
+    getJson('https://speed.cloudflare.com/meta'),
+    getJson('https://ip-api.com/json'),
+    detectDohResolver(),
+    measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
+    measureLatency('https://dns.google/generate_204', 5),
+  ]);
+
+  _renderNetCards(
+    cfTraceR.value  || {},
+    speedMetaR.value|| {},
+    ipInfoR.value   || {},
+    resolverIpR.value || null,
+    cfLatR.value    || null,
+    gLatR.value     || null
+  );
+
+  if (refreshBtn) refreshBtn.disabled = false;
+  netDiagRunning = false;
+}
+
+async function runSpeedTest() {
+  const btn = document.getElementById('net-speed-run-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Testing… (downloads ~10 MB)'; }
+
+  const [speedResult, latResult] = await Promise.all([
+    measureDownloadSpeed(),
+    measureLatency('https://cloudflare.com/cdn-cgi/trace', 8),
+  ]);
+
+  const card = document.getElementById('nc-speed');
+  if (!card) return;
+  const body = card.querySelector('.net-card-hdr');
+  // Remove everything after the header
+  let next = body && body.nextSibling;
+  while (next) { const tmp = next.nextSibling; next.parentNode.removeChild(next); next = tmp; }
+
+  if (speedResult) {
+    const pct = Math.min(speedResult.mbps / 150, 1) * 100;
+    const qual = speedResult.mbps > 50 ? 'ok' : speedResult.mbps > 10 ? 'warn' : 'bad';
+    const latStr = latResult ? latResult.min + ' ms min · ' + latResult.avg + ' ms avg' : '—';
+    const html = `<div class="net-speed-row"><span class="net-speed-val">${speedResult.mbps}</span><span class="net-speed-unit">Mbps ↓</span></div>`
+      + `<div class="speed-bar"><div class="speed-bar-fill" style="width:${pct}%;background:${qual==='ok'?'var(--ok)':qual==='warn'?'var(--warn)':'var(--bad)'}"></div></div>`
+      + mkNetMetric('RTT (CF Edge)', latStr)
+      + mkNetMetric('Test Duration', speedResult.elapsed + 's')
+      + `<button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Re-run Speed Test</button>`;
+    card.insertAdjacentHTML('beforeend', html);
+  } else {
+    card.insertAdjacentHTML('beforeend',
+      `<div class="net-err">Speed test failed — check connection or try again.</div>`
+      + `<button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Re-run Speed Test</button>`);
+  }
+  document.getElementById('net-speed-run-btn')?.addEventListener('click', runSpeedTest);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 window.addEventListener('DOMContentLoaded',()=>{
   const testBtn=document.getElementById('test-alert-btn');
   if(testBtn) testBtn.addEventListener('click', runAlertTest);
@@ -1964,8 +2266,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('pointerdown', primeAudio, {once:true, passive:true});
   window.addEventListener('keydown', primeAudio, {once:true});
 
-  // Tab navigation
-  document.querySelectorAll('.nav-tab').forEach(t=>t.addEventListener('click',()=>showView(t.dataset.view)));
+  // Tab navigation — auto-run diagnostics on first Network tab visit
+  document.querySelectorAll('.nav-tab').forEach(t=>t.addEventListener('click',()=>{
+    showView(t.dataset.view);
+    if(t.dataset.view==='network' && !netDiagRan) runNetworkDiag();
+  }));
+
+  // Network refresh button
+  document.getElementById('net-refresh-btn')?.addEventListener('click',()=>{
+    netDiagRan=false;
+    runNetworkDiag();
+  });
 
   // Footer refresh button
   document.getElementById('f-refresh-btn')?.addEventListener('click',()=>{ if(!isRefreshing) init(); });
