@@ -1838,18 +1838,22 @@ function renderServices(results){
   searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false">`;
   dir.appendChild(searchWrap);
   const srch=searchWrap.querySelector('.svc-search');
+  let _srchTimer=null;
   srch.addEventListener('input',()=>{
-    const q=srch.value.trim().toLowerCase();
-    dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
-      let any=false;
-      sec.querySelectorAll('.svc-row').forEach(row=>{
-        const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
-        row.style.display=match?'':'none';
-        if(match) any=true;
+    clearTimeout(_srchTimer);
+    _srchTimer=setTimeout(()=>{
+      const q=srch.value.trim().toLowerCase();
+      dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
+        let any=false;
+        sec.querySelectorAll('.svc-row').forEach(row=>{
+          const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
+          row.style.display=match?'':'none';
+          if(match) any=true;
+        });
+        sec.style.display=any?'':'none';
+        if(q&&any) sec.classList.remove('collapsed');
       });
-      sec.style.display=any?'':'none';
-      if(q&&any) sec.classList.remove('collapsed');
-    });
+    },150);
   });
 
   const addSection=(label,items,icon)=>{
@@ -1899,26 +1903,26 @@ function mkIncCard(svc){
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
   const labels=[svc.label,...(svc.labels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
-  const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${l}</span>`).join('')}</div>`:'';
+  const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${esc(l)}</span>`).join('')}</div>`:'';
   const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback||ICONS[svc.ind]||'?'}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${esc(fallback)||ICONS[svc.ind]||'?'}</span></div>
         <div class="c-name-block">
-          <div class="c-name">${svc.name}</div>
-          ${urlHost?`<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>`:''}
+          <div class="c-name">${esc(svc.name)}</div>
+          ${urlHost?`<a class="c-url" href="${esc(svc.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${esc(urlHost)}</a>`:''}
         </div>
       </div>
-      <div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div>
+      <div class="c-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
     </div>
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
       ${statusLabels}
-      <div class="inc-title">${incTitle}</div>
-      <div class="inc-body">${incBody}</div>
+      <div class="inc-title">${esc(incTitle)}</div>
+      <div class="inc-body">${esc(incBody)}</div>
     </div>
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
@@ -1941,10 +1945,10 @@ function mkSvcRow(svc){
   const preview=svc.ind!=='none'&&svc.title?svc.title:'';
   d.innerHTML=`
     <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
-    <div class="svc-icon-wrap">${logos.length?`<img src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${fallback}</span>`}</div>
-    <span class="svc-name">${svc.name}</span>
-    <span class="svc-inc-preview">${preview}</span>
-    <span class="svc-badge ${IC[svc.ind]||'ok'}">${svc.label}</span>`;
+    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${esc(fallback)}</span>`}</div>
+    <span class="svc-name">${esc(svc.name)}</span>
+    <span class="svc-inc-preview">${esc(preview)}</span>
+    <span class="svc-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</span>`;
   return d;
 }
 
@@ -2091,13 +2095,17 @@ async function pollService(svc){
   }catch(e){}
 }
 
+const _pollIntervals=[];
 function startPerServicePolling(){
+  // Clear any previously-registered intervals to prevent duplicates
+  _pollIntervals.forEach(id=>clearInterval(id));
+  _pollIntervals.length=0;
   SVCS.forEach((s,i)=>{
     // Stagger so they don't all hit simultaneously, spread over the 2-min window
     const offset=Math.round((i/SVCS.length)*110000)+5000;
     setTimeout(()=>{
       pollService(s);
-      setInterval(()=>pollService(s), 120000);
+      _pollIntervals.push(setInterval(()=>pollService(s), 120000));
     }, offset);
   });
 }
@@ -2462,6 +2470,13 @@ window.addEventListener('DOMContentLoaded',()=>{
     init().then(()=>startPerServicePolling());
   }
   scheduleRefresh();
+
+  window.addEventListener('beforeunload',()=>{
+    if(_sseEs){ _sseEs.close(); _sseEs=null; }
+    clearTimeout(_sseTimer);
+    _pollIntervals.forEach(id=>clearInterval(id));
+    clearInterval(refreshInterval);
+  });
 });
 </script>
 </body>

@@ -92,6 +92,31 @@ function corsHeaders() {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Max-Age': '86400',
+    'X-Content-Type-Options': 'nosniff',
+  };
+}
+
+// Security headers applied to every HTML page response
+function pageSecurityHeaders() {
+  return {
+    'X-Frame-Options': 'SAMEORIGIN',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+    // Inline scripts/styles are needed (single-file SPA).
+    // External connects are HTTPS-only; logo images come from several CDNs.
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https:",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'none'",
+    ].join('; '),
   };
 }
 
@@ -236,7 +261,13 @@ export default {
     if (pathname === '/proxy') return handleProxy(request, ctx);
     if (pathname === '/events') return handleEvents(request, ctx);
 
-    // Serve static assets (index.html, icons, fonts cache, etc.)
-    return env.ASSETS.fetch(request);
+    // Serve static assets; inject security headers on HTML responses
+    const resp = await env.ASSETS.fetch(request);
+    if (resp.headers.get('content-type')?.includes('text/html')) {
+      const headers = new Headers(resp.headers);
+      for (const [k, v] of Object.entries(pageSecurityHeaders())) headers.set(k, v);
+      return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers });
+    }
+    return resp;
   },
 };
