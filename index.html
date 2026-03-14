@@ -1227,7 +1227,7 @@ async function fetchWithOpts(url, opts={}, timeout=20000){
 
 async function pingLatencies(count=10){
   const times=[];
-  const base='https://backend.librespeed.org/empty.php?nc=';
+  const base='https://www.gstatic.com/generate_204?nc=';
   for(let i=0;i<count;i++){
     const t0=performance.now();
     try {
@@ -1241,7 +1241,7 @@ async function pingLatencies(count=10){
 
 // Collect count latency pings staggered intervalMs apart (all fired concurrently)
 async function collectLatencyPings(count=20, intervalMs=350){
-  const base='https://backend.librespeed.org/empty.php?nc=';
+  const base='https://www.gstatic.com/generate_204?nc=';
   const tasks=Array.from({length:count},(_,i)=>
     new Promise(resolve=>{
       setTimeout(async()=>{
@@ -1268,12 +1268,12 @@ function pct90(arr){ if(!arr||!arr.length) return null; const s=[...arr].sort((a
 
 // ─── Download phase: streams bytes and fires concurrent pings ─────────────────
 async function runDownloadPhase(){
-  const sizeMB=[1, 10, 25]; // LibreSpeed uses MB parameter
+  const sizeMB=[1, 10, 25];
   const allSamples=[]; let cumulativeT=0; let allLat=[];
   let totalBits=0, totalSecs=0;
   for(const mb of sizeMB){
     const bytes=mb*1024*1024;
-    const url=`https://backend.librespeed.org/garbage.php?ckSize=${mb}&nc=${Date.now()}`;
+    const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
     const t0=performance.now();
     let received=0, lastSampleT=t0, lastSampleBytes=0;
     const pingCount=bytes>=10*1024*1024?10:6;
@@ -1328,7 +1328,7 @@ async function runUploadPhase(){
   // Helper: upload one chunk and return {mbps, bits} or null
   const uploadChunk=async(bytes,idx)=>{
     const body=new Uint8Array(bytes);
-    const url='https://backend.librespeed.org/empty.php?nc='+(Date.now()+idx);
+    const url='https://speed.cloudflare.com/__up?nc='+(Date.now()+idx);
     try{
       const tUp=performance.now();
       const r=await fetchWithOpts(url,{method:'POST',mode:'no-cors',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
@@ -1457,10 +1457,10 @@ function calcQuality(r){
 function updateServerInfo(meta){
   const el=document.getElementById('net-server-info');
   if(!el) return;
-  const location=[meta.city, meta.region, meta.country].filter(Boolean).join(', ')||'Unknown';
-  const ipVersion=meta.ip&&meta.ip.includes(':') ? 'IPv6' : 'IPv4';
+  const location=[meta.city, meta.regionName, meta.country].filter(Boolean).join(', ')||'Unknown';
+  const ipVersion=meta.query&&meta.query.includes(':') ? 'IPv6' : 'IPv4';
   const ipBadge=`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.12);margin-left:5px;vertical-align:middle">${ipVersion}</span>`;
-  const org=(meta.connection&&(meta.connection.org||meta.connection.isp))||'Unknown';
+  const org=meta.isp||meta.org||'Unknown';
   // navigator.connection supplement (Chrome/Edge only)
   const nc=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
   const ncType=nc ? (nc.effectiveType||nc.type||'') : '';
@@ -1470,7 +1470,7 @@ function updateServerInfo(meta){
   el.innerHTML=`
     <div class="net-info-line"><span class="net-info-icon">📍</span><span>Location: <span class="net-info-val">${location}</span></span></div>
     <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Network: <span class="net-info-val">${org}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.ip||'Unknown'}${ipBadge}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.query||'Unknown'}${ipBadge}</span></span></div>
     ${ncLine}`;
 }
 
@@ -1479,7 +1479,7 @@ function updateConnDetails(metaUrl){
   const grid=document.getElementById('net-conn-grid');
   if(!panel||!grid) return;
   try{
-    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('ipwho.is'));
+    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('ip-api.com'));
     const e=entries[entries.length-1];
     if(!e||!e.connectEnd) return;
     const dns=Math.round(e.domainLookupEnd-e.domainLookupStart);
@@ -1504,8 +1504,8 @@ function showNetMap(meta){
   }
   const mapEl=document.getElementById('net-map');
   if(!mapEl) return;
-  const clientLat=parseFloat(meta.latitude);
-  const clientLon=parseFloat(meta.longitude);
+  const clientLat=parseFloat(meta.lat);
+  const clientLon=parseFloat(meta.lon);
   if(!isFinite(clientLat)||!isFinite(clientLon)) return;
   if(netMapInstance){ netMapInstance.remove(); netMapInstance=null; }
   netMapInstance=L.map('net-map',{zoomControl:true,scrollWheelZoom:false}).setView([clientLat,clientLon],7);
@@ -1523,9 +1523,9 @@ function showNetMap(meta){
 
 async function measureEndpointLatency(){
   const endpoints=[
-    {label:'LibreSpeed', url:'https://backend.librespeed.org/empty.php?nc=', color:'#14b8a6'},
-    {label:'Google',     url:'https://www.gstatic.com/generate_204?nc=',     color:'#4ade80'},
-    {label:'Microsoft',  url:'https://www.bing.com/favicon.ico?nc=',         color:'#60a5fa'},
+    {label:'Cloudflare', url:'https://cloudflare.com/cdn-cgi/trace?nc=', color:'#f97316'},
+    {label:'Google',     url:'https://www.gstatic.com/generate_204?nc=', color:'#4ade80'},
+    {label:'Microsoft',  url:'https://www.bing.com/favicon.ico?nc=',     color:'#60a5fa'},
   ];
   const el=document.getElementById('net-endpoint-lat');
   if(el) el.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Measuring…</div>';
@@ -1599,14 +1599,14 @@ async function runFullSpeedTest(){
   if(cdPanel) cdPanel.style.display='none';
 
   try{
-    // 1. Connection info (ipwho.is — CORS-open public API)
+    // 1. Connection info (ip-api.com — free public API, CORS-open from all origins)
     setNetPhase('Getting connection info…');
     let meta={};
     try{
-      const r=await fetchWithOpts('https://ipwho.is/',{cache:'no-store'},8000);
+      const r=await fetchWithOpts('https://ip-api.com/json/',{cache:'no-store'},8000);
       if(r.ok) meta=await r.json();
     }catch(e){}
-    if(meta.ip){
+    if(meta.query){
       updateServerInfo(meta);
       showNetMap(meta);
       updateConnDetails();
