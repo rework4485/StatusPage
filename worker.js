@@ -78,6 +78,33 @@ const SSE_KEYS = Object.keys(ROUTES).filter(k =>
   !['cf-trace','speed-meta','ip-api','doh-cloudflare','google-204'].includes(k)
 );
 
+// Special routes: dynamic URLs or auth headers — handled outside the cache layer
+const SPECIAL_KEYS = new Set(['ioda-na-outages', 'radar-us-anomalies']);
+
+async function fetchSpecialRoute(key, env) {
+  if (key === 'ioda-na-outages') {
+    const until = Math.floor(Date.now() / 1000);
+    const from  = until - 86400;
+    const url = `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events/continent/NA?from=${from}&until=${until}&limit=50`;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': UA } });
+    if (!resp.ok) throw new Error(`upstream ${resp.status}`);
+    const body = await resp.text();
+    return { body, ct: resp.headers.get('content-type') || 'application/json' };
+  }
+  if (key === 'radar-us-anomalies') {
+    const token = env?.CF_RADAR_TOKEN;
+    if (!token) return { body: JSON.stringify({ noToken: true }), ct: 'application/json' };
+    const resp = await fetch(
+      'https://api.cloudflare.com/client/v4/radar/traffic_anomalies?location=US&location=CA&location=MX&status=VERIFIED&format=json',
+      { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }
+    );
+    if (!resp.ok) throw new Error(`upstream ${resp.status}`);
+    const body = await resp.text();
+    return { body, ct: resp.headers.get('content-type') || 'application/json' };
+  }
+  throw new Error('unknown special key');
+}
+
 const CACHE_TTL = 60; // seconds
 const UA = 'Mozilla/5.0 (compatible; StatusMonitor/1.0)';
 
@@ -169,7 +196,7 @@ async function fetchRoute(key, ctx) {
 }
 
 // ── /proxy handler ─────────────────────────────────────────────────────────────
-async function handleProxy(request, ctx) {
+async function handleProxy(request, env, ctx) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -178,6 +205,20 @@ async function handleProxy(request, ctx) {
   if (!key) {
     return new Response('Missing svc parameter', { status: 400, headers: corsHeaders() });
   }
+
+  // Special routes (dynamic URL / auth) — bypass cache
+  if (SPECIAL_KEYS.has(key)) {
+    try {
+      const { body, ct } = await fetchSpecialRoute(key, env);
+      return new Response(body, {
+        status: 200,
+        headers: { ...corsHeaders(), 'Content-Type': ct, 'Cache-Control': 'no-store' },
+      });
+    } catch (err) {
+      return new Response('Upstream error: ' + err.message, { status: 502, headers: corsHeaders() });
+    }
+  }
+
   if (!ROUTES[key]) {
     return new Response('Unknown service key', { status: 404, headers: corsHeaders() });
   }
@@ -258,7 +299,7 @@ export default {
     if (isBlocked(pathname)) {
       return new Response('Not Found', { status: 404 });
     }
-    if (pathname === '/proxy') return handleProxy(request, ctx);
+    if (pathname === '/proxy') return handleProxy(request, env, ctx);
     if (pathname === '/events') return handleEvents(request, ctx);
 
     // Serve static assets; inject security headers on HTML responses
