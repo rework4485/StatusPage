@@ -437,10 +437,13 @@
     .net-card-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); }
     .net-card-icon svg { width:17px; height:17px; }
     .net-card-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--sub); }
-    .net-metric { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; flex-wrap:wrap; }
+    .net-metric { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
     .net-metric:last-child { border-bottom:none; }
     .net-metric-label { color:var(--sub); flex-shrink:0; }
-    .net-metric-val { color:var(--text); font-weight:600; text-align:right; word-break:break-all; flex:1; min-width:0; }
+    .net-metric-val { color:var(--text); font-weight:600; text-align:right; word-break:break-all; min-width:0; }
+    /* Stacked layout for long values like IPv6 addresses */
+    .net-metric-stack { flex-direction:column; align-items:flex-start; gap:3px; }
+    .net-metric-stack .net-metric-val { text-align:left; font-size:12px; font-family:monospace; letter-spacing:-0.01em; width:100%; }
     .net-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:2px 8px; border-radius:5px; }
     .net-badge-ok   { background:rgba(34,197,94,0.1);  color:#86efac; border:1px solid rgba(34,197,94,0.2); }
     .net-badge-warn { background:rgba(245,158,11,0.1); color:#fcd34d; border:1px solid rgba(245,158,11,0.2); }
@@ -2277,9 +2280,17 @@ function classifyResolver(ip) {
 
 async function detectDohResolver() {
   try {
-    // Direct browser fetch so the resolver IP reflects the *user's* DNS configuration, not the proxy's.
-    // Cloudflare's DoH endpoint supports CORS with Access-Control-Allow-Origin: *.
-    const data = await _netDirectJson('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json');
+    // Must use Accept: application/dns-json header — the ct= query param causes 400 on cloudflare-dns.com.
+    // Direct browser fetch so resolver IP reflects the user's DNS config, not a proxy's.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT', {
+      headers: { 'Accept': 'application/dns-json' },
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const data = await r.json();
     const raw = (data?.Answer?.[0]?.data) || '';
     return raw.replace(/"/g, '').trim() || null;
   } catch(e) { return null; }
@@ -2309,6 +2320,9 @@ function mkNetCard(id, iconSvg, title, body) {
 function mkNetMetric(label, val) {
   return `<div class="net-metric"><span class="net-metric-label">${label}</span><span class="net-metric-val">${val}</span></div>`;
 }
+function mkNetMetricStack(label, val) {
+  return `<div class="net-metric net-metric-stack"><span class="net-metric-label">${label}</span><span class="net-metric-val">${val}</span></div>`;
+}
 function mkNetBadge(label, type) {
   const sym = type === 'ok' ? '✓' : type === 'bad' ? '✗' : type === 'warn' ? '⚠' : '–';
   return `<span class="net-badge net-badge-${type}">${sym} ${label}</span>`;
@@ -2332,7 +2346,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
   // navigator.connection.downlink is privacy-capped at 10 Mbps by browsers; omit to avoid misleading values.
   // Only show Data Saver which is reliable regardless of speed cap.
   const connSaveRow = (navConn && navConn.saveData) ? mkNetMetric('Data Saver', mkNetBadge('Enabled', 'warn')) : '';
-  const connCard = mkNetMetric('Public IP', publicIp)
+  const connCard = mkNetMetricStack('Public IP', publicIp)
     + mkNetMetric('ISP', isp)
     + mkNetMetric('Location', loc)
     + mkNetMetric('ASN', asn)
