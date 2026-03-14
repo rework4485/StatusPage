@@ -2280,19 +2280,19 @@ function classifyResolver(ip) {
 
 async function detectDohResolver() {
   try {
-    // Must use Accept: application/dns-json header — the ct= query param causes 400 on cloudflare-dns.com.
-    // Direct browser fetch so resolver IP reflects the user's DNS config, not a proxy's.
+    // edns.ip-api.com uses a unique random subdomain per request, forcing a fresh DNS lookup.
+    // Their authoritative server records which resolver queried it and returns {"dns":{"ip":"...","geo":"..."}}.
+    // Has Access-Control-Allow-Origin: * — works directly from browsers.
+    // whoami.cloudflare returns NXDOMAIN; cloudflare-dns.com DoH always shows CF's own resolver IP.
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch('https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT', {
-      headers: { 'Accept': 'application/dns-json' },
-      signal: ctrl.signal,
-    });
+    const r = await fetch('https://edns.ip-api.com/json', { signal: ctrl.signal });
     clearTimeout(timer);
     if (!r.ok) return null;
     const data = await r.json();
-    const raw = (data?.Answer?.[0]?.data) || '';
-    return raw.replace(/"/g, '').trim() || null;
+    const ip = data?.dns?.ip;
+    if (!ip) return null;
+    return { ip, geo: data.dns.geo || null };
   } catch(e) { return null; }
 }
 
@@ -2378,15 +2378,26 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
     + mkNetMetric('IP Protocol', ipv6Badge)
     + mkNetMetric('Cloudflare WARP', warpBadge);
 
-  const resolverClassification = classifyResolver(resolverIp);
-  const resolverDisplay = resolverIp ? esc(resolverIp) : '<span class="net-err">Unavailable</span>';
-  const dohBadge = resolverIp
-    ? (resolverClassification.isDoh ? mkNetBadge('Detected · ' + esc(resolverClassification.provider), 'ok') : mkNetBadge('Not detected · ' + esc(resolverClassification.provider), 'muted'))
+  // resolverIp is {ip, geo} from edns.ip-api.com, or null on failure
+  const resolverAddr = resolverIp?.ip || null;
+  const resolverGeo  = resolverIp?.geo || null;  // e.g. "United States - Google LLC"
+  const resolverClassification = classifyResolver(resolverAddr);
+  // Use geo org from edns.ip-api.com when CIDR match doesn't identify the provider
+  // (e.g. Google's recursive resolver may use 192.178.x.x, not 8.8.x.x)
+  const geoOrg = resolverGeo ? resolverGeo.replace(/^[A-Z]{2}\s*-\s*/, '') : null;
+  const knownPublicDns = /cloudflare|google|quad9|nextdns|adguard|opendns|cisco umbrella/i.test(geoOrg || '');
+  const resolverProvider = resolverClassification.isDoh
+    ? resolverClassification.provider
+    : (geoOrg || resolverClassification.provider);
+  const resolverDisplay = resolverAddr ? mkNetMetricStack('DNS Resolver IP', esc(resolverAddr)) : mkNetMetric('DNS Resolver IP', '<span class="net-err">Unavailable</span>');
+  const pubDnsBadge = resolverAddr
+    ? (knownPublicDns || resolverClassification.isDoh
+        ? mkNetBadge(esc(resolverProvider), 'ok')
+        : mkNetBadge(esc(resolverProvider || 'ISP / Private DNS'), 'muted'))
     : '<span class="net-err">Could not determine</span>';
-  const dnsCard = mkNetMetric('DNS Resolver IP', resolverDisplay)
-    + mkNetMetric('Resolver', esc(resolverClassification.provider))
-    + mkNetMetric('DNS over HTTPS', dohBadge)
-    + `<div class="net-note">The resolver IP shows which DNS server forwards your queries. Known DoH providers (Cloudflare, Google, Quad9 etc.) are detected automatically.</div>`;
+  const dnsCard = resolverDisplay
+    + mkNetMetric('Public DNS Provider', pubDnsBadge)
+    + `<div class="net-note">Shows the recursive DNS resolver your browser used to look up this page. Public DNS providers (Cloudflare, Google, Quad9, etc.) offer privacy and filtering features.</div>`;
 
   const gLatCard = gLat
     ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg')
