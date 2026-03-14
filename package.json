@@ -1,0 +1,11 @@
+{
+  "name": "status-page",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "scripts": {
+    "deploy": "wrangler pages deploy . --project-name status-page"
+  }
+}
