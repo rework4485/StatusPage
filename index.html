@@ -154,6 +154,7 @@
       grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
       gap:12px;
       padding-bottom:24px;
+      align-items:start;
     }
     .loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 0; }
     .card.tile-in { animation:tileIn 0.5s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--tile-delay, 0ms); }
@@ -284,7 +285,7 @@
     .card.mini .c-icon { width:56px; height:56px; border-radius:12px; font-size:27px; }
     .card.mini .c-logo { width:40px; height:40px; }
     .card.mini .c-fallback { font-size:20px; }
-    .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); overflow:hidden; }
     .card.mini .c-url { display:none; }
     .card.mini .c-badge { font-size:12px; padding:4px 10px; }
     .card.mini .c-name-block { min-width:0; }
@@ -811,6 +812,8 @@ const SVCS=[
   {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
+  {name:'Apple Services',su:'https://www.apple.com/support/systemstatus/data/system_status_en_US.js',hu:'https://www.apple.com/support/systemstatus/',p:'apple',cat:'app'},
+  {name:'Apple Developer',su:'https://developer.apple.com/tutorials/data/system-status.json',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
@@ -818,6 +821,13 @@ const SVCS=[
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
   {name:'Azure',su:'https://azure.status.microsoft/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
+  {name:'Oracle Cloud',su:'https://ocistatus.oraclecloud.com/api/v2/status.json',cu:'https://ocistatus.oraclecloud.com/api/v2/components.json',hu:'https://ocistatus.oraclecloud.com',p:'oci',cat:'infra'},
+  {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
+  {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/status.json',iu:'https://www.akamaistatus.com/api/v2/incidents.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
+  {name:'Fastly',su:'https://www.fastlystatus.com/api/v2/status.json',iu:'https://www.fastlystatus.com/api/v2/incidents.json',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
+  {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
+  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
+  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',cat:'infra'},
   // Net Connection is handled by the dedicated Network page (⚡ Network tab)
 ];
 
@@ -1231,7 +1241,7 @@ async function pingLatencies(count=10){
   for(let i=0;i<count;i++){
     const t0=performance.now();
     try {
-      const r=await fetchWithOpts(base+Date.now()+i, {cache:'no-store'}, 5000);
+      const r=await fetchWithOpts(base+Date.now()+i, {cache:'no-store',mode:'no-cors'}, 5000);
       await r.arrayBuffer();
       times.push(performance.now()-t0);
     } catch(e){ /* count as packet loss */ }
@@ -1247,7 +1257,7 @@ async function collectLatencyPings(count=20, intervalMs=350){
       setTimeout(async()=>{
         const t0=performance.now();
         try{
-          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store'},7000);
+          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store',mode:'no-cors'},7000);
           await r.arrayBuffer();
           resolve(performance.now()-t0);
         }catch(e){ resolve(null); }
@@ -1603,7 +1613,7 @@ async function runFullSpeedTest(){
     setNetPhase('Getting connection info…');
     let meta={};
     try{
-      const r=await fetchWithOpts('https://ip-api.com/json/',{cache:'no-store'},8000);
+      const r=await fetchWithOpts('http://ip-api.com/json/',{cache:'no-store'},8000);
       if(r.ok) meta=await r.json();
     }catch(e){}
     if(meta.query){
@@ -1747,8 +1757,10 @@ const PROXIES=[
 ];
 
 function proxyOrder(provider){
-  if(provider==='aws')   return [2,0,3,1];
-  if(provider==='azure') return [1,2,3,0];
+  if(provider==='aws')     return [2,0,3,1];
+  if(provider==='azure')   return [1,2,3,0];
+  if(provider==='fastly')  return [1,2,3,0];
+  if(provider==='akamai')  return [1,0,2,3];
   return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
 
@@ -2196,6 +2208,79 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
+  if(s.p==='oci'){
+    try{
+      const [st,comp]=await Promise.all([
+        getJson(s.su,s.p),
+        getJson(s.cu,s.p).catch(()=>null)
+      ]);
+      let ind=normalizeIndicator(st?.status?.indicator||'none');
+      const updated=st?.page?.updated_at?new Date(st.page.updated_at).toLocaleString():new Date().toLocaleString();
+      let title='',body='';
+      if(comp){
+        const naRegions=(comp.regionHealthReports||[]).filter(r=>r.geographicAreaName==='NAM');
+        const affected=[];
+        for(const region of naRegions)
+          for(const svc of (region.serviceHealthReports||[]))
+            if(svc.serviceStatus!=='NormalPerformance'&&(svc.incidents||[]).length)
+              affected.push(svc.serviceName+' ('+region.regionCanonicalName+')');
+        if(affected.length){
+          if(ind==='none') ind='minor';
+          title=affected.length+' North America service'+(affected.length>1?'s':'')+' affected';
+          body=affected.slice(0,3).join('; ');
+        }
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='ibm'){
+    try{
+      const text=await getText(s.su,s.p);
+      const doc=new DOMParser().parseFromString(text,'application/xml');
+      const items=[...doc.querySelectorAll('item')];
+      const cutoff=Date.now()-48*60*60*1000;
+      const recent=items.filter(it=>{
+        const pd=it.querySelector('pubDate')?.textContent;
+        return pd?new Date(pd).getTime()>cutoff:true;
+      });
+      const active=recent.filter(it=>
+        /incident|outage|degraded|disruption/i.test(it.querySelector('title')?.textContent||'')
+      );
+      const ind=active.length?'minor':'none';
+      const title=active.length?(active[0].querySelector('title')?.textContent||''):'';
+      const body=active.length?stripHtml(active[0].querySelector('description')?.textContent||'').slice(0,200):'';
+      const updated=items[0]?.querySelector('pubDate')?.textContent
+        ?new Date(items[0].querySelector('pubDate').textContent).toLocaleString()
+        :new Date().toLocaleString();
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='apple'){
+    try{
+      const data=JSON.parse(await getText(s.su,s.p));
+      const active=(data.services||[]).filter(sv=>
+        (sv.events||[]).some(ev=>ev.eventStatus&&ev.eventStatus!=='resolved')
+      );
+      const ind=active.length?'minor':'none';
+      const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
+      const body=active.slice(0,3).map(sv=>sv.serviceName).join(', ');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='appledeveloper'){
+    try{
+      const data=await getJson(s.su,s.p);
+      const active=(data.services||[]).filter(sv=>sv.statusType&&sv.statusType!=='');
+      const ind=active.length?(active.some(sv=>sv.statusType==='Outage')?'major':'minor'):'none';
+      const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
+      const body=active.slice(0,3).map(sv=>sv.serviceName).join(', ');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const [sd,id]=await Promise.all([
       getJson(s.su, s.p),
@@ -2241,6 +2326,15 @@ const LOGO_DOMAINS={
   'AWS':'aws.amazon.com',
   'Azure':'microsoft.com',
   'Google Cloud':'cloud.google.com',
+  'Oracle Cloud':'oracle.com',
+  'IBM Cloud':'ibm.com',
+  'Akamai':'akamai.com',
+  'Fastly':'fastly.com',
+  'Bunny.net':'bunny.net',
+  'CacheFly':'cachefly.com',
+  'Quad9':'quad9.net',
+  'Apple Services':'apple.com',
+  'Apple Developer':'developer.apple.com',
   'Net Connection':'librespeed.org'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
