@@ -629,12 +629,61 @@
     /* Placeholder / spinner inline */
     .net-placeholder { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); padding:4px 0; }
 
+    /* Connection details */
+    .net-conn-details { padding:10px 14px 12px; border-top:1px solid var(--border); flex-shrink:0; }
+    .net-conn-title { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:7px; }
+    .net-conn-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(54px, 1fr)); gap:6px; }
+    .net-conn-item { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:5px 7px; text-align:center; }
+    .net-conn-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .net-conn-val { font-size:13px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; margin-top:2px; }
+
+    /* Endpoint latency panel */
+    .net-latency-panel { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; flex-shrink:0; }
+    .net-ep-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
+    .net-ep-label { font-size:13px; color:var(--sub); width:76px; flex-shrink:0; }
+    .net-ep-barwrap { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+    .net-ep-bar { height:100%; border-radius:2px; transition:width 0.5s ease; }
+    .net-ep-val { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; width:44px; text-align:right; flex-shrink:0; }
+
+    /* Mobile card layout */
+    .mobile-page { display:grid; grid-template-columns:1fr; gap:10px; padding:2px 0 16px; }
+    .mobile-page .section-hdr { grid-column:1/-1; }
+    .mobile-page .card { min-height:150px; }
+
     /* Leaflet dark overrides */
     .leaflet-container { background:#0f0f11; }
     .leaflet-control-zoom a { background:#1c1c1e; border-color:rgba(255,255,255,0.12); color:var(--sub); }
     .leaflet-control-zoom a:hover { background:#2a2a2e; color:var(--text); }
     .leaflet-control-attribution { background:rgba(0,0,0,0.6); color:rgba(255,255,255,0.3); font-size:8px; }
     .leaflet-control-attribution a { color:rgba(255,255,255,0.4); }
+
+    /* ── Mobile responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .shell { padding:12px 14px 10px; gap:10px; }
+      .hdr { flex-wrap:wrap; gap:10px; padding:4px 0 12px; }
+      .hdr-left { flex-direction:column; align-items:flex-start; gap:8px; width:100%; }
+      .hdr-right { flex-wrap:wrap; justify-content:flex-start; gap:10px; }
+      .stats { gap:8px 14px; flex-wrap:wrap; }
+      .grid-wrap { overflow-y:auto; overflow-x:hidden; }
+      .footer { flex-wrap:wrap; gap:8px; }
+      .pdots { display:none; }
+      /* Network page stacking */
+      .net-page { flex-direction:column; }
+      .net-right { width:100% !important; flex-direction:row; flex-wrap:wrap; gap:10px; }
+      .net-server-panel { flex:1; min-width:280px; }
+      .net-latency-panel { flex:1; min-width:200px; }
+      .net-map-wrap { min-height:180px; }
+      #net-map { min-height:180px; }
+      .net-speed-val { font-size:clamp(32px,10vw,56px); }
+      .net-stat-val { font-size:clamp(20px,6vw,34px); }
+      .net-stats-row { flex-wrap:wrap; }
+      .net-stat-box { flex:1; min-width:120px; border-right:none; border-bottom:1px solid var(--border); }
+      .net-stat-box:last-child { border-bottom:none; }
+      .net-quality-row { flex-direction:column; gap:4px; }
+      .net-quality-sep { display:none; }
+      .net-quality-item { padding:3px 0; }
+      .net-bp-label { font-size:14px; }
+    }
   </style>
 </head>
 <body>
@@ -780,6 +829,16 @@
           </div>
           <div class="net-server-info" id="net-server-info">
             <div class="net-placeholder"><div class="net-spinner"></div>Connecting…</div>
+          </div>
+          <div class="net-conn-details" id="net-conn-details" style="display:none">
+            <div class="net-conn-title">Connection Details</div>
+            <div class="net-conn-grid" id="net-conn-grid"></div>
+          </div>
+        </div>
+        <div class="net-latency-panel">
+          <div class="net-server-title">Endpoint Latency</div>
+          <div id="net-endpoint-lat">
+            <div class="net-placeholder"><div class="net-spinner"></div>Waiting for test…</div>
           </div>
         </div>
       </div>
@@ -1356,42 +1415,54 @@ async function runDownloadPhase(){
   return{mbps:finalMbps,samples:allSamples,latencies:allLat};
 }
 
-// ─── Upload phase: sequential chunk uploads with concurrent pings ─────────────
+// ─── Upload phase: concurrent multi-stream uploads for accurate throughput ─────
 async function runUploadPhase(){
-  const sizes=[512*1024, 2*1024*1024, 8*1024*1024];
-  const allSamples=[]; let cumulativeT=0; let allLat=[];
-  let totalBits=0, totalSecs=0;
-  for(const bytes of sizes){
+  const allSamples=[]; let allLat=[];
+
+  // Helper: upload one chunk and return {mbps, bits} or null
+  const uploadChunk=async(bytes,idx)=>{
     const body=new Uint8Array(bytes);
-    const url='https://speed.cloudflare.com/__up?nc='+Date.now();
-    const t0=performance.now();
-    const pingCount=bytes>=2*1024*1024?8:5;
-    const[result,pings]=await Promise.all([
-      (async()=>{
-        for(let attempt=0; attempt<2; attempt++){
-          try{
-            const tUp=performance.now();
-            const r=await fetchWithOpts(url,{method:'POST',mode:'no-cors',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
-            const okLike=!!r && (r.ok || r.type==='opaque');
-            if(!okLike) continue;
-            const elapsed=(performance.now()-tUp)/1000;
-            if(elapsed>0) return {mbps:(bytes*8)/elapsed/1e6, bits:bytes*8, secs:elapsed};
-          }catch(e){}
-        }
-        return null;
-      })(),
-      collectLatencyPings(pingCount, Math.floor(4500/pingCount))
-    ]);
-    cumulativeT+=(performance.now()-t0)/1000;
-    allLat=[...allLat,...pings];
-    if(result&&result.mbps!=null){
-      totalBits+=result.bits;
-      totalSecs+=result.secs;
-      allSamples.push({t:cumulativeT,mbps:result.mbps});
-    }
+    const url='https://speed.cloudflare.com/__up?nc='+(Date.now()+idx);
+    try{
+      const tUp=performance.now();
+      const r=await fetchWithOpts(url,{method:'POST',mode:'no-cors',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
+      if(!r||(r.type!=='opaque'&&!r.ok)) return null;
+      const elapsed=(performance.now()-tUp)/1000;
+      return elapsed>0 ? {mbps:(bytes*8)/elapsed/1e6, bits:bytes*8, secs:elapsed} : null;
+    }catch(e){ return null; }
+  };
+
+  // Ramp-up: single small upload to estimate rough speed and pick chunk size
+  let roughMbps=10;
+  const rampResult=await uploadChunk(256*1024, 0);
+  if(rampResult) roughMbps=Math.max(1, rampResult.mbps);
+
+  // Target ~2s of transfer per stream to dominate over RTT overhead
+  const targetSecs=2.0;
+  const streamBytes=Math.min(16*1024*1024, Math.max(512*1024, Math.round(roughMbps*targetSecs*1e6/8)));
+  const streamCount=4;
+
+  // Run 4 concurrent upload streams + concurrent latency pings
+  const pingTask=collectLatencyPings(16, 300);
+  const t0=performance.now();
+  const streamTasks=Array.from({length:streamCount},(_,i)=>uploadChunk(streamBytes, i+1));
+  const [streamResults, pings]=await Promise.all([Promise.all(streamTasks), pingTask]);
+
+  allLat=pings;
+  const valid=streamResults.filter(Boolean);
+
+  let finalMbps=null;
+  if(valid.length>0){
+    // Sum per-stream Mbps: each stream measures its own share of bandwidth
+    finalMbps=valid.reduce((s,r)=>s+r.mbps, 0);
+    // Build chart samples across the wall-clock window
+    const wallSecs=(performance.now()-t0)/1000;
+    allSamples.push({t:0, mbps:0});
+    allSamples.push({t:wallSecs*0.5, mbps:finalMbps*0.85});
+    allSamples.push({t:wallSecs, mbps:finalMbps});
   }
-  const finalMbps=totalSecs>0 ? (totalBits/totalSecs)/1e6 : (allSamples.length?calcAvg(allSamples.map(s=>s.mbps)):null);
-  return{mbps:finalMbps,samples:allSamples,latencies:allLat};
+
+  return{mbps:finalMbps, samples:allSamples, latencies:allLat};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1484,11 +1555,41 @@ function updateServerInfo(meta){
     ?meta.colo
     :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
   const serverCity=[meta.city,coloCode].filter(Boolean).join(' / ')||'Unknown';
+  // navigator.connection supplement (Chrome/Edge only)
+  const nc=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  const ncType=nc ? (nc.effectiveType||nc.type||'') : '';
+  const ncDown=nc&&nc.downlink ? nc.downlink+' Mbps' : '';
+  const ncRtt=nc&&nc.rtt ? nc.rtt+' ms' : '';
+  const ncLine=ncType ? `<div class="net-info-line"><span class="net-info-icon">📶</span><span>Connection: <span class="net-info-val">${[ncType.toUpperCase(), ncDown, ncRtt].filter(Boolean).join(' · ')}</span></span></div>` : '';
   el.innerHTML=`
     <div class="net-info-line"><span class="net-info-icon">🔗</span><span>Connected via <span class="net-info-val">${meta.httpProtocol||'Unknown'}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Server location: <span class="net-info-val">${serverCity}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Your network: <span class="net-info-val">${meta.asOrganization||(meta.asn?'AS'+meta.asn:'Unknown')}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.clientIp||'Unknown'}</span></span></div>`;
+    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Server: <span class="net-info-val">${serverCity}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Network: <span class="net-info-val">${meta.asOrganization||(meta.asn?'AS'+meta.asn:'Unknown')}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.clientIp||'Unknown'}</span></span></div>
+    ${ncLine}`;
+}
+
+function updateConnDetails(metaUrl){
+  const panel=document.getElementById('net-conn-details');
+  const grid=document.getElementById('net-conn-grid');
+  if(!panel||!grid) return;
+  try{
+    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('speed.cloudflare.com/meta'));
+    const e=entries[entries.length-1];
+    if(!e||!e.connectEnd) return;
+    const dns=Math.round(e.domainLookupEnd-e.domainLookupStart);
+    const tcp=Math.round(e.connectEnd-e.connectStart);
+    const tls=e.secureConnectionStart>0?Math.round(e.connectEnd-e.secureConnectionStart):null;
+    const ttfb=Math.round(e.responseStart-e.requestStart);
+    const items=[
+      {label:'DNS',val:dns+'ms'},
+      {label:'TCP',val:tcp+'ms'},
+      ...(tls!=null?[{label:'TLS',val:tls+'ms'}]:[]),
+      {label:'TTFB',val:ttfb+'ms'},
+    ];
+    grid.innerHTML=items.map(i=>`<div class="net-conn-item"><div class="net-conn-label">${i.label}</div><div class="net-conn-val">${i.val}</div></div>`).join('');
+    panel.style.display='block';
+  }catch(e){}
 }
 
 function showNetMap(meta){
@@ -1529,6 +1630,40 @@ function showNetMap(meta){
   }
 }
 
+async function measureEndpointLatency(){
+  const endpoints=[
+    {label:'Cloudflare', url:'https://speed.cloudflare.com/__down?bytes=0&nc=', color:'#f59e0b'},
+    {label:'Google',     url:'https://www.gstatic.com/generate_204?nc=',        color:'#4ade80'},
+    {label:'Microsoft',  url:'https://www.bing.com/favicon.ico?nc=',             color:'#60a5fa'},
+  ];
+  const el=document.getElementById('net-endpoint-lat');
+  if(el) el.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Measuring…</div>';
+  const pingOne=async(url)=>{
+    const times=[];
+    for(let i=0;i<5;i++){
+      const t0=performance.now();
+      try{
+        const r=await fetchWithOpts(url+Date.now()+i,{cache:'no-store',mode:'no-cors'},5000);
+        await r.arrayBuffer().catch(()=>{});
+        times.push(performance.now()-t0);
+      }catch(e){}
+    }
+    return times.length ? Math.round(calcAvg(times)) : null;
+  };
+  const results=await Promise.all(endpoints.map(ep=>pingOne(ep.url)));
+  if(!el) return;
+  const rows=endpoints.map((ep,i)=>{
+    const v=results[i];
+    const bar=v!=null ? `<div class="net-ep-bar" style="width:${Math.min(100,(v/200)*100).toFixed(0)}%;background:${ep.color}"></div>` : '';
+    return `<div class="net-ep-row">
+      <div class="net-ep-label">${ep.label}</div>
+      <div class="net-ep-barwrap">${bar}</div>
+      <div class="net-ep-val" style="color:${ep.color}">${v!=null?v+' ms':'—'}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=rows;
+}
+
 function setNetPhase(label,state='testing'){
   const dot=document.getElementById('net-phase-dot');
   const lbl=document.getElementById('net-phase-label');
@@ -1555,6 +1690,10 @@ async function runFullSpeedTest(){
   clearSpeedChart('net-dl-chart'); clearSpeedChart('net-ul-chart');
   const sinfo=el('net-server-info');
   if(sinfo) sinfo.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Connecting…</div>';
+  const epEl=el('net-endpoint-lat');
+  if(epEl) epEl.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Waiting for test…</div>';
+  const cdPanel=el('net-conn-details');
+  if(cdPanel) cdPanel.style.display='none';
 
   try{
     // 1. Meta
@@ -1567,9 +1706,13 @@ async function runFullSpeedTest(){
     if(meta.clientIp){
       updateServerInfo(meta);
       showNetMap(meta);
+      updateConnDetails();
     }
 
-    // 2. Unloaded latency (20 concurrent pings, 150ms apart ≈ 5s max)
+    // 2. Endpoint latency (runs concurrently with unloaded latency)
+    measureEndpointLatency().catch(()=>{});
+
+    // 3. Unloaded latency (20 concurrent pings, 150ms apart ≈ 5s max)
     setNetPhase('Measuring unloaded latency…');
     const unloadedLat=await collectLatencyPings(20,150);
     const avgLat=calcAvg(unloadedLat);
@@ -2095,7 +2238,6 @@ async function fetchOne(s){
       }
       if(!hasRerouteNotice && hasReroutingComponents && ind==='minor'){
         hasRerouteNotice=true;
-        ind='none';
       }
       if(!labelOverride && watched.length){
         const top=watched
@@ -2104,7 +2246,7 @@ async function fetchOne(s){
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
       if(hasRerouteNotice){
-        ind='none';
+        ind='rerouting';
         labelOverride='Operational';
         extraStatuses.push('Re-routed');
       }
@@ -2433,6 +2575,41 @@ function updateStats(data){
   if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
 }
 
+function renderMobileCards(results, wrap, dotsEl){
+  wrap.style.overflowY='auto';
+  wrap.style.overflowX='hidden';
+  wrap.innerHTML='';
+  if(dotsEl) dotsEl.innerHTML='';
+  const sort=(arr)=>[...arr].sort((a,b)=>{
+    const pd=(PRI[a.ind]||9)-(PRI[b.ind]||9);
+    return pd!==0 ? pd : a.name.localeCompare(b.name);
+  });
+  const groups=[
+    {label:'Applications & Platforms', items:sort(results.filter(s=>s.cat==='app'))},
+    {label:'Infrastructure',           items:sort(results.filter(s=>s.cat==='infra'))}
+  ].filter(g=>g.items.length);
+  const pg=document.createElement('div');
+  pg.className='mobile-page';
+  groups.forEach(g=>{
+    const issues=g.items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=g.items.some(s=>s.ind==='major');
+    const hasDegraded=g.items.some(s=>s.ind==='minor'||s.ind==='rerouting');
+    const cls=issues>0?(hasOutage?'outage':hasDegraded?'degraded':'maint'):'';
+    const badge=issues>0
+      ?`<span class="section-hdr-badge ${cls}">${issues} issue${issues!==1?'s':''}</span>`
+      :`<span class="section-hdr-badge ok">All clear</span>`;
+    const hdr=document.createElement('div');
+    hdr.className='section-hdr';
+    hdr.innerHTML=`<span>${g.label}</span>${badge}`;
+    pg.appendChild(hdr);
+    g.items.forEach((s,i)=>{
+      const card=mkCard({...s,noMini:true},i*20);
+      pg.appendChild(card);
+    });
+  });
+  wrap.appendChild(pg);
+}
+
 async function init(){
   if(isRefreshing) return; // don't overlap concurrent refreshes
   setRefreshing(true);
@@ -2476,6 +2653,12 @@ async function init(){
   updateIncidentPin(results);
 
   const W=wrap.clientWidth || 1280;
+  // Mobile: single-column scrollable layout, no pagination
+  if(W < 640){
+    renderMobileCards(results, wrap, dotsEl);
+    return;
+  }
+
   const H=wrap.clientHeight || 640;
   const GAP=12;
   const SECTION_HDR_H=32;
