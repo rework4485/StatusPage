@@ -605,6 +605,12 @@
     .net-quality-score.good { color:#f59e0b; }
     .net-quality-score.poor { color:#ef4444; }
 
+    /* History rows */
+    .net-hist-row { display:flex; align-items:center; gap:10px; padding:3px 0; font-size:12px; border-bottom:1px solid var(--border); }
+    .net-hist-row:last-child { border-bottom:none; }
+    .net-hist-ts { color:var(--sub); min-width:80px; flex-shrink:0; }
+    .net-hist-stat { color:var(--fg); }
+
     /* Footer row */
     .net-footer-row { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:12px; }
     .net-retest-btn { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.35); color:#93c5fd; border-radius:8px; padding:10px 22px; font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font); letter-spacing:0.04em; text-transform:uppercase; transition:all 0.2s; }
@@ -807,6 +813,11 @@
           <div class="net-quality-row" id="net-quality-row">
             <div class="net-placeholder">—</div>
           </div>
+        </div>
+        <!-- Test history -->
+        <div class="net-quality" id="net-history-panel" style="display:none">
+          <div class="net-quality-title">Recent Tests</div>
+          <div id="net-history-rows"><div class="net-placeholder" style="font-size:12px">No history yet</div></div>
         </div>
         <!-- Footer -->
         <div class="net-footer-row">
@@ -1322,7 +1333,7 @@ async function fetchWithOpts(url, opts={}, timeout=20000){
 
 async function pingLatencies(count=10){
   const times=[];
-  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
+  const base='https://backend.librespeed.org/empty.php?nc=';
   for(let i=0;i<count;i++){
     const t0=performance.now();
     try {
@@ -1336,7 +1347,7 @@ async function pingLatencies(count=10){
 
 // Collect count latency pings staggered intervalMs apart (all fired concurrently)
 async function collectLatencyPings(count=20, intervalMs=350){
-  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
+  const base='https://backend.librespeed.org/empty.php?nc=';
   const tasks=Array.from({length:count},(_,i)=>
     new Promise(resolve=>{
       setTimeout(async()=>{
@@ -1363,11 +1374,12 @@ function pct90(arr){ if(!arr||!arr.length) return null; const s=[...arr].sort((a
 
 // ─── Download phase: streams bytes and fires concurrent pings ─────────────────
 async function runDownloadPhase(){
-  const sizes=[1*1024*1024, 10*1024*1024, 25*1024*1024];
+  const sizeMB=[1, 10, 25]; // LibreSpeed uses MB parameter
   const allSamples=[]; let cumulativeT=0; let allLat=[];
   let totalBits=0, totalSecs=0;
-  for(const bytes of sizes){
-    const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
+  for(const mb of sizeMB){
+    const bytes=mb*1024*1024;
+    const url=`https://backend.librespeed.org/garbage.php?ckSize=${mb}&nc=${Date.now()}`;
     const t0=performance.now();
     let received=0, lastSampleT=t0, lastSampleBytes=0;
     const pingCount=bytes>=10*1024*1024?10:6;
@@ -1422,7 +1434,7 @@ async function runUploadPhase(){
   // Helper: upload one chunk and return {mbps, bits} or null
   const uploadChunk=async(bytes,idx)=>{
     const body=new Uint8Array(bytes);
-    const url='https://speed.cloudflare.com/__up?nc='+(Date.now()+idx);
+    const url='https://backend.librespeed.org/empty.php?nc='+(Date.now()+idx);
     try{
       const tUp=performance.now();
       const r=await fetchWithOpts(url,{method:'POST',mode:'no-cors',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
@@ -1551,10 +1563,9 @@ function calcQuality(r){
 function updateServerInfo(meta){
   const el=document.getElementById('net-server-info');
   if(!el) return;
-  const coloCode=typeof meta.colo==='string'
-    ?meta.colo
-    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
-  const serverCity=[meta.city,coloCode].filter(Boolean).join(' / ')||'Unknown';
+  const location=[meta.city, meta.region, meta.country_name].filter(Boolean).join(', ')||'Unknown';
+  const ipVersion=meta.ip&&meta.ip.includes(':') ? 'IPv6' : 'IPv4';
+  const ipBadge=`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.12);margin-left:5px;vertical-align:middle">${ipVersion}</span>`;
   // navigator.connection supplement (Chrome/Edge only)
   const nc=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
   const ncType=nc ? (nc.effectiveType||nc.type||'') : '';
@@ -1562,10 +1573,9 @@ function updateServerInfo(meta){
   const ncRtt=nc&&nc.rtt ? nc.rtt+' ms' : '';
   const ncLine=ncType ? `<div class="net-info-line"><span class="net-info-icon">📶</span><span>Connection: <span class="net-info-val">${[ncType.toUpperCase(), ncDown, ncRtt].filter(Boolean).join(' · ')}</span></span></div>` : '';
   el.innerHTML=`
-    <div class="net-info-line"><span class="net-info-icon">🔗</span><span>Connected via <span class="net-info-val">${meta.httpProtocol||'Unknown'}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Server: <span class="net-info-val">${serverCity}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Network: <span class="net-info-val">${meta.asOrganization||(meta.asn?'AS'+meta.asn:'Unknown')}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.clientIp||'Unknown'}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Location: <span class="net-info-val">${location}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Network: <span class="net-info-val">${meta.org||'Unknown'}</span></span></div>
+    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.ip||'Unknown'}${ipBadge}</span></span></div>
     ${ncLine}`;
 }
 
@@ -1574,7 +1584,7 @@ function updateConnDetails(metaUrl){
   const grid=document.getElementById('net-conn-grid');
   if(!panel||!grid) return;
   try{
-    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('speed.cloudflare.com/meta'));
+    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('ipapi.co'));
     const e=entries[entries.length-1];
     if(!e||!e.connectEnd) return;
     const dns=Math.round(e.domainLookupEnd-e.domainLookupStart);
@@ -1603,14 +1613,7 @@ function showNetMap(meta){
   const clientLon=parseFloat(meta.longitude);
   if(!isFinite(clientLat)||!isFinite(clientLon)) return;
   if(netMapInstance){ netMapInstance.remove(); netMapInstance=null; }
-  const coloCode=typeof meta.colo==='string'
-    ?meta.colo
-    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
-  const coloCords=CF_COLO[coloCode]||null;
-  const center=coloCords
-    ?[(clientLat+coloCords[0])/2,(clientLon+coloCords[1])/2]
-    :[clientLat,clientLon];
-  netMapInstance=L.map('net-map',{zoomControl:true,scrollWheelZoom:false}).setView(center,7);
+  netMapInstance=L.map('net-map',{zoomControl:true,scrollWheelZoom:false}).setView([clientLat,clientLon],7);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
     attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
   }).addTo(netMapInstance);
@@ -1620,45 +1623,50 @@ function showNetMap(meta){
   });
   L.marker([clientLat,clientLon],{icon:mkIcon('#f59e0b',12)})
     .addTo(netMapInstance)
-    .bindPopup(`Your location<br>${[meta.city,meta.country].filter(Boolean).join(', ')}`);
-  if(coloCords){
-    L.marker(coloCords,{icon:mkIcon('#ef4444',14)})
-      .addTo(netMapInstance)
-      .bindPopup(`Cloudflare ${coloCode||'colo'}`);
-    L.polyline([[clientLat,clientLon],coloCords],{color:'#f59e0b',weight:1.5,opacity:0.55,dashArray:'5,5'}).addTo(netMapInstance);
-    netMapInstance.fitBounds(L.latLngBounds([[clientLat,clientLon],coloCords]).pad(0.25));
-  }
+    .bindPopup(`Your location<br>${[meta.city,meta.country_name].filter(Boolean).join(', ')}`);
 }
 
 async function measureEndpointLatency(){
   const endpoints=[
-    {label:'Cloudflare', url:'https://speed.cloudflare.com/__down?bytes=0&nc=', color:'#f59e0b'},
-    {label:'Google',     url:'https://www.gstatic.com/generate_204?nc=',        color:'#4ade80'},
-    {label:'Microsoft',  url:'https://www.bing.com/favicon.ico?nc=',             color:'#60a5fa'},
+    {label:'LibreSpeed', url:'https://backend.librespeed.org/empty.php?nc=', color:'#14b8a6'},
+    {label:'Google',     url:'https://www.gstatic.com/generate_204?nc=',     color:'#4ade80'},
+    {label:'Microsoft',  url:'https://www.bing.com/favicon.ico?nc=',         color:'#60a5fa'},
   ];
   const el=document.getElementById('net-endpoint-lat');
   if(el) el.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Measuring…</div>';
+  // Returns {lat, jitter} — concurrent staggered pings, discard first (DNS/TLS warmup), median of rest
   const pingOne=async(url)=>{
-    const times=[];
-    for(let i=0;i<5;i++){
-      const t0=performance.now();
-      try{
-        const r=await fetchWithOpts(url+Date.now()+i,{cache:'no-store',mode:'no-cors'},5000);
-        await r.arrayBuffer().catch(()=>{});
-        times.push(performance.now()-t0);
-      }catch(e){}
-    }
-    return times.length ? Math.round(calcAvg(times)) : null;
+    const COUNT=6;
+    const tasks=Array.from({length:COUNT},(_,i)=>
+      new Promise(resolve=>{
+        setTimeout(async()=>{
+          const t0=performance.now();
+          try{
+            const r=await fetchWithOpts(url+Date.now()+i,{cache:'no-store',mode:'no-cors'},5000);
+            await r.arrayBuffer().catch(()=>{});
+            resolve(performance.now()-t0);
+          }catch(e){resolve(null);}
+        },i*50);
+      })
+    );
+    const all=(await Promise.all(tasks)).filter(t=>t!=null);
+    if(all.length<2) return {lat:all.length?Math.round(all[0]):null,jitter:null};
+    const warm=all.slice(1).sort((a,b)=>a-b);
+    const med=warm[Math.floor(warm.length/2)];
+    const avg=warm.reduce((s,v)=>s+v,0)/warm.length;
+    const jitter=Math.round(Math.sqrt(warm.reduce((s,v)=>s+(v-avg)**2,0)/warm.length));
+    return {lat:Math.round(med),jitter};
   };
   const results=await Promise.all(endpoints.map(ep=>pingOne(ep.url)));
   if(!el) return;
   const rows=endpoints.map((ep,i)=>{
-    const v=results[i];
+    const {lat:v,jitter:j}=results[i]||{};
     const bar=v!=null ? `<div class="net-ep-bar" style="width:${Math.min(100,(v/200)*100).toFixed(0)}%;background:${ep.color}"></div>` : '';
+    const jitStr=j!=null ? `<div class="net-ep-jitter" style="color:${ep.color}88">±${j} ms</div>` : '';
     return `<div class="net-ep-row">
       <div class="net-ep-label">${ep.label}</div>
       <div class="net-ep-barwrap">${bar}</div>
-      <div class="net-ep-val" style="color:${ep.color}">${v!=null?v+' ms':'—'}</div>
+      <div class="net-ep-val" style="color:${ep.color}">${v!=null?v+' ms':'—'}${jitStr}</div>
     </div>`;
   }).join('');
   el.innerHTML=rows;
@@ -1696,14 +1704,14 @@ async function runFullSpeedTest(){
   if(cdPanel) cdPanel.style.display='none';
 
   try{
-    // 1. Meta
-    setNetPhase('Connecting to Cloudflare…');
+    // 1. Connection info (ipapi.co — free public API designed for embedding)
+    setNetPhase('Getting connection info…');
     let meta={};
     try{
-      const r=await fetchWithOpts('https://speed.cloudflare.com/meta',{cache:'no-store'},12000);
+      const r=await fetchWithOpts('https://ipapi.co/json/',{cache:'no-store'},8000);
       if(r.ok) meta=await r.json();
     }catch(e){}
-    if(meta.clientIp){
+    if(meta.ip){
       updateServerInfo(meta);
       showNetMap(meta);
       updateConnDetails();
@@ -1769,6 +1777,14 @@ async function runFullSpeedTest(){
     netTestResults=results;
     netLastTestAt=Date.now();
 
+    // 8. Save to localStorage history
+    try{
+      const hist=JSON.parse(localStorage.getItem('net_history')||'[]');
+      hist.push({ts:Date.now(),dl:Math.round(dlResult.mbps),ul:Math.round(ulResult.mbps),lat:Math.round(avgLat),jit:Math.round(jit),loss:Math.round(loss*10)/10});
+      localStorage.setItem('net_history',JSON.stringify(hist.slice(-5)));
+      renderNetHistory();
+    }catch(e){}
+
     // Re-invalidate map if just became visible
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),200);
 
@@ -1780,6 +1796,31 @@ async function runFullSpeedTest(){
   }
 }
 
+function renderNetHistory(){
+  const el=document.getElementById('net-history-rows');
+  const panel=document.getElementById('net-history-panel');
+  if(!el) return;
+  try{
+    const hist=JSON.parse(localStorage.getItem('net_history')||'[]');
+    const recent=hist.slice(-3).reverse();
+    if(!recent.length){ if(panel) panel.style.display='none'; return; }
+    if(panel) panel.style.display='';
+    const fmtDate=ts=>{
+      const d=new Date(ts), now=new Date();
+      if(d.toDateString()===now.toDateString()) return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      const yest=new Date(now); yest.setDate(yest.getDate()-1);
+      if(d.toDateString()===yest.toDateString()) return 'Yesterday '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    };
+    el.innerHTML=recent.map(r=>`<div class="net-hist-row">
+      <span class="net-hist-ts">${fmtDate(r.ts)}</span>
+      <span class="net-hist-stat">↓ ${r.dl} Mbps</span>
+      <span class="net-hist-stat">↑ ${r.ul} Mbps</span>
+      <span class="net-hist-stat">${r.lat} ms</span>
+    </div>`).join('');
+  }catch(e){ el.innerHTML=''; }
+}
+
 function showView(view){
   const svcView=document.getElementById('grid-wrap');
   const netView=document.getElementById('net-view');
@@ -1789,6 +1830,7 @@ function showView(view){
     if(netView){netView.style.display='flex';}
     const shouldRun=!netTestResults || (Date.now()-netLastTestAt)>=NET_TEST_INTERVAL_MS;
     if(!netTestRunning && shouldRun) runFullSpeedTest();
+    renderNetHistory();
     if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),120);
   }else{
     currentView='services';
@@ -1807,7 +1849,8 @@ const PROXIES=[
 ];
 
 function proxyOrder(provider){
-  if(provider==='aws') return [2,0,3,1];
+  if(provider==='aws')   return [2,0,3,1];
+  if(provider==='azure') return [1,2,3,0];
   return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
 }
 
@@ -2300,7 +2343,7 @@ const LOGO_DOMAINS={
   'AWS':'aws.amazon.com',
   'Azure':'microsoft.com',
   'Google Cloud':'cloud.google.com',
-  'Net Connection':'speed.cloudflare.com'
+  'Net Connection':'librespeed.org'
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
