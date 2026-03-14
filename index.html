@@ -1687,17 +1687,29 @@ async function fetchOne(s){
       const doc=new DOMParser().parseFromString(xml,'text/xml');
       const items=Array.from(doc.querySelectorAll('item'));
       const now=Date.now();
-      const active=items.filter(item=>{
+      // Include items from the past 7 days and up to 30 days ahead (upcoming maintenance)
+      const relevant=items.filter(item=>{
         const pub=item.querySelector('pubDate')?.textContent;
-        if(!pub || now-Date.parse(pub)>24*3600000) return false;
+        if(!pub) return false;
+        const t=Date.parse(pub);
+        return (now-t)<7*24*3600000 && (t-now)<30*24*3600000;
+      }).filter(item=>{
         const t=(item.querySelector('title')?.textContent||'').toLowerCase();
-        return !/resolv|complet|restor|postmortem/i.test(t);
+        return !/\b(resolv|complet|restor|postmortem|ended)\b/i.test(t);
       });
-      if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      const latest=active[0];
+      if(!relevant.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const latest=relevant[0];
       const title=latest.querySelector('title')?.textContent||'';
-      const body=stripHtml(latest.querySelector('description')?.textContent||'');
-      const ind=/outage|down|major/i.test(title)?'major':'minor';
+      // RSS <description> contains XML entity-encoded HTML; decode via innerHTML then extract text
+      const _tmp=document.createElement('div');
+      _tmp.innerHTML=latest.querySelector('description')?.textContent||'';
+      const body=(_tmp.textContent||_tmp.innerText||'').replace(/\s+/g,' ').trim().slice(0,400);
+      const tl=title.toLowerCase();
+      let ind;
+      if(/unavailable|outage|down\b/i.test(tl)) ind='major';
+      else if(/degrad|investigat|identif|monitoring/i.test(tl)) ind='minor';
+      else if(/re.?rout/i.test(tl)) ind='rerouting';
+      else ind='maintenance'; // expansion, capacity, new DC, upcoming/scheduled maintenance, informational
       return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
     }catch{return errSvc(s);}
   }
@@ -2195,14 +2207,18 @@ async function _netDirectJson(url) {
   return JSON.parse(t.replace(/^\uFEFF/, ''));
 }
 
-async function measureLatency(url, count) {
+async function measureLatency(url, count, noCors) {
   count = count || 5;
   const times = [];
+  const baseOpts = noCors ? { mode: 'no-cors' } : {};
   for (let i = 0; i < count; i++) {
     const sep = url.includes('?') ? '&' : '?';
     const t = performance.now();
     try {
-      await fetchWithTimeout(url + sep + '_t=' + Date.now(), 6000);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      await fetch(url + sep + '_t=' + Date.now(), { ...baseOpts, signal: ctrl.signal });
+      clearTimeout(timer);
       times.push(performance.now() - t);
     } catch(e) {}
     if (i < count - 1) await new Promise(r => setTimeout(r, 80));
@@ -2276,19 +2292,19 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat) {
   const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
   const warp = cf.warp === 'on';
   const publicIp = esc(cf.ip || ip.query || '—');
-  const isp = esc(ip.isp || meta.asOrganization || '—');
-  const loc = ip.city && ip.country ? esc(ip.city + ', ' + ip.country) : esc(ip.country || '—');
-  const asn = esc(ip.as || (meta.asn ? 'AS' + meta.asn : '—'));
-  const connSpeedRow = navConn
-    ? mkNetMetric('Browser Est.', navConn.downlink ? '~' + navConn.downlink + ' Mbps · ' + esc(navConn.effectiveType || '') : esc(navConn.effectiveType || '—'))
-    : '';
+  // Prefer speed.cloudflare.com/meta for ISP/ASN — always available; ip-api is optional enrichment
+  const isp = esc(meta.asOrganization || ip.isp || '—');
+  const loc = ip.city && ip.country ? esc(ip.city + ', ' + ip.country) : esc(ip.country || meta.city || '—');
+  const asn = esc(meta.asn ? 'AS' + meta.asn : ip.as || '—');
+  // navigator.connection.downlink is privacy-capped at 10 Mbps by browsers; omit to avoid misleading values.
+  // Only show Data Saver which is reliable regardless of speed cap.
   const connSaveRow = (navConn && navConn.saveData) ? mkNetMetric('Data Saver', mkNetBadge('Enabled', 'warn')) : '';
   const connCard = mkNetMetric('Public IP', publicIp)
     + mkNetMetric('ISP', isp)
     + mkNetMetric('Location', loc)
     + mkNetMetric('ASN', asn)
     + (warp ? mkNetMetric('VPN / Tunnel', mkNetBadge('Cloudflare WARP', 'ok')) : '')
-    + connSpeedRow + connSaveRow;
+    + connSaveRow;
 
   const cfColo = esc(meta.colo || cf.colo || '—');
   const cfCity = esc(meta.city || '—');
@@ -2370,12 +2386,14 @@ async function runNetworkDiag() {
     // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
     _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
     _netDirectJson('https://speed.cloudflare.com/meta'),
-    _netDirectJson('https://ip-api.com/json'),
+    // ip-api: direct-fetch only — proxy server IPs are blocked by ip-api as datacenter IPs.
+    // Optional enrichment (city/country); failure is graceful since meta provides ISP/ASN.
+    fetchWithTimeout('https://ip-api.com/json', 8000).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => ({})),
     // DoH resolver check uses proxy — we're asking what DNS resolver Cloudflare sees
     detectDohResolver(),
     // Latency pings are already direct (fetchWithTimeout, no proxy)
     measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
-    measureLatency('https://dns.google/generate_204', 5),
+    measureLatency('https://dns.google/generate_204', 5, true),
   ]);
 
   _renderNetCards(
