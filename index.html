@@ -8,10 +8,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#09090b">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2322c55e'/><circle cx='16' cy='16' r='7' fill='%23fff'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com" fetchpriority="high">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
       --ok: #22c55e;
@@ -30,10 +32,11 @@
     }
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body {
-      height:100%; overflow:hidden;
+      min-height:100%;
       background:var(--bg); color:var(--text);
       font-family:var(--font); -webkit-font-smoothing:antialiased;
     }
+    body { overflow-y:auto; -webkit-overflow-scrolling:touch; }
     body::before,
     body::after {
       content:'';
@@ -63,7 +66,7 @@
       0%, 100% { transform:translate3d(0, 0, 0) scale(1); }
       50% { transform:translate3d(0, -12px, 0) scale(1.08); }
     }
-    .shell { height:100vh; display:flex; flex-direction:column; padding:20px 24px 16px; gap:16px; position:relative; z-index:1; animation:shellIn 0.75s cubic-bezier(.22,1,.36,1) both; }
+    .shell { min-height:100vh; display:flex; flex-direction:column; padding:20px 24px 16px; gap:16px; position:relative; z-index:1; animation:shellIn 0.75s cubic-bezier(.22,1,.36,1) both; }
     @keyframes shellIn { from { opacity:0; transform:translateY(10px) scale(.995); } to { opacity:1; transform:translateY(0) scale(1); } }
     .hdr {
       display:flex;
@@ -128,44 +131,6 @@
     .stat.reroute-stat.show { display: flex; }
     .stat.unknown-stat { display: none; }
     .stat.unknown-stat.show { display: flex; }
-    .clock {
-      font-size:clamp(24px, 1.8vw, 38px);
-      font-weight:500;
-      color:rgba(244,244,245,0.75);
-      font-variant-numeric:tabular-nums;
-      letter-spacing:0.03em;
-      display:inline-flex;
-      align-items:baseline;
-      gap:2px;
-    }
-    .clock .clock-unit {
-      display:inline-flex;
-      align-items:flex-start;
-      justify-content:center;
-      min-width:1.15em;
-      height:1.1em;
-      overflow:hidden;
-    }
-    .clock .clock-num {
-      display:block;
-      line-height:1.1;
-      transform:translateY(0);
-    }
-    .clock .clock-num.slide-up { animation:clockDigitUp 0.32s cubic-bezier(.22,1,.36,1); }
-    .clock .clock-num.slide-down { animation:clockDigitDown 0.32s cubic-bezier(.22,1,.36,1); }
-    .clock .clock-sep {
-      color:rgba(244,244,245,0.3);
-      min-width:6px;
-      text-align:center;
-    }
-    .clock .clock-meridiem {
-      font-size:14px;
-      letter-spacing:0.12em;
-      margin-left:6px;
-      color:rgba(244,244,245,0.4);
-    }
-    @keyframes clockDigitUp { from { transform:translateY(105%); opacity:0; } to { transform:translateY(0); opacity:1; } }
-    @keyframes clockDigitDown { from { transform:translateY(-105%); opacity:0; } to { transform:translateY(0); opacity:1; } }
     .test-btn {
       border:1px solid rgba(255,255,255,0.1);
       background:rgba(255,255,255,0.05);
@@ -183,22 +148,15 @@
     .test-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); border-color:rgba(255,255,255,0.18); }
     .test-btn:active { transform:translateY(1px); }
     .divider { height:1px; background:var(--border); flex-shrink:0; }
-    .grid-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
-    .page {
-      position:absolute; inset:0; display:grid; gap:12px; align-content:start;
-      opacity:0; pointer-events:none;
-      transform:translateX(36px) scale(0.995);
-      filter:blur(3px);
+    .view { display:none; }
+    .view.active { display:block; }
+    #services-grid {
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+      padding-bottom:28px;
     }
-    .page.active { opacity:1; pointer-events:auto; position:relative; transform:translateX(0) scale(1); filter:blur(0); }
-    .page.enter-next { animation:pageInNext 0.55s cubic-bezier(.22,1,.36,1) both; }
-    .page.leave-next { animation:pageOutNext 0.55s cubic-bezier(.22,1,.36,1) both; }
-    .page.enter-prev { animation:pageInPrev 0.55s cubic-bezier(.22,1,.36,1) both; }
-    .page.leave-prev { animation:pageOutPrev 0.55s cubic-bezier(.22,1,.36,1) both; }
-    @keyframes pageInNext { from { opacity:0; transform:translateX(44px) scale(0.99); filter:blur(4px); } to { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} }
-    @keyframes pageOutNext { from { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} to { opacity:0; transform:translateX(-44px) scale(0.99); filter:blur(4px);} }
-    @keyframes pageInPrev { from { opacity:0; transform:translateX(-44px) scale(0.99); filter:blur(4px);} to { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} }
-    @keyframes pageOutPrev { from { opacity:1; transform:translateX(0) scale(1); filter:blur(0);} to { opacity:0; transform:translateX(44px) scale(0.99); filter:blur(4px);} }
+    .loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 0; }
     .card.tile-in { animation:tileIn 0.5s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--tile-delay, 0ms); }
     .card.tile-out { animation:tileOut 0.34s cubic-bezier(.4,0,.2,1) both; animation-delay:calc(var(--tile-delay, 0ms) * 0.4); }
     @keyframes tileIn { from { opacity:0; transform:translateY(18px) scale(0.98); filter:blur(3px); } to { opacity:1; transform:translateY(0) scale(1); filter:blur(0);} }
@@ -248,7 +206,7 @@
     .c-icon.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); }
     .c-logo { width:26px; height:26px; border-radius:5px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
     .c-fallback { font-size:18px; font-weight:700; line-height:1; }
-    .c-name { font-size:clamp(14px, 1.2vw, 24px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+    .c-name { font-size:clamp(14px, 1.1vw, 20px); font-weight:700; letter-spacing:-0.02em; line-height:1.2; word-break:break-word; }
     .c-url { font-size:13px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
     .c-badge {
@@ -272,105 +230,57 @@
     .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:clamp(13px, 1.15vw, 24px); font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow:hidden; overflow-wrap:anywhere; min-height:0; padding-right:2px; }
+    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:180px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; }
+    .inc-body::-webkit-scrollbar { width:4px; }
+    .inc-body::-webkit-scrollbar-track { background:transparent; }
+    .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card.compact .status-label { font-size:10px; padding:2px 6px; }
-    .card.dense .inc-title { font-size:clamp(13px, 1.05vw, 22px); }
-    .card.dense .inc-body { font-size:clamp(11px, 0.88vw, 18px); }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
-    .meta-updated { font-size:clamp(11px, 0.7vw, 14px); color:var(--muted); display:flex; align-items:center; gap:5px; }
-    .meta-updated svg { width:12px; height:12px; opacity:0.6; }
-    .meta-tag { font-size:clamp(10px, 0.65vw, 13px); font-weight:500; color:var(--muted); padding:3px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:6px; border-top:1px solid var(--border); margin-top:8px; gap:8px; }
+    .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
+    .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
+    .meta-tag { font-size:11px; font-weight:600; color:var(--muted); padding:3px 9px; border-radius:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
 
-    .card.compact .card-top { margin-bottom:7px; }
-    .card.compact .card-div { margin-bottom:7px; }
-    .card.compact .inc-block { padding:8px 10px; margin-bottom:6px; }
-    .card.compact .inc-label { margin-bottom:3px; }
-    .card.compact .inc-title { font-size:clamp(12px, 1.0vw, 20px); margin-bottom:2px; }
-    .card.compact .inc-body { font-size:clamp(11px, 0.85vw, 18px); }
-    .card.compact .meta-updated { font-size:clamp(10px, 0.65vw, 13px); }
-    .card.compact .meta-tag { font-size:clamp(10px, 0.62vw, 12px); }
+    /* ── Issues section (top panel) ─────────────────────────────────────────── */
+    .issues-section { display:flex; flex-direction:column; gap:10px; }
+    .issues-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--sub); }
+    .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
+    .issues-hdr.has-outage::before { background:var(--bad); }
+    .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; align-items:stretch; }
 
-    /* iOS-style widget snap sizes — title/body scale up as cards get bigger */
-    .card.span-wide .inc-title  { font-size:clamp(14px, 1.25vw, 26px); }
-    .card.span-tall .inc-title  { font-size:clamp(15px, 1.35vw, 28px); }
-    .card.span-large .inc-title { font-size:clamp(16px, 1.5vw, 32px); }
-
-    .card.span-wide .inc-body   { font-size:clamp(13px, 1.0vw, 21px); }
-    .card.span-tall .inc-body   { font-size:clamp(13px, 1.05vw, 22px); }
-    .card.span-large .inc-body  { font-size:clamp(14px, 1.15vw, 24px); }
-
-    .card.span-wide .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
-    .card.span-tall .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
-    .card.span-large .c-icon    { width:50px; height:50px; font-size:24px; }
-    .card.span-large .c-logo    { width:30px; height:30px; }
-    .card.span-large .c-name    { font-size:clamp(17px, 1.5vw, 30px); }
-    .card.span-large .c-badge   { font-size:clamp(11px, 0.78vw, 14px); padding:4px 10px; }
-
-    @media (min-width: 1400px) {
-      .inc-body { font-size:clamp(13px, 0.95vw + 0.1rem, 22px); }
-      .card.compact .inc-body { font-size:clamp(11px, 0.82vw, 18px); }
-      .card.dense .inc-body { font-size:clamp(12px, 0.88vw, 20px); }
-    }
-
-    /* Mini cards (no-incident half-size widgets) */
-    .card.mini {
-      padding:12px 16px;
-      justify-content:center;
-    }
-    .card.mini .card-div,
-    .card.mini .inc-block,
-    .card.mini .card-meta { display:none; }
-    .card.mini .card-top { margin-bottom:0; align-items:center; gap:10px; }
-    .card.mini .card-title-row { gap:10px; }
-    .card.mini .c-icon { width:56px; height:56px; border-radius:12px; font-size:27px; }
-    .card.mini .c-logo { width:40px; height:40px; }
-    .card.mini .c-fallback { font-size:20px; }
-    .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .card.mini .c-url { display:none; }
-    .card.mini .c-badge { font-size:12px; padding:4px 10px; }
-    .card.mini .c-name-block { min-width:0; }
+    /* ── Service directory (bottom panel) ───────────────────────────────────── */
+    .svc-directory { display:flex; flex-direction:column; gap:14px; }
+    .svc-cat-sec { display:flex; flex-direction:column; gap:6px; }
+    .svc-cat-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--sub); padding:2px 0; }
+    .svc-cat-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
+    .svc-cat-badge { font-size:10px; font-weight:600; letter-spacing:0.03em; padding:2px 8px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
+    .svc-cat-badge.ok { color:var(--ok); background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.18); }
+    .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
+    .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:46px; }
+    .svc-row:last-child { border-bottom:none; }
+    .svc-row:hover { background:rgba(255,255,255,0.035); }
+    .svc-row:active { background:rgba(255,255,255,0.065); }
+    .svc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.3s; }
+    .svc-row:hover .svc-dot { box-shadow:0 0 0 3px rgba(255,255,255,0.05); }
+    .svc-icon-wrap { width:30px; height:30px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); overflow:hidden; }
+    .svc-icon-wrap img { width:22px; height:22px; border-radius:3px; object-fit:contain; background:rgba(255,255,255,0.9); padding:1px; }
+    .svc-name { font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+    .svc-inc-preview { font-size:12px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; display:none; }
+    @media (min-width:768px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto; } .svc-inc-preview { display:block; } }
+    .svc-badge { font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:3px 8px; border-radius:5px; flex-shrink:0; white-space:nowrap; }
+    .svc-badge.ok { color:var(--ok); background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.18); }
+    .svc-badge.warn { color:var(--warn); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); }
+    .svc-badge.bad { color:var(--bad); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); }
+    .svc-badge.maint { color:var(--maint); background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); }
+    .svc-badge.reroute { color:var(--reroute); background:rgba(20,184,166,0.1); border:1px solid rgba(20,184,166,0.18); }
+    .svc-badge.unknown { color:var(--unknown); background:rgba(107,114,128,0.1); border:1px solid rgba(107,114,128,0.18); }
 
     /* Net Connection widget */
-    .net-grid { display:flex; flex-direction:column; gap:6px; }
-    .net-info-rows { display:flex; flex-direction:column; gap:2px; }
-    .net-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:1px 0; }
-    .net-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; flex-shrink:0; }
-    .net-val { font-size:11px; color:var(--text); font-weight:600; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .net-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
-    .net-metric { display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:5px 3px; }
-    .net-metric-val { font-size:clamp(11px,1.0vw,17px); font-weight:700; color:var(--ok); line-height:1.1; }
-    .net-metric-lbl { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; text-align:center; margin-top:2px; line-height:1.2; }
-    .net-testing { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
-    .net-spinner { width:12px; height:12px; border:2px solid rgba(255,255,255,0.1); border-top-color:rgba(59,130,246,0.7); border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0; }
-    /* Net Connection box plot (latency measurements) */
-    .net-lat-section { display:flex; flex-direction:column; gap:4px; }
-    .net-lat-section-hdr { font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; }
-    .net-bp-rows { display:flex; flex-direction:column; gap:4px; }
-    .net-bp-row { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:7px; padding:5px 8px; }
-    .net-bp-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:3px; }
-    .net-bp-label { font-size:18px; font-weight:600; color:var(--text); }
-    .net-bp-count { font-size:14px; color:var(--muted); }
-    .net-bp-chart { position:relative; height:24px; user-select:none; }
-    .net-bp-axis-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:var(--border); }
-    .net-bp-whisker { position:absolute; height:2px; top:50%; transform:translateY(-50%); border-radius:1px; }
-    .net-bp-iqr { position:absolute; top:20%; height:60%; border-radius:3px; border:1.5px solid; }
-    .net-bp-median { position:absolute; top:10%; height:80%; width:2px; border-radius:1px; background:rgba(255,255,255,0.9); }
-    .net-bp-dot { position:absolute; width:5px; height:5px; border-radius:50%; top:50%; transform:translate(-50%,-50%); }
-    .net-bp-axis { display:flex; justify-content:space-between; padding:0 0; margin-top:2px; position:relative; height:10px; }
-    .net-bp-axis-tick { position:absolute; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; transform:translateX(-50%); }
-    .net-bp-axis-tick:first-child { transform:translateX(0); }
-    .net-bp-axis-tick:last-child { transform:translateX(-100%); }
     .footer { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:16px; }
     .f-left { display:flex; align-items:center; gap:20px; }
     .f-meta { font-size:12px; color:var(--muted); }
-    .pdots { display:flex; align-items:center; gap:6px; }
-    .pdot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15); cursor:pointer; transition:all 0.3s; }
-    .pdot.active { background:#fff; transform:scale(1.35); }
-    .prog-track { width:200px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px; overflow:hidden; }
-    .prog-fill { height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#8b5cf6); transition:width 0.4s linear; }
-    .loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
     .spinner { width:32px; height:32px; border:2.5px solid rgba(255,255,255,0.07); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .load-t { font-size:13px; color:var(--muted); }
@@ -458,24 +368,6 @@
       }
     }
 
-    body.idle { cursor: none; }
-
-    @media (max-height: 720px) {
-      .shell { padding:12px 14px 8px; gap:8px; }
-      .hdr { gap:12px; padding:4px 0 10px; }
-      .test-btn { padding:5px 9px; font-size:10px; }
-      .card { padding:12px 14px; }
-      .card-top { margin-bottom:8px; }
-      .card-div { margin-bottom:8px; }
-      .inc-block { padding:8px 10px; margin-bottom:6px; }
-      .inc-body { font-size:13px; }
-      .card.mini { padding:8px 12px; }
-      .card.mini .c-icon { width:42px; height:42px; font-size:21px; }
-      .card.mini .c-logo { width:30px; height:30px; }
-      .card.mini .c-fallback { font-size:15px; }
-      .card.mini .c-name { font-size:13px; }
-    }
-
     @media (min-width: 1600px) {
       .incident-pin { max-width:min(54vw, 900px); }
       .c-badge { font-size:clamp(14px, 0.9vw, 18px); }
@@ -530,110 +422,67 @@
     .section-hdr-badge.outage { color: var(--bad); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
     .section-hdr-badge.maint { color: var(--maint); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
 
-    /* ── Nav tabs ───────────────────────────────────────────────────────────── */
-    .nav-tabs { display:flex; gap:4px; flex-shrink:0; }
-    .nav-tab { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--sub); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font); transition:all 0.2s; white-space:nowrap; }
-    .nav-tab:hover { background:rgba(255,255,255,0.09); color:var(--text); border-color:rgba(255,255,255,0.14); }
-    .nav-tab.active { background:rgba(59,130,246,0.12); border-color:rgba(59,130,246,0.4); color:#93c5fd; }
+    /* ── Nav tabs (hidden — single view) ─────────────────────────────────────── */
+    .nav-tabs { display:none; }
 
-    /* ── Network page ───────────────────────────────────────────────────────── */
-    #net-view { flex:1; min-height:0; display:none; flex-direction:column; gap:12px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent; }
-    #net-view.active { display:flex; }
-    .net-page { display:flex; gap:14px; flex:1; min-height:0; }
-    .net-left { flex:1; display:flex; flex-direction:column; gap:10px; min-width:0; }
-    .net-right { width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }
 
-    /* Speed panels */
-    .net-speed-section { display:flex; gap:10px; }
-    .net-speed-panel { flex:1; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px 12px; display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .net-speed-label { font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; }
-    .net-speed-num { display:flex; align-items:baseline; gap:5px; }
-    .net-speed-val { font-size:clamp(48px,6vw,86px); font-weight:800; letter-spacing:-0.04em; line-height:1; font-variant-numeric:tabular-nums; }
-    .net-speed-unit { font-size:20px; font-weight:500; color:var(--sub); }
-    .net-speed-dl .net-speed-val { color:#f59e0b; }
-    .net-speed-ul .net-speed-val { color:#8b5cf6; }
+    /* Issues grid responsive */
+    .issues-grid { container-type:inline-size; }
 
-    /* SVG chart */
-    .net-chart-wrap { position:relative; flex:1; min-height:70px; }
-    .net-chart { width:100%; height:100%; display:block; overflow:visible; }
-    .net-chart-line { fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-    .net-90pct-line { stroke:rgba(255,255,255,0.18); stroke-width:0.75; stroke-dasharray:3,3; }
-    .net-90pct-label { font-size:7.5px; fill:rgba(255,255,255,0.28); font-family:var(--font); }
+    /* ── Status summary banner ───────────────────────────────────────────────── */
+    .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
+    .status-summary.show { display:flex; }
+    .status-summary.ok { background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); color:#4ade80; }
+    .status-summary.warn { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
+    .status-summary.bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); color:#f87171; }
+    .status-summary-count { font-size:12px; font-weight:400; opacity:0.6; }
 
-    /* Stats row */
-    .net-stats-row { display:flex; background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; flex-shrink:0; }
-    .net-stat-box { flex:1; padding:10px 14px; border-right:1px solid var(--border); }
-    .net-stat-box:last-child { border-right:none; }
-    .net-stat-name { font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px; }
-    .net-stat-big { display:flex; align-items:baseline; gap:3px; }
-    .net-stat-val { font-size:clamp(28px,3.8vw,52px); font-weight:800; letter-spacing:-0.03em; color:var(--text); line-height:1; font-variant-numeric:tabular-nums; }
-    .net-stat-ms { font-size:16px; font-weight:500; color:var(--sub); }
-    .net-stat-sub { font-size:13px; color:var(--muted); display:flex; gap:10px; margin-top:3px; }
-    .net-stat-sub span { display:inline-flex; align-items:center; gap:2px; font-variant-numeric:tabular-nums; }
 
-    /* Latency box plots */
-    .net-lat-section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
-    .net-lat-section-hdr { font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; }
-    .net-bp-rows { display:flex; flex-direction:column; gap:5px; }
-    .net-bp-row { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:7px; padding:6px 9px; }
-    .net-bp-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
-    .net-bp-label { font-size:18px; font-weight:600; color:var(--text); }
-    .net-bp-count { font-size:14px; color:var(--muted); }
-    .net-bp-chart { position:relative; height:34px; }
-    .net-bp-axis-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:rgba(255,255,255,0.07); }
-    .net-bp-whisker { position:absolute; height:2px; top:50%; transform:translateY(-50%); border-radius:1px; }
-    .net-bp-iqr { position:absolute; top:18%; height:64%; border-radius:3px; border:1.5px solid; }
-    .net-bp-median { position:absolute; top:10%; height:80%; width:2px; border-radius:1px; background:rgba(255,255,255,0.88); }
-    .net-bp-dot { position:absolute; width:5px; height:5px; border-radius:50%; top:50%; transform:translate(-50%,-50%); opacity:0.85; }
-    .net-bp-axis-unit { font-size:13px; color:var(--muted); margin-top:1px; }
-    .net-bp-axis { position:relative; height:14px; margin-top:2px; }
-    .net-bp-axis-tick { position:absolute; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; transform:translateX(-50%); }
-    .net-bp-axis-tick:first-child { transform:translateX(0); }
-    .net-bp-axis-tick:last-child { transform:translateX(-100%); }
+    /* ── Header stat operational count color ─────────────────────────────────── */
+    #n-ok { color:var(--ok) !important; }
 
-    /* Quality scores */
-    .net-quality { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 14px; flex-shrink:0; }
-    .net-quality-title { font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
-    .net-quality-title::after { content:''; flex:1; height:1px; background:var(--border); }
-    .net-quality-row { display:flex; align-items:center; gap:0; }
-    .net-quality-item { flex:1; display:flex; align-items:center; gap:6px; padding:2px 0; }
-    .net-quality-sep { width:1px; height:24px; background:var(--border); flex-shrink:0; margin:0 12px; }
-    .net-quality-name { font-size:16px; color:var(--sub); white-space:nowrap; }
-    .net-quality-score { font-size:17px; font-weight:700; }
-    .net-quality-score.great { color:#22c55e; }
-    .net-quality-score.good { color:#f59e0b; }
-    .net-quality-score.poor { color:#ef4444; }
+    /* ── Per-service refresh time & stale indicator ───────────────────────────── */
+    .card-fetched { font-size:11px; color:var(--muted); margin-left:2px; }
+    .card-fetched.stale { color:#f59e0b; font-weight:600; }
 
-    /* Footer row */
-    .net-footer-row { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:12px; }
-    .net-retest-btn { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.35); color:#93c5fd; border-radius:8px; padding:10px 22px; font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font); letter-spacing:0.04em; text-transform:uppercase; transition:all 0.2s; }
-    .net-retest-btn:hover { background:rgba(59,130,246,0.2); }
-    .net-retest-btn:disabled { opacity:0.4; cursor:not-allowed; }
-    .net-phase-row { display:flex; align-items:center; gap:7px; font-size:15px; color:var(--muted); }
-    .net-phase-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--muted); }
-    .net-phase-dot.testing { background:#3b82f6; animation:stalePulse 1s ease-in-out infinite; }
-    .net-phase-dot.done { background:var(--ok); }
-    .net-timestamp { font-size:14px; color:var(--muted); }
+    /* ── Mobile responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .shell { padding:12px 14px 10px; gap:10px; }
+      .hdr { flex-wrap:wrap; gap:10px; padding:4px 0 12px; }
+      .hdr-left { flex-direction:column; align-items:flex-start; gap:8px; width:100%; }
+      .hdr-right { flex-wrap:wrap; justify-content:flex-start; gap:10px; }
+      .stats { gap:8px 14px; flex-wrap:wrap; }
+      .issues-grid { grid-template-columns:1fr; }
+      .footer { flex-wrap:wrap; gap:8px; }
+    }
 
-    /* Right column – server panel */
-    .net-server-panel { flex:1; background:var(--card); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; }
-    .net-server-title { font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; padding:12px 14px 6px; flex-shrink:0; }
-    .net-map-wrap { flex:1; min-height:220px; background:rgba(0,0,0,0.3); position:relative; }
-    #net-map { width:100%; height:100%; min-height:220px; }
-    .net-server-info { padding:10px 14px; display:flex; flex-direction:column; gap:5px; flex-shrink:0; border-top:1px solid var(--border); }
-    .net-info-line { display:flex; align-items:flex-start; gap:7px; font-size:14px; color:var(--sub); line-height:1.4; }
-    .net-info-icon { font-size:13px; opacity:0.7; flex-shrink:0; margin-top:1px; }
-    .net-info-val { color:var(--text); font-weight:600; }
+    /* ── Service search filter ─────────────────────────────────────────────── */
+    .svc-search-wrap { position:relative; margin-bottom:6px; }
+    .svc-search { width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font); font-size:13px; padding:8px 14px 8px 38px; outline:none; transition:border-color 0.2s, background 0.2s; -webkit-appearance:none; appearance:none; }
+    .svc-search:focus { border-color:rgba(255,255,255,0.16); background:rgba(255,255,255,0.05); }
+    .svc-search::placeholder { color:var(--muted); }
+    .svc-search::-webkit-search-cancel-button { -webkit-appearance:none; }
+    .svc-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--muted); pointer-events:none; }
 
-    /* Placeholder / spinner inline */
-    .net-placeholder { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); padding:4px 0; }
+    /* ── Collapsible category sections ─────────────────────────────────────── */
+    .svc-cat-hdr { cursor:pointer; }
+    .svc-cat-hdr:hover { color:var(--text); }
+    .svc-cat-toggle { flex-shrink:0; width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:transform 0.22s cubic-bezier(.22,1,.36,1); }
+    .svc-cat-sec.collapsed .svc-cat-toggle { transform:rotate(-90deg); }
+    .svc-cat-sec.collapsed .svc-table { display:none; }
+    .svc-cat-count { font-size:10px; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 
-    /* Leaflet dark overrides */
-    .leaflet-container { background:#0f0f11; }
-    .leaflet-control-zoom a { background:#1c1c1e; border-color:rgba(255,255,255,0.12); color:var(--sub); }
-    .leaflet-control-zoom a:hover { background:#2a2a2e; color:var(--text); }
-    .leaflet-control-attribution { background:rgba(0,0,0,0.6); color:rgba(255,255,255,0.3); font-size:8px; }
-    .leaflet-control-attribution a { color:rgba(255,255,255,0.4); }
+    /* ── Category header icon ───────────────────────────────────────────────── */
+    .svc-cat-icon { width:13px; height:13px; flex-shrink:0; color:var(--muted); opacity:0.65; }
+
+    /* ── Pulsing dot for active issues ─────────────────────────────────────── */
+    .svc-dot-pulse { animation:stalePulse 2s ease-in-out infinite; }
+
+    /* ── Footer refresh button ──────────────────────────────────────────────── */
+    .f-refresh-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:17px; padding:2px 8px; border-radius:5px; transition:color 0.2s, transform 0.4s cubic-bezier(.22,1,.36,1); line-height:1; flex-shrink:0; }
+    .f-refresh-btn:hover { color:var(--sub); }
+    .f-refresh-btn:active { transform:rotate(180deg); }
+    .f-refresh-btn:disabled { opacity:0.3; cursor:default; }
   </style>
 </head>
 <body>
@@ -648,7 +497,7 @@
         </div>
         <div class="brand-meta">
           <div class="brand-name">Service Status</div>
-          <div class="brand-sub">Live monitoring · auto-refresh every 2 min</div>
+          <div class="brand-sub">Live monitoring · per-service updates</div>
           <div class="stats">
             <div class="stat"><span class="sdot" style="background:var(--ok)"></span><strong id="n-ok">—</strong>&nbsp;Operational</div>
             <div class="stat"><span class="sdot" style="background:var(--warn)"></span><strong id="n-warn">—</strong>&nbsp;Degraded</div>
@@ -665,171 +514,28 @@
       <span class="stale-badge" id="stale-badge" title="Data may be outdated — refresh failed">&#9888; Stale Data</span>
       <div class="refresh-spinner" id="refresh-spinner" title="Refreshing…"></div>
       <button class="test-btn" id="test-alert-btn" type="button" title="Test notification banner and sounds">Test Alerts</button>
-      <div class="clock" id="clock">--:--:--</div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-view="services" type="button">Services</button>
+      </div>
     </div>
   </div>
-  <div class="grid-wrap" id="grid-wrap">
+  <div class="view active" id="view-services">
+    <div id="status-summary"></div>
     <div class="loading" id="loading-el">
       <div class="spinner"></div>
       <div class="load-t">Fetching service status…</div>
     </div>
+    <div id="services-grid"></div>
   </div>
-  <!-- ── Dedicated Network / Speed Test page ──────────────────────────────── -->
-  <div id="net-view">
-    <div class="net-page">
-      <!-- Left column: speeds, stats, box plots, quality -->
-      <div class="net-left">
-        <div class="net-speed-section">
-          <!-- Download -->
-          <div class="net-speed-panel net-speed-dl">
-            <div class="net-speed-label">Download</div>
-            <div class="net-speed-num">
-              <span class="net-speed-val" id="net-dl-val">—</span>
-              <span class="net-speed-unit">Mbps</span>
-            </div>
-            <div class="net-chart-wrap">
-              <svg class="net-chart" id="net-dl-chart" viewBox="0 0 400 90" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="dl-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
-                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/>
-                  </linearGradient>
-                </defs>
-                <path class="net-chart-fill" fill="url(#dl-grad)" d=""/>
-                <path class="net-chart-line" stroke="#f59e0b" d=""/>
-              </svg>
-            </div>
-          </div>
-          <!-- Upload -->
-          <div class="net-speed-panel net-speed-ul">
-            <div class="net-speed-label">Upload</div>
-            <div class="net-speed-num">
-              <span class="net-speed-val" id="net-ul-val">—</span>
-              <span class="net-speed-unit">Mbps</span>
-            </div>
-            <div class="net-chart-wrap">
-              <svg class="net-chart" id="net-ul-chart" viewBox="0 0 400 90" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="ul-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45"/>
-                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"/>
-                  </linearGradient>
-                </defs>
-                <path class="net-chart-fill" fill="url(#ul-grad)" d=""/>
-                <path class="net-chart-line" stroke="#8b5cf6" d=""/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <!-- Stats row -->
-        <div class="net-stats-row">
-          <div class="net-stat-box">
-            <div class="net-stat-name">Latency</div>
-            <div class="net-stat-big"><span class="net-stat-val" id="net-lat-val">—</span><span class="net-stat-ms">ms</span></div>
-            <div class="net-stat-sub">
-              <span><span style="color:#f59e0b">↓</span>&nbsp;<span id="net-lat-dl">—</span> ms</span>
-              <span><span style="color:#8b5cf6">↑</span>&nbsp;<span id="net-lat-ul">—</span> ms</span>
-            </div>
-          </div>
-          <div class="net-stat-box">
-            <div class="net-stat-name">Jitter</div>
-            <div class="net-stat-big"><span class="net-stat-val" id="net-jit-val">—</span><span class="net-stat-ms">ms</span></div>
-            <div class="net-stat-sub">
-              <span><span style="color:#f59e0b">↓</span>&nbsp;<span id="net-jit-dl">—</span> ms</span>
-              <span><span style="color:#8b5cf6">↑</span>&nbsp;<span id="net-jit-ul">—</span> ms</span>
-            </div>
-          </div>
-          <div class="net-stat-box">
-            <div class="net-stat-name">Packet Loss</div>
-            <div class="net-stat-big"><span class="net-stat-val" id="net-loss-val">—</span><span class="net-stat-ms">%</span></div>
-          </div>
-        </div>
-        <!-- Latency box plots -->
-        <div class="net-lat-section">
-          <div class="net-lat-section-hdr">Latency Measurements</div>
-          <div class="net-bp-rows" id="net-bp-rows">
-            <div class="net-placeholder"><div class="net-spinner"></div>Waiting for test…</div>
-          </div>
-        </div>
-        <!-- Network quality -->
-        <div class="net-quality">
-          <div class="net-quality-title">Network Quality Score</div>
-          <div class="net-quality-row" id="net-quality-row">
-            <div class="net-placeholder">—</div>
-          </div>
-        </div>
-        <!-- Footer -->
-        <div class="net-footer-row">
-          <div style="display:flex;align-items:center;gap:12px">
-            <button class="net-retest-btn" id="net-retest-btn">⟳ Retest</button>
-            <div class="net-phase-row">
-              <div class="net-phase-dot" id="net-phase-dot"></div>
-              <span id="net-phase-label">Ready</span>
-            </div>
-          </div>
-          <div class="net-timestamp" id="net-timestamp"></div>
-        </div>
-      </div>
-      <!-- Right column: server location map + info -->
-      <div class="net-right">
-        <div class="net-server-panel">
-          <div class="net-server-title">Server Location</div>
-          <div class="net-map-wrap">
-            <div id="net-map"></div>
-          </div>
-          <div class="net-server-info" id="net-server-info">
-            <div class="net-placeholder"><div class="net-spinner"></div>Connecting…</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="footer">
+<div class="footer">
     <div class="f-left">
       <div class="f-meta" id="f-meta"></div>
     </div>
-    <div class="pdots" id="pdots"></div>
-    <div class="prog-track" id="prog-track" style="display:none"><div class="prog-fill" id="prog-fill"></div></div>
+    <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
   </div>
 </div>
 <div class="status-banner-wrap" aria-live="assertive" aria-atomic="true"><div class="status-banner" id="status-banner"></div></div>
 <script>
-(function tick(){
-  const e=document.getElementById('clock');
-  const now=new Date();
-  let h=now.getHours();
-  const m=String(now.getMinutes()).padStart(2,'0');
-  const sec=String(now.getSeconds()).padStart(2,'0');
-  const ampm=h>=12?'PM':'AM';
-  h=h%12 || 12;
-  const hh=String(h).padStart(2,'0');
-  const next=[hh,m,sec,ampm];
-
-  if(!e.dataset.ready){
-    e.innerHTML=`<span class="clock-unit"><span class="clock-num" data-part="0">${hh}</span></span><span class="clock-sep">:</span><span class="clock-unit"><span class="clock-num" data-part="1">${m}</span></span><span class="clock-sep">:</span><span class="clock-unit"><span class="clock-num" data-part="2">${sec}</span></span><span class="clock-meridiem"><span class="clock-num" data-part="3">${ampm}</span></span>`;
-    e.dataset.prev=next.join('|');
-    e.dataset.ready='1';
-  } else {
-    const prev=(e.dataset.prev||'').split('|');
-    e.querySelectorAll('.clock-num[data-part]').forEach((node)=>{
-      const i=Number(node.dataset.part);
-      const nextVal=next[i];
-      if(node.textContent!==nextVal){
-        const oldVal=prev[i] ?? node.textContent ?? '0';
-        const oldNum=Number(oldVal);
-        const newNum=Number(nextVal);
-        const direction=(Number.isFinite(oldNum) && Number.isFinite(newNum) && newNum < oldNum) ? 'slide-down' : 'slide-up';
-        const clone=node.cloneNode(true);
-        clone.textContent=nextVal;
-        clone.classList.add(direction);
-        node.replaceWith(clone);
-      }
-    });
-    e.dataset.prev=next.join('|');
-  }
-
-  setTimeout(tick, 1000-now.getMilliseconds());
-})();;
 
 const SVCS=[
   // Applications & Education Platforms
@@ -846,14 +552,25 @@ const SVCS=[
   {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
+  {name:'Apple Services',su:'https://www.apple.com/support/systemstatus/data/system_status_en_US.js',hu:'https://www.apple.com/support/systemstatus/',p:'apple',cat:'app'},
+  {name:'Apple Developer',su:'https://developer.apple.com/tutorials/data/system-status.json',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azurestatusprodscus2.azurewebsites.net/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
-  // Net Connection is handled by the dedicated Network page (⚡ Network tab)
+  {name:'Oracle Cloud',su:'https://ocistatus.oraclecloud.com/api/v2/status.json',cu:'https://ocistatus.oraclecloud.com/api/v2/components.json',hu:'https://ocistatus.oraclecloud.com',p:'oci',cat:'infra'},
+  {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
+  {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/status.json',iu:'https://www.akamaistatus.com/api/v2/incidents.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
+  {name:'Fastly',su:'https://www.fastlystatus.com/api/v2/status.json',iu:'https://www.fastlystatus.com/api/v2/incidents.json',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
+  {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
+  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
+  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',cat:'infra'},
+  // Transit
+  {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
+  {name:'MBTA South Coast Rail',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/commuter-rail',p:'mbta',cat:'transit'},
 ];
 
 window._pi = window._pi || {};
@@ -1187,485 +904,19 @@ function runAlertTest(){
   queueAlert({name:'Test Service 3', label:'Operational'}, 'restored');
 }
 
-// ─── Box-plot helpers ─────────────────────────────────────────────────────────
-function boxStats(times){
-  if(!times||!times.length) return null;
-  const s=[...times].sort((a,b)=>a-b);
-  const n=s.length;
-  const q=(p)=>s[Math.min(Math.floor(n*p),n-1)];
-  return {min:s[0],q1:q(0.25),med:q(0.5),q3:q(0.75),max:s[n-1],n,sorted:s};
-}
-
-// Deterministic y-jitter so dots don't jump on re-render
-function dotJitter(v){ return ((v*7919)%37)/37*50+25; } // 25–75% of chart height
-
-function renderNetBoxPlot(times, label, colorRgb, axisMax, expectedCount){
-  const st=boxStats(times);
-  const denom=expectedCount||((times&&times.length)||0);
-  const count=st?`(${st.n}/${Math.max(st.n,denom)})`:`(0/${Math.max(denom,0)})`;
-  if(!st) return `<div class="net-bp-row"><div class="net-bp-header"><span class="net-bp-label">${label}</span><span class="net-bp-count">${count}</span></div><div style="font-size:9px;color:var(--muted);padding:4px 0">No data</div></div>`;
-
-  const aMax=axisMax||Math.max(st.max,50);
-  const pct=(v)=>Math.min(100,Math.max(0,(v/aMax)*100));
-
-  // Whisker and box positions
-  const wL=pct(st.min), wR=pct(st.max);
-  const bL=pct(st.q1), bW=Math.max(pct(st.q3)-pct(st.q1),1);
-  const mPos=pct(st.med);
-
-  // Individual dots
-  const dots=st.sorted.map((t,i)=>{
-    const x=pct(t);
-    const y=dotJitter(t+(i*31));
-    return `<div class="net-bp-dot" style="left:${x.toFixed(1)}%;top:${y.toFixed(0)}%;background:rgb(${colorRgb})"></div>`;
-  }).join('');
-
-  // Axis ticks (0 + multiples of tickInterval up to aMax)
-  const ti=aMax<=100?20:aMax<=200?25:50;
-  const ticks=[];
-  for(let v=0;v<=aMax;v+=ti) ticks.push(v);
-  if(ticks[ticks.length-1]<aMax) ticks.push(aMax);
-  const ticksHtml=ticks.map(v=>`<div class="net-bp-axis-tick" style="left:${pct(v).toFixed(1)}%">${v}</div>`).join('');
-
-  return `<div class="net-bp-row">
-    <div class="net-bp-header"><span class="net-bp-label">${label}</span><span class="net-bp-count">${count}</span></div>
-    <div class="net-bp-chart">
-      <div class="net-bp-axis-line"></div>
-      <div class="net-bp-whisker" style="left:${wL.toFixed(1)}%;width:${(wR-wL).toFixed(1)}%;background:rgb(${colorRgb});opacity:0.35"></div>
-      <div class="net-bp-iqr" style="left:${bL.toFixed(1)}%;width:${bW.toFixed(1)}%;background:rgba(${colorRgb},0.15);border-color:rgb(${colorRgb})"></div>
-      <div class="net-bp-median" style="left:${mPos.toFixed(1)}%"></div>
-      ${dots}
-    </div>
-    <div class="net-bp-axis-unit">ms</div>
-    <div class="net-bp-axis">${ticksHtml}</div>
-  </div>`;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── Net Connection Speed Test ───────────────────────────────────────────────
-// State for the dedicated Network page (⚡ tab)
-let netTestRunning=false;
-let netTestResults=null;
-let netMapInstance=null;
-let netLastTestAt=0;
-const NET_TEST_INTERVAL_MS=30*60*1000;
-
-async function fetchWithOpts(url, opts={}, timeout=20000){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(), timeout);
-  try {
-    return await fetch(url, {...opts, signal:controller.signal});
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function pingLatencies(count=10){
-  const times=[];
-  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
-  for(let i=0;i<count;i++){
-    const t0=performance.now();
-    try {
-      const r=await fetchWithOpts(base+Date.now()+i, {cache:'no-store'}, 5000);
-      await r.arrayBuffer();
-      times.push(performance.now()-t0);
-    } catch(e){ /* count as packet loss */ }
-  }
-  return times;
-}
-
-// Collect count latency pings staggered intervalMs apart (all fired concurrently)
-async function collectLatencyPings(count=20, intervalMs=350){
-  const base='https://speed.cloudflare.com/__down?bytes=0&nc=';
-  const tasks=Array.from({length:count},(_,i)=>
-    new Promise(resolve=>{
-      setTimeout(async()=>{
-        const t0=performance.now();
-        try{
-          const r=await fetchWithOpts(base+Date.now()+i,{cache:'no-store'},7000);
-          await r.arrayBuffer();
-          resolve(performance.now()-t0);
-        }catch(e){ resolve(null); }
-      }, i*intervalMs);
-    })
-  );
-  return (await Promise.all(tasks)).filter(t=>t!=null);
-}
-
-function calcJitter(times){
-  if(!times||times.length<2) return 0;
-  let sum=0;
-  for(let i=1;i<times.length;i++) sum+=Math.abs(times[i]-times[i-1]);
-  return sum/(times.length-1);
-}
-function calcAvg(arr){ return (!arr||!arr.length)?null:arr.reduce((a,b)=>a+b,0)/arr.length; }
-function pct90(arr){ if(!arr||!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*0.9)]||s[s.length-1]; }
-
-// ─── Download phase: streams bytes and fires concurrent pings ─────────────────
-async function runDownloadPhase(){
-  const sizes=[1*1024*1024, 10*1024*1024, 25*1024*1024];
-  const allSamples=[]; let cumulativeT=0; let allLat=[];
-  let totalBits=0, totalSecs=0;
-  for(const bytes of sizes){
-    const url=`https://speed.cloudflare.com/__down?bytes=${bytes}&nc=${Date.now()}`;
-    const t0=performance.now();
-    let received=0, lastSampleT=t0, lastSampleBytes=0;
-    const pingCount=bytes>=10*1024*1024?10:6;
-    const pingTask=collectLatencyPings(pingCount, Math.floor(7000/pingCount));
-    const dlTask=(async()=>{
-      try{
-        const resp=await fetchWithOpts(url,{cache:'no-store'},65000);
-        if(!resp||!resp.ok) return null;
-        if(resp.body&&typeof resp.body.getReader==='function'){
-          const reader=resp.body.getReader();
-          while(true){
-            const{done,value}=await reader.read();
-            if(done) break;
-            received+=value.byteLength;
-            const now=performance.now();
-            if(now-lastSampleT>=180){
-              const dt=(now-lastSampleT)/1000;
-              const db=received-lastSampleBytes;
-              const mbps=(db*8)/dt/1e6;
-              const t=cumulativeT+(now-t0)/1000;
-              allSamples.push({t,mbps});
-              lastSampleT=now; lastSampleBytes=received;
-            }
-          }
-        } else {
-          const data=await resp.arrayBuffer();
-          received=data.byteLength;
-        }
-        const elapsed=(performance.now()-t0)/1000;
-        return elapsed>0 ? {mbps:(received*8)/elapsed/1e6, bits:received*8, secs:elapsed} : null;
-      }catch(e){ return null; }
-    })();
-    const[result,pings]=await Promise.all([dlTask,pingTask]);
-    cumulativeT+=(performance.now()-t0)/1000;
-    allLat=[...allLat,...pings];
-    if(result&&result.mbps!=null){
-      totalBits+=result.bits;
-      totalSecs+=result.secs;
-      if(!allSamples.length||allSamples[allSamples.length-1].t<cumulativeT-0.08){
-        allSamples.push({t:cumulativeT,mbps:result.mbps});
-      }
-    }
-  }
-  const finalMbps=totalSecs>0 ? (totalBits/totalSecs)/1e6 : (allSamples.length?calcAvg(allSamples.map(s=>s.mbps)):null);
-  return{mbps:finalMbps,samples:allSamples,latencies:allLat};
-}
-
-// ─── Upload phase: sequential chunk uploads with concurrent pings ─────────────
-async function runUploadPhase(){
-  const sizes=[512*1024, 2*1024*1024, 8*1024*1024];
-  const allSamples=[]; let cumulativeT=0; let allLat=[];
-  let totalBits=0, totalSecs=0;
-  for(const bytes of sizes){
-    const body=new Uint8Array(bytes);
-    const url='https://speed.cloudflare.com/__up?nc='+Date.now();
-    const t0=performance.now();
-    const pingCount=bytes>=2*1024*1024?8:5;
-    const[result,pings]=await Promise.all([
-      (async()=>{
-        for(let attempt=0; attempt<2; attempt++){
-          try{
-            const tUp=performance.now();
-            const r=await fetchWithOpts(url,{method:'POST',mode:'no-cors',body,cache:'no-store',headers:{'Content-Type':'application/octet-stream'}},60000);
-            const okLike=!!r && (r.ok || r.type==='opaque');
-            if(!okLike) continue;
-            const elapsed=(performance.now()-tUp)/1000;
-            if(elapsed>0) return {mbps:(bytes*8)/elapsed/1e6, bits:bytes*8, secs:elapsed};
-          }catch(e){}
-        }
-        return null;
-      })(),
-      collectLatencyPings(pingCount, Math.floor(4500/pingCount))
-    ]);
-    cumulativeT+=(performance.now()-t0)/1000;
-    allLat=[...allLat,...pings];
-    if(result&&result.mbps!=null){
-      totalBits+=result.bits;
-      totalSecs+=result.secs;
-      allSamples.push({t:cumulativeT,mbps:result.mbps});
-    }
-  }
-  const finalMbps=totalSecs>0 ? (totalBits/totalSecs)/1e6 : (allSamples.length?calcAvg(allSamples.map(s=>s.mbps)):null);
-  return{mbps:finalMbps,samples:allSamples,latencies:allLat};
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── Network page ─────────────────────────────────────────────────────────────
-const CF_COLO={
-  'EWR':[40.6925,-74.1687],'JFK':[40.6413,-73.7781],'BOS':[42.3656,-71.0096],
-  'ATL':[33.6407,-84.4277],'MIA':[25.7959,-80.287],'ORD':[41.9742,-87.9073],
-  'DFW':[32.8998,-97.0403],'DEN':[39.8561,-104.6737],'PHX':[33.4373,-112.0078],
-  'LAX':[33.9425,-118.4081],'SFO':[37.6213,-122.379],'SEA':[47.4502,-122.3088],
-  'IAD':[38.9531,-77.4565],'CLT':[35.2144,-80.9473],'MSP':[44.8848,-93.2223],
-  'DTW':[42.2124,-83.3534],'STL':[38.7499,-90.37],'BNA':[36.1263,-86.6774],
-  'LHR':[51.4775,-0.4614],'LGW':[51.1537,-0.1821],'CDG':[49.0097,2.5479],
-  'AMS':[52.3105,4.7683],'FRA':[50.0379,8.5622],'MUC':[48.3538,11.7861],
-  'FCO':[41.8045,12.2508],'MAD':[40.4719,-3.5626],'BCN':[41.2971,2.0785],
-  'ARN':[59.6498,17.9238],'HEL':[60.3172,24.9633],'WAW':[52.1657,20.9671],
-  'VIE':[48.1103,16.5697],'ZRH':[47.4647,8.5492],'BRU':[50.9014,4.4844],
-  'LIS':[38.7813,-9.1359],'DUB':[53.4213,-6.27],'NRT':[35.772,140.3929],
-  'HND':[35.5494,139.7798],'ICN':[37.4602,126.4407],'PVG':[31.1443,121.8083],
-  'HKG':[22.308,113.9185],'TPE':[25.0777,121.2328],'SIN':[1.3644,103.9915],
-  'KUL':[2.7456,101.7099],'BKK':[13.6811,100.7475],'DEL':[28.5562,77.1],
-  'BOM':[19.0887,72.8679],'SYD':[-33.9399,151.1753],'MEL':[-37.6733,144.8433],
-  'AKL':[-37.0082,174.7917],'GRU':[-23.4356,-46.4731],'EZE':[-34.8222,-58.5358],
-  'BOG':[4.7016,-74.1469],'MEX':[19.4363,-99.0721],'YYZ':[43.6777,-79.6248],
-  'YVR':[49.1967,-123.1815],'YUL':[45.4706,-73.7408],'MXP':[45.6306,8.7281],
-  'CPH':[55.618,12.6561],'OSL':[60.1976,11.1004],'PRG':[50.1008,14.26]
-};
-
-function clearSpeedChart(svgId){
-  const svg=document.getElementById(svgId);
-  if(!svg) return;
-  svg.querySelector('.net-chart-fill').setAttribute('d','');
-  svg.querySelector('.net-chart-line').setAttribute('d','');
-  const old90=svg.querySelector('.net-90pct-line');
-  if(old90) old90.remove();
-  const old90l=svg.querySelector('.net-90pct-label');
-  if(old90l) old90l.remove();
-}
-
-function updateSpeedChart(svgId, samples, color){
-  const svg=document.getElementById(svgId);
-  if(!svg||!samples.length) return;
-  const W=400, H=90;
-  const maxMbps=Math.max(...samples.map(s=>s.mbps))*1.18||10;
-  const maxT=Math.max(samples[samples.length-1].t,0.1);
-  const pts=samples.map(s=>[
-    Math.min(W,(s.t/maxT)*W),
-    Math.max(0,H-(Math.min(s.mbps,maxMbps)/maxMbps)*H)
-  ]);
-  const lineD='M'+pts.map(([x,y])=>`${x.toFixed(1)} ${y.toFixed(1)}`).join(' L');
-  const fillD=`M0 ${H} L`+pts.map(([x,y])=>`${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')+` L${W} ${H} Z`;
-  svg.querySelector('.net-chart-fill').setAttribute('d',fillD);
-  svg.querySelector('.net-chart-line').setAttribute('d',lineD);
-  // 90th percentile line
-  const sorted=[...samples.map(s=>s.mbps)].sort((a,b)=>a-b);
-  const p90v=sorted[Math.floor(sorted.length*0.9)]||sorted[sorted.length-1];
-  const p90y=Math.max(2,H-(Math.min(p90v,maxMbps)/maxMbps)*H);
-  let ln=svg.querySelector('.net-90pct-line');
-  let lb=svg.querySelector('.net-90pct-label');
-  if(!ln){
-    ln=document.createElementNS('http://www.w3.org/2000/svg','line');
-    ln.setAttribute('class','net-90pct-line');
-    svg.insertBefore(ln,svg.querySelector('.net-chart-fill'));
-    lb=document.createElementNS('http://www.w3.org/2000/svg','text');
-    lb.setAttribute('class','net-90pct-label');
-    lb.setAttribute('x','3');
-    lb.textContent='90th percentile';
-    svg.appendChild(lb);
-  }
-  ln.setAttribute('x1','0'); ln.setAttribute('y1',p90y.toFixed(1));
-  ln.setAttribute('x2',W); ln.setAttribute('y2',p90y.toFixed(1));
-  lb.setAttribute('y',(p90y-2).toFixed(1));
-}
-
-function calcQuality(r){
-  const lat=r.avgLatency||999, jit=r.jitter||999, loss=r.packetLoss||0;
-  const dl=r.downloadMbps||0, ul=r.uploadMbps||0;
-  const rate=(g,ok)=>g?'great':ok?'good':'poor';
-  return{
-    streaming:rate(dl>=25&&jit<20&&loss<0.5, dl>=5&&jit<50&&loss<2),
-    gaming:rate(lat<20&&jit<5&&loss<1, lat<50&&jit<15&&loss<3),
-    chatting:rate(dl>=5&&ul>=3&&lat<50, dl>=1&&ul>=1&&lat<100)
-  };
-}
-
-function updateServerInfo(meta){
-  const el=document.getElementById('net-server-info');
-  if(!el) return;
-  const coloCode=typeof meta.colo==='string'
-    ?meta.colo
-    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
-  const serverCity=[meta.city,coloCode].filter(Boolean).join(' / ')||'Unknown';
-  el.innerHTML=`
-    <div class="net-info-line"><span class="net-info-icon">🔗</span><span>Connected via <span class="net-info-val">${meta.httpProtocol||'Unknown'}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Server location: <span class="net-info-val">${serverCity}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Your network: <span class="net-info-val">${meta.asOrganization||(meta.asn?'AS'+meta.asn:'Unknown')}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.clientIp||'Unknown'}</span></span></div>`;
-}
-
-function showNetMap(meta){
-  if(typeof L==='undefined'){
-    setTimeout(()=>showNetMap(meta),350);
-    return;
-  }
-  const mapEl=document.getElementById('net-map');
-  if(!mapEl) return;
-  const clientLat=parseFloat(meta.latitude);
-  const clientLon=parseFloat(meta.longitude);
-  if(!isFinite(clientLat)||!isFinite(clientLon)) return;
-  if(netMapInstance){ netMapInstance.remove(); netMapInstance=null; }
-  const coloCode=typeof meta.colo==='string'
-    ?meta.colo
-    :(meta.colo&&typeof meta.colo==='object'?(meta.colo.code||meta.colo.iata||meta.colo.name||''):String(meta.colo||''));
-  const coloCords=CF_COLO[coloCode]||null;
-  const center=coloCords
-    ?[(clientLat+coloCords[0])/2,(clientLon+coloCords[1])/2]
-    :[clientLat,clientLon];
-  netMapInstance=L.map('net-map',{zoomControl:true,scrollWheelZoom:false}).setView(center,7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
-  }).addTo(netMapInstance);
-  const mkIcon=(color,size)=>L.divIcon({
-    html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.85);box-shadow:0 2px 6px rgba(0,0,0,0.6)"></div>`,
-    className:'',iconSize:[size,size],iconAnchor:[size/2,size/2]
-  });
-  L.marker([clientLat,clientLon],{icon:mkIcon('#f59e0b',12)})
-    .addTo(netMapInstance)
-    .bindPopup(`Your location<br>${[meta.city,meta.country].filter(Boolean).join(', ')}`);
-  if(coloCords){
-    L.marker(coloCords,{icon:mkIcon('#ef4444',14)})
-      .addTo(netMapInstance)
-      .bindPopup(`Cloudflare ${coloCode||'colo'}`);
-    L.polyline([[clientLat,clientLon],coloCords],{color:'#f59e0b',weight:1.5,opacity:0.55,dashArray:'5,5'}).addTo(netMapInstance);
-    netMapInstance.fitBounds(L.latLngBounds([[clientLat,clientLon],coloCords]).pad(0.25));
-  }
-}
-
-function setNetPhase(label,state='testing'){
-  const dot=document.getElementById('net-phase-dot');
-  const lbl=document.getElementById('net-phase-label');
-  if(dot) dot.className='net-phase-dot '+state;
-  if(lbl) lbl.textContent=label;
-}
-
-async function runFullSpeedTest(){
-  if(netTestRunning) return;
-  netTestRunning=true;
-  const retestBtn=document.getElementById('net-retest-btn');
-  if(retestBtn) retestBtn.disabled=true;
-  const el=id=>document.getElementById(id);
-
-  // Reset UI
-  ['net-dl-val','net-ul-val','net-lat-val','net-jit-val','net-loss-val',
-   'net-lat-dl','net-lat-ul','net-jit-dl','net-jit-ul'].forEach(id=>{
-    const e=el(id); if(e) e.textContent='—';
-  });
-  const bpRows=el('net-bp-rows');
-  if(bpRows) bpRows.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Running measurements…</div>';
-  const qr=el('net-quality-row');
-  if(qr) qr.innerHTML='<div class="net-placeholder">—</div>';
-  clearSpeedChart('net-dl-chart'); clearSpeedChart('net-ul-chart');
-  const sinfo=el('net-server-info');
-  if(sinfo) sinfo.innerHTML='<div class="net-placeholder"><div class="net-spinner"></div>Connecting…</div>';
-
-  try{
-    // 1. Meta
-    setNetPhase('Connecting to Cloudflare…');
-    let meta={};
-    try{
-      const r=await fetchWithOpts('https://speed.cloudflare.com/meta',{cache:'no-store'},12000);
-      if(r.ok) meta=await r.json();
-    }catch(e){}
-    if(meta.clientIp){
-      updateServerInfo(meta);
-      showNetMap(meta);
-    }
-
-    // 2. Unloaded latency (20 concurrent pings, 150ms apart ≈ 5s max)
-    setNetPhase('Measuring unloaded latency…');
-    const unloadedLat=await collectLatencyPings(20,150);
-    const avgLat=calcAvg(unloadedLat);
-    const jit=calcJitter(unloadedLat);
-    const loss=((20-unloadedLat.length)/20)*100;
-    const fmtMs=v=>v!=null?Math.round(v):'—';
-
-    // 3. Download
-    setNetPhase('Testing download speed…');
-    const dlResult=await runDownloadPhase();
-    const dlAvgLat=calcAvg(dlResult.latencies);
-    const dlJit=calcJitter(dlResult.latencies);
-
-    // 4. Upload
-    setNetPhase('Testing upload speed…');
-    const ulResult=await runUploadPhase();
-    const ulAvgLat=calcAvg(ulResult.latencies);
-    const ulJit=calcJitter(ulResult.latencies);
-
-    // Populate all values only after test completion for stable display
-    const dv=el('net-dl-val'); if(dv) dv.textContent=dlResult.mbps!=null?dlResult.mbps.toFixed(0):'—';
-    const uv=el('net-ul-val'); if(uv) uv.textContent=ulResult.mbps!=null?ulResult.mbps.toFixed(0):'—';
-    const lv=el('net-lat-val'); if(lv) lv.textContent=fmtMs(avgLat);
-    const jv=el('net-jit-val'); if(jv) jv.textContent=fmtMs(jit);
-    const lsv=el('net-loss-val'); if(lsv) lsv.textContent=loss.toFixed(0);
-    const ldl=el('net-lat-dl'); if(ldl) ldl.textContent=fmtMs(dlAvgLat);
-    const jdl=el('net-jit-dl'); if(jdl) jdl.textContent=fmtMs(dlJit);
-    const lul=el('net-lat-ul'); if(lul) lul.textContent=fmtMs(ulAvgLat);
-    const jul=el('net-jit-ul'); if(jul) jul.textContent=fmtMs(ulJit);
-    updateSpeedChart('net-dl-chart',dlResult.samples,'#f59e0b');
-    updateSpeedChart('net-ul-chart',ulResult.samples,'#8b5cf6');
-
-    // 5. Box plots
-    const allLat=[...unloadedLat,...dlResult.latencies,...ulResult.latencies];
-    const rawMax=allLat.length?Math.max(...allLat):200;
-    const axisMax=Math.ceil(rawMax/50)*50||200;
-    if(bpRows) bpRows.innerHTML=
-      renderNetBoxPlot(unloadedLat,'Unloaded latency','59,130,246',axisMax,20)+
-      renderNetBoxPlot(dlResult.latencies,'Latency during download','245,158,11',axisMax,26)+
-      renderNetBoxPlot(ulResult.latencies,'Latency during upload','139,92,246',axisMax,20);
-
-    // 6. Quality scores
-    const results={avgLatency:avgLat,jitter:jit,packetLoss:loss,downloadMbps:dlResult.mbps,uploadMbps:ulResult.mbps};
-    const q=calcQuality(results);
-    if(qr) qr.innerHTML=[['Video Streaming',q.streaming],['Online Gaming',q.gaming],['Video Chatting',q.chatting]]
-      .map(([name,score],i,arr)=>
-        `${i>0?'<div class="net-quality-sep"></div>':''}<div class="net-quality-item"><span class="net-quality-name">${name}:</span>&nbsp;<span class="net-quality-score ${score}">${score.charAt(0).toUpperCase()+score.slice(1)}</span></div>`
-      ).join('');
-
-    // 7. Timestamp + done
-    const ts=el('net-timestamp');
-    if(ts) ts.textContent='Measured at '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
-    setNetPhase('Test complete',  'done');
-    netTestResults=results;
-    netLastTestAt=Date.now();
-
-    // Re-invalidate map if just became visible
-    if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),200);
-
-  }catch(e){
-    setNetPhase('Error — please retry','');
-  }finally{
-    netTestRunning=false;
-    if(retestBtn) retestBtn.disabled=false;
-  }
-}
-
 function showView(view){
-  const svcView=document.getElementById('grid-wrap');
-  const netView=document.getElementById('net-view');
-  if(view==='network'){
-    currentView='network';
-    if(svcView){svcView.style.display='none';}
-    if(netView){netView.style.display='flex';}
-    const shouldRun=!netTestResults || (Date.now()-netLastTestAt)>=NET_TEST_INTERVAL_MS;
-    if(!netTestRunning && shouldRun) runFullSpeedTest();
-    if(netMapInstance) setTimeout(()=>netMapInstance.invalidateSize(),120);
-  }else{
-    currentView='services';
-    if(svcView){svcView.style.display='';}
-    if(netView){netView.style.display='none';}
-  }
-  syncViewDots();
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
+  currentView=view;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PROXIES=[
-  u=>u,
-  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://cors.isomorphic-git.org/'+u
-];
-
-function proxyOrder(provider){
-  if(provider==='aws') return [2,0,3,1];
-  return (provider==='adobe' || provider==='follett') ? [1,0,2,3] : [0,1,2,3];
-}
+// When deployed (Cloudflare Pages / Vercel), /proxy is a server-side function —
+// no CORS restrictions. Locally, try direct fetch only.
+const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
+const PROXIES=_IS_DEPLOYED
+  ?[u=>`/proxy?url=${encodeURIComponent(u)}`,u=>u]
+  :[u=>u];
 
 async function fetchWithTimeout(url, timeout=15000){
   const controller=new AbortController();
@@ -1677,11 +928,11 @@ async function fetchWithTimeout(url, timeout=15000){
   }
 }
 
-async function getText(url, provider){
+async function getText(url){
   let err;
-  for(const idx of proxyOrder(provider)){
+  for(const proxy of PROXIES){
     try {
-      const r=await fetchWithTimeout(PROXIES[idx](url));
+      const r=await fetchWithTimeout(proxy(url));
       if(!r.ok) throw new Error(String(r.status));
       return await r.text();
     } catch(e){ err=e; }
@@ -1689,8 +940,8 @@ async function getText(url, provider){
   throw err;
 }
 
-async function getJson(url, provider){
-  const t=await getText(url, provider);
+async function getJson(url){
+  const t=await getText(url);
   return JSON.parse(t.replace(/^﻿/,''));
 }
 
@@ -1747,12 +998,25 @@ function mostRecentEvent(events){
 }
 
 function mk(name,ind,title,body,updated,url,labelOverride,labels=[]){
-  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[]};
+  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[],fetchedAt:Date.now()};
 }
 
 function errSvc(s){
-  return {name:s.name,ind:'unknown',label:'Stale / Unknown',title:'Cannot reach status API',body:'We are currently unable to reach the status API. Check the status page manually.',updated:'—',url:s.hu};
+  return {name:s.name,ind:'unknown',label:'Stale / Unknown',title:'Cannot reach status API',body:'We are currently unable to reach the status API. Check the status page manually.',updated:'—',url:s.hu,fetchedAt:Date.now()};
 }
+
+function fmtFetchAge(fetchedAt){
+  if(!fetchedAt) return '';
+  const secs=Math.floor((Date.now()-fetchedAt)/1000);
+  if(secs<5) return 'just now';
+  if(secs<60) return secs+'s ago';
+  const mins=Math.floor(secs/60);
+  if(mins<60) return mins+'m ago';
+  const hrs=Math.floor(mins/60);
+  return hrs+'h ago';
+}
+
+const STALE_MS=5*60*1000; // 5 minutes
 
 function adobeSeverityToIndicator(sev, impact){
   const value=String(sev || impact || '').toLowerCase().trim();
@@ -1771,7 +1035,7 @@ function isOpenAdobeStatus(status){
 async function fetchOne(s){
   if(s.p==='adobe'){
     try {
-      const [registry, events]=await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
+      const [registry, events]=await Promise.all([getJson(s.su), getJson(s.iu)]);
       const ccEntry=Object.values(registry?.clouds||{}).find(c=>String(c?.name||'').toLowerCase()==='creative cloud');
       const ccId=ccEntry?.id;
       if(!ccId) return mk(s.name,'major','Adobe source format changed','Could not locate Creative Cloud in Adobe status registry.',new Date().toLocaleString(),s.hu);
@@ -1818,7 +1082,7 @@ async function fetchOne(s){
 
   if(s.p==='follett'){
     try {
-      const d=await getJson(s.su, s.p);
+      const d=await getJson(s.su);
       let ind='none';
       if(d.generalStatus==='issues') ind='minor';
       else if(d.generalStatus==='maintenance') ind='maintenance';
@@ -1830,7 +1094,7 @@ async function fetchOne(s){
 
   if(s.p==='statusio'){
     try {
-      const h=await getText(s.su, s.p);
+      const h=await getText(s.su);
       let ind='none';
       const statusBarMatch=h.match(/id=["']statusbar_text["'][^>]*>([^<]+)/i);
       const statusBarText=(statusBarMatch?.[1]||'').toLowerCase();
@@ -1851,9 +1115,9 @@ async function fetchOne(s){
     try {
       const compMap={'operational':'none','degraded_performance':'minor','partial_outage':'minor','major_outage':'major','under_maintenance':'maintenance'};
       const [sd,id,cd]=await Promise.all([
-        getJson(s.su, s.p),
-        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]})
+        getJson(s.su),
+        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]})
       ]);
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
       // Filter to only Duo Support and DUO72 components (case-insensitive)
@@ -1892,7 +1156,7 @@ async function fetchOne(s){
 
   if(s.p==='aws'){
     try {
-      const rss=await getText(s.su, s.p);
+      const rss=await getText(s.su);
       const items=parseAwsRssItems(rss)
         .filter(item=>isAwsNorthAmericaEvent({region_name:'', service_name:item.title, summary:item.description, description:item.description}))
         .filter(item=>isAwsRssItemFresh(item.pubDate));
@@ -1911,7 +1175,7 @@ async function fetchOne(s){
 
   if(s.p==='gcloud'){
     try {
-      const incidents=await getJson(s.su, s.p);
+      const incidents=await getJson(s.su);
       const active=(incidents||[]).filter(x=>!x.end);
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
       const top=mostRecentEvent(active) || active[0];
@@ -1927,7 +1191,7 @@ async function fetchOne(s){
 
   if(s.p==='gworkspace'){
     try {
-      const incidents=await getJson(s.su, s.p);
+      const incidents=await getJson(s.su);
       // incidents.json is an array; active = no end date yet
       const active=(incidents||[]).filter(x=>!x.end);
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
@@ -1946,7 +1210,7 @@ async function fetchOne(s){
 
   if(s.p==='azure'){
     try {
-      const html=await getText(s.su, s.p);
+      const html=await getText(s.su);
       const americasTable=extractAzureAmericasTable(html);
       if(!americasTable){
         return mk(s.name,'unknown','Azure status format changed','Could not locate the Americas status table.',new Date().toLocaleString(),s.hu);
@@ -1971,13 +1235,108 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
+  if(s.p==='mbta'){
+    try{
+      const data=await getJson(s.su);
+      const now=Date.now();
+
+      // Human-readable effect labels
+      const EFFECT_LABEL={
+        SUSPENSION:'Service Suspended',SHUTTLE:'Bus Shuttle in Effect',NO_SERVICE:'No Service',
+        SIGNIFICANT_DELAYS:'Significant Delays',DELAY:'Delays',DETOUR:'Detour',
+        STOP_CLOSURE:'Stop Closure',SERVICE_CHANGE:'Service Change',TRACK_CHANGE:'Track Change',
+        EXTRA_SERVICE:'Extra Service',SCHEDULE_CHANGE:'Schedule Change',
+      };
+      const EFFECT_IND={
+        SUSPENSION:'major',SHUTTLE:'major',NO_SERVICE:'major',
+        SIGNIFICANT_DELAYS:'minor',DELAY:'minor',DETOUR:'minor',
+        STOP_CLOSURE:'minor',SERVICE_CHANGE:'minor',TRACK_CHANGE:'minor',
+      };
+      const CAUSE_LABEL={
+        CONSTRUCTION:'Construction',MAINTENANCE:'Maintenance',SPECIAL_EVENT:'Special Event',
+        ACCIDENT:'Accident',WEATHER:'Weather',TRAFFIC:'Traffic',TECHNICAL_PROBLEM:'Technical Problem',
+        STRIKE:'Strike',DEMONSTRATION:'Demonstration',MEDICAL_EMERGENCY:'Medical Emergency',
+        POLICE_ACTIVITY:'Police Activity',POWER_PROBLEM:'Power Problem',
+        SIGNAL_PROBLEM:'Signal Problem',SWITCH_PROBLEM:'Switch Problem',
+        TRACK_PROBLEM:'Track Problem',VEHICLE_EQUIPMENT_PROBLEM:'Equipment Problem',
+      };
+
+      // Filter to active, lifecycle NEW/ONGOING alerts
+      const alerts=(data?.data||[]).filter(a=>{
+        const lc=(a.attributes?.lifecycle||'').toUpperCase();
+        if(lc!=='NEW'&&lc!=='ONGOING') return false;
+        // Check active_period — at least one period must overlap now
+        const periods=a.attributes?.active_period||[];
+        if(!periods.length) return true;
+        return periods.some(p=>{
+          const start=p.start?Date.parse(p.start):0;
+          const end=p.end?Date.parse(p.end):Infinity;
+          return start<=now&&now<=end;
+        });
+      });
+
+      const serviceAlerts=alerts.filter(a=>{
+        const sev=a.attributes?.severity||0;
+        const eff=a.attributes?.effect||'';
+        return sev>=3&&EFFECT_IND[eff]!=null;
+      }).sort((a,b)=>(b.attributes?.severity||0)-(a.attributes?.severity||0));
+
+      if(!serviceAlerts.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+
+      const top=serviceAlerts[0];
+      const attr=top.attributes||{};
+      const eff=attr.effect||'';
+      const ind=EFFECT_IND[eff]||'minor';
+      const effectLabel=EFFECT_LABEL[eff]||eff.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      const cause=attr.cause?CAUSE_LABEL[attr.cause]||null:null;
+      const timeframe=attr.timeframe||null;
+
+      // Build title: effect label + cause if meaningful
+      const titleParts=[effectLabel];
+      if(cause&&cause!=='Unknown') titleParts.push('('+cause+')');
+      const title=titleParts.join(' ');
+
+      // Build body: short header + timeframe + affected routes + additional alerts
+      const parts=[];
+      const shortHdr=attr.short_header||attr.header||'';
+      if(shortHdr) parts.push(shortHdr);
+      if(timeframe) parts.push('<strong>When:</strong> '+timeframe);
+
+      // Affected route names from relationships
+      const routeIds=(top.relationships?.routes?.data||[]).map(r=>r.id);
+      if(routeIds.length){
+        const routeNames=routeIds.map(id=>{
+          if(id.includes('Providence')) return 'Providence/Stoughton';
+          if(id.includes('NewBedford')) return 'New Bedford';
+          if(id.includes('FallRiver')) return 'Fall River';
+          return id.replace('CR-','').replace(/-/g,' ');
+        });
+        parts.push('<strong>Affected:</strong> '+routeNames.join(', '));
+      }
+
+      // Additional alerts summary
+      if(serviceAlerts.length>1){
+        const extras=serviceAlerts.slice(1).map(a=>{
+          const aEff=a.attributes?.effect||'';
+          return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+
+            (a.attributes?.short_header?' — '+a.attributes.short_header.substring(0,60):'');
+        });
+        parts.push(extras.join('<br>'));
+      }
+
+      const body=parts.join('<br>');
+      const updated=new Date(attr.updated_at||now).toLocaleString();
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
   if(s.p==='cloudflare'){
     try {
       const [sd,id,cd,md]=await Promise.all([
-        getJson(s.su, s.p),
-        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
-        s.mu ? getJson(s.mu, s.p).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
+        getJson(s.su),
+        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
+        s.mu ? getJson(s.mu).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
       ]);
       let ind='none';
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -2012,6 +1371,7 @@ async function fetchOne(s){
       } else {
         ind=normalizeIndicator(sd?.status?.indicator||'none');
       }
+      const hasReroutingComponents=watched.some(c=>cloudflareComponentIndicator(c)==='rerouting');
 
       const active=(id?.incidents||[]).filter(x=>{
         if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
@@ -2069,14 +1429,21 @@ async function fetchOne(s){
           hasRerouteNotice=true;
           ind='none';
         }
-        const impactsList=affectedNorthAmerica
-          .map(c=>`• ${c.name}: ${LABELS[cloudflareComponentIndicator(c)]||'Impacted'}`)
-          .join('<br>');
-
+        // Format DC names compactly: "CLT · Charlotte, NC" instead of full verbose name
+        const fmtDc=n=>{
+          const codeM=/\(([A-Z]{3,4})\)/.exec(n);
+          const code=codeM?codeM[1]:'';
+          const city=n.replace(/,?\s*[\w\s]+-\s*\([A-Z]{3,4}\)/,'').replace(/,\s*(United States|Canada|Mexico)$/i,'').trim();
+          return code?`${code} · ${city}`:(city||n);
+        };
+        const n=affectedNorthAmerica.length;
+        const numWord=['','one','two','three','four','five','six','seven','eight','nine','ten'];
+        const nLabel=n<=10?numWord[n]:String(n);
+        const dcList=affectedNorthAmerica.map(c=>`• ${fmtDc(c.name)}`).join('<br>');
         if(!title){
-          title=`${affectedNorthAmerica.length} non-operational North America status${affectedNorthAmerica.length===1?'':'es'}`;
+          title=`Traffic re-routed at ${nLabel} Data Center${n===1?'':'s'} in North America`;
         }
-        body=`${body ? `${body}<br><br>` : ''}<strong>North America affected areas:</strong><br>${impactsList}`;
+        body=`${body?`${body}<br><br>`:''}<strong>Affected Data Centers:</strong><br>${dcList}`;
       } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
           .filter(c=>cloudflareComponentIndicator(c)!=='none')
@@ -2091,6 +1458,9 @@ async function fetchOne(s){
         hasRerouteNotice=true;
         ind='none';
       }
+      if(!hasRerouteNotice && hasReroutingComponents && ind==='minor'){
+        hasRerouteNotice=true;
+      }
       if(!labelOverride && watched.length){
         const top=watched
           .filter(c=>componentStatusToIndicator(c.status)!=='none')
@@ -2098,7 +1468,7 @@ async function fetchOne(s){
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
       if(hasRerouteNotice){
-        ind='none';
+        ind='rerouting';
         labelOverride='Operational';
         extraStatuses.push('Re-routed');
       }
@@ -2107,10 +1477,83 @@ async function fetchOne(s){
     } catch { return errSvc(s); }
   }
 
+  if(s.p==='oci'){
+    try{
+      const [st,comp]=await Promise.all([
+        getJson(s.su),
+        getJson(s.cu).catch(()=>null)
+      ]);
+      let ind=normalizeIndicator(st?.status?.indicator||'none');
+      const updated=st?.page?.updated_at?new Date(st.page.updated_at).toLocaleString():new Date().toLocaleString();
+      let title='',body='';
+      if(comp){
+        const naRegions=(comp.regionHealthReports||[]).filter(r=>r.geographicAreaName==='NAM');
+        const affected=[];
+        for(const region of naRegions)
+          for(const svc of (region.serviceHealthReports||[]))
+            if(svc.serviceStatus!=='NormalPerformance'&&(svc.incidents||[]).length)
+              affected.push(svc.serviceName+' ('+region.regionCanonicalName+')');
+        if(affected.length){
+          if(ind==='none') ind='minor';
+          title=affected.length+' North America service'+(affected.length>1?'s':'')+' affected';
+          body=affected.slice(0,3).join('; ');
+        }
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='ibm'){
+    try{
+      const text=await getText(s.su);
+      const doc=new DOMParser().parseFromString(text,'application/xml');
+      const items=[...doc.querySelectorAll('item')];
+      const cutoff=Date.now()-48*60*60*1000;
+      const recent=items.filter(it=>{
+        const pd=it.querySelector('pubDate')?.textContent;
+        return pd?new Date(pd).getTime()>cutoff:true;
+      });
+      const active=recent.filter(it=>
+        /incident|outage|degraded|disruption/i.test(it.querySelector('title')?.textContent||'')
+      );
+      const ind=active.length?'minor':'none';
+      const title=active.length?(active[0].querySelector('title')?.textContent||''):'';
+      const body=active.length?stripHtml(active[0].querySelector('description')?.textContent||'').slice(0,200):'';
+      const updated=items[0]?.querySelector('pubDate')?.textContent
+        ?new Date(items[0].querySelector('pubDate').textContent).toLocaleString()
+        :new Date().toLocaleString();
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='apple'){
+    try{
+      const data=JSON.parse(await getText(s.su));
+      const active=(data.services||[]).filter(sv=>
+        (sv.events||[]).some(ev=>ev.eventStatus&&ev.eventStatus!=='resolved')
+      );
+      const ind=active.length?'minor':'none';
+      const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
+      const body=active.slice(0,3).map(sv=>sv.serviceName).join(', ');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='appledeveloper'){
+    try{
+      const data=await getJson(s.su);
+      const active=(data.services||[]).filter(sv=>sv.statusType&&sv.statusType!=='');
+      const ind=active.length?(active.some(sv=>sv.statusType==='Outage')?'major':'minor'):'none';
+      const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
+      const body=active.slice(0,3).map(sv=>sv.serviceName).join(', ');
+      return mk(s.name,ind,title,body,new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const [sd,id]=await Promise.all([
-      getJson(s.su, s.p),
-      s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+      getJson(s.su),
+      s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
     ]);
     let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -2152,7 +1595,15 @@ const LOGO_DOMAINS={
   'AWS':'aws.amazon.com',
   'Azure':'microsoft.com',
   'Google Cloud':'cloud.google.com',
-  'Net Connection':'speed.cloudflare.com'
+  'Oracle Cloud':'oracle.com',
+  'IBM Cloud':'ibm.com',
+  'Akamai':'akamai.com',
+  'Fastly':'fastly.com',
+  'Bunny.net':'bunny.net',
+  'CacheFly':'cachefly.com',
+  'Quad9':'quad9.net',
+  'Apple Services':'apple.com',
+  'Apple Developer':'developer.apple.com',
 };
 const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
 const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
@@ -2165,7 +1616,6 @@ function logoSources(svc){
   const statusHost=(svc.url||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
 
   if(companyDomain){
-    sources.push(`https://logo.clearbit.com/${companyDomain}`);
     sources.push(`https://icons.duckduckgo.com/ip3/${companyDomain}.ico`);
     sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(companyDomain)}&sz=64`);
   }
@@ -2188,105 +1638,172 @@ function nextLogo(img){
   img.src=sources[idx];
 }
 
-// Returns the iOS-style snap size for a widget based on incident text volume.
-// Grid uses 4 rows per page so mini (no-incident) = 1 row ≈ half the old normal height.
-// Sizes: 1×1 mini (no incidents), 1×2 normal, 2×2 expanded-wide, 1×3 expanded-tall, 2×4 large.
-function getCardSize(svc, cols){
-  // No incidents → mini half-size card
-  if(svc.ind==='none') return {spanCol:1, spanRow:1};
-  const score=(svc.title||'').length+(svc.body||'').length+(svc.label||'').length*0.7+(svc.labels||[]).join(' ').length*1.6;
-  if(score<130 || cols<2) return {spanCol:1, spanRow:2};  // normal
-  if(score<320) return {spanCol:2, spanRow:2};             // expanded wide
-  if(score<620) return {spanCol:1, spanRow:3};             // expanded tall
-  return {spanCol:2, spanRow:4};                           // large — full page column
+function renderServices(results){
+  const grid=document.getElementById('services-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const loadEl=document.getElementById('loading-el');
+  if(loadEl) loadEl.style.display='none';
+  const sort=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
+
+  // ── Status summary banner ──────────────────────────────────────────────────
+  const summary=document.getElementById('status-summary');
+  if(summary){
+    const total=results.length;
+    const issueCount=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=results.some(s=>s.ind==='major');
+    const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
+    const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
+    summary.className='status-summary show '+cls;
+    summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
+  }
+
+  // ── Active Issues panel ────────────────────────────────────────────────────
+  const activeIssues=sort(results.filter(s=>s.ind!=='none'&&s.ind!=='unknown'));
+  if(activeIssues.length){
+    const sec=document.createElement('div');
+    sec.className='issues-section';
+    const hdr=document.createElement('div');
+    const hasOutageInActive=activeIssues.some(s=>s.ind==='major');
+    hdr.className='issues-hdr'+(hasOutageInActive?' has-outage':'');
+    hdr.innerHTML=`<span>Active Issues</span><span class="issues-hdr-count">${activeIssues.length} service${activeIssues.length!==1?'s':''} affected</span>`;
+    sec.appendChild(hdr);
+    const ig=document.createElement('div');
+    ig.className='issues-grid';
+    activeIssues.forEach(s=>ig.appendChild(mkIncCard(s)));
+    sec.appendChild(ig);
+    grid.appendChild(sec);
+  }
+
+  // ── Service directory ──────────────────────────────────────────────────────
+  const dir=document.createElement('div');
+  dir.className='svc-directory';
+
+  // ── Search/filter bar ──────────────────────────────────────────────────────
+  const searchWrap=document.createElement('div');
+  searchWrap.className='svc-search-wrap';
+  searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false">`;
+  dir.appendChild(searchWrap);
+  const srch=searchWrap.querySelector('.svc-search');
+  srch.addEventListener('input',()=>{
+    const q=srch.value.trim().toLowerCase();
+    dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
+      let any=false;
+      sec.querySelectorAll('.svc-row').forEach(row=>{
+        const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
+        row.style.display=match?'':'none';
+        if(match) any=true;
+      });
+      sec.style.display=any?'':'none';
+      if(q&&any) sec.classList.remove('collapsed');
+    });
+  });
+
+  const addSection=(label,items,icon)=>{
+    if(!items.length) return;
+    const storageKey='svc-collapse-'+label.replace(/\W+/g,'-');
+    const isCollapsed=localStorage.getItem(storageKey)==='1';
+    const sec=document.createElement('div');
+    sec.className='svc-cat-sec'+(isCollapsed?' collapsed':'');
+    const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=items.some(s=>s.ind==='major');
+    const badgeCls=hasOutage?'warn':issueCount>0?'warn':'ok';
+    const badgeTxt=issueCount===0?'All clear':issueCount+' issue'+(issueCount!==1?'s':'');
+    const hdr=document.createElement('div');
+    hdr.className='svc-cat-hdr';
+    hdr.innerHTML=`${icon||''}<span>${label}</span><span class="svc-cat-count">${items.length}</span><span class="svc-cat-badge ${badgeCls}">${badgeTxt}</span><svg class="svc-cat-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+    hdr.addEventListener('click',()=>{
+      const collapsed=sec.classList.toggle('collapsed');
+      localStorage.setItem(storageKey,collapsed?'1':'0');
+    });
+    sec.appendChild(hdr);
+    const tbl=document.createElement('div');
+    tbl.className='svc-table';
+    sort(items).forEach(s=>tbl.appendChild(mkSvcRow(s)));
+    sec.appendChild(tbl);
+    dir.appendChild(sec);
+  };
+  const appIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`;
+  const infraIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6" stroke-width="3"/><line x1="6" y1="18" x2="6.01" y2="18" stroke-width="3"/></svg>`;
+  const transitIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="13" rx="2"/><path d="M8 16v3m8-3v3M3 16h18"/><circle cx="8.5" cy="10" r="1.5"/><circle cx="15.5" cy="10" r="1.5"/><line x1="4" y1="7" x2="20" y2="7"/></svg>`;
+  addSection('Applications & Platforms', results.filter(s=>s.cat==='app'), appIcon);
+  addSection('Infrastructure', results.filter(s=>s.cat==='infra'), infraIcon);
+  addSection('Transit', results.filter(s=>s.cat==='transit'), transitIcon);
+  grid.appendChild(dir);
 }
 
-// Pack items into pages of `cols × rows` cells, respecting each item's span.
-// Returns an array of pages; each page is an array of items with added
-// gridCol, gridRow (1-based), spanCol, spanRow properties.
-function packToPages(items, cols, rows){
-  const pages=[];
-  let grid, placed;
-  function reset(){ grid=Array.from({length:rows},()=>Array(cols).fill(false)); placed=[]; }
-  reset();
-
-  function findPos(w,h){
-    for(let r=0;r<=rows-h;r++){
-      for(let c=0;c<=cols-w;c++){
-        let ok=true;
-        for(let dr=0;dr<h&&ok;dr++) for(let dc=0;dc<w&&ok;dc++) if(grid[r+dr][c+dc]) ok=false;
-        if(ok) return [r,c];
-      }
-    }
-    return null;
-  }
-  function mark(r,c,w,h){ for(let dr=0;dr<h;dr++) for(let dc=0;dc<w;dc++) grid[r+dr][c+dc]=true; }
-
-  for(const item of items){
-    let sc=Math.min(item.spanCol,cols);
-    let sr=Math.min(item.spanRow,rows);
-    let pos=findPos(sc,sr);
-    if(!pos){ pages.push(placed); reset(); pos=findPos(sc,sr); }
-    // If still no fit (shouldn't happen), shrink to 1×1
-    if(!pos){ sc=1; sr=1; pos=findPos(1,1); }
-    if(pos){
-      mark(pos[0],pos[1],sc,sr);
-      placed.push({...item,spanCol:sc,spanRow:sr,gridRow:pos[0]+1,gridCol:pos[1]+1});
-    }
-  }
-  if(placed.length) pages.push(placed);
-  return pages;
-}
-
-function mkCard(svc, delay){
+// Incident card — shown in the Active Issues panel for services with problems
+function mkIncCard(svc){
   const d=document.createElement('div');
-  const isMini=svc.ind==='none' && !svc.noMini;
-  d.className=`card ${CC[svc.ind]||''}${isMini?' mini':''}`;
-  d.style.animationDelay=delay+'ms';
-  d.style.setProperty('--tile-delay', delay+'ms');
+  d.className=`card ${CC[svc.ind]||''}`;
+  d.dataset.svc=svc.name;
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
-
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
-  const incTitle=svc.ind==='none' ? (svc.title||'No incidents') : (svc.title||svc.label);
-  const incBody=svc.ind==='none' ? (svc.body||'All systems operating normally.') : (svc.body||'See the status page for full details.');
-  const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
+  const incTitle=svc.title||svc.label;
+  const incBody=svc.body||'See the status page for full details.';
+  const urlHost=svc.url?svc.url.replace(/^https?:\/\//,'').replace(/\/$/,''):'';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-  const labels=[svc.label, ...(svc.labels||[])].filter((v,i,a)=>v && a.indexOf(v)===i);
-  const statusLabels=labels.length>1 ? `<div class="status-labels">${labels.map(label=>`<span class="status-label">${label}</span>`).join('')}</div>` : '';
-  const densityScore=(incTitle.length*1.5)+(incBody.length)+(labels.join(' ').length*1.2);
-  if(densityScore>320) d.classList.add('dense');
-
-  // Mini cards only show the top bar (icon + name + badge); incident block is hidden via CSS
+  const labels=[svc.label,...(svc.labels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${l}</span>`).join('')}</div>`:'';
+  const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
+  const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback||ICONS[svc.ind]||'?'}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
-          ${!isMini && urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
+          ${urlHost?`<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>`:''}
         </div>
       </div>
       <div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div>
     </div>
-    ${isMini ? '' : `
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
-      <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${svc.ind==='none'?'Current Status':svc.ind==='rerouting'?'Traffic Notice':'Active Incident'}</div>
+      <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
       ${statusLabels}
       <div class="inc-title">${incTitle}</div>
       <div class="inc-body">${incBody}</div>
     </div>
     <div class="card-meta">
-      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated ${svc.updated}</div>
-      <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : svc.ind==='rerouting' ? 'Rerouted' : 'Investigating'}${(svc.labels||[]).length>1 ? ' · Multi-status' : ''}</div>
-    </div>`}`;
+      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
+      <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
+    </div>`;
   return d;
 }
 
-let cur=0, rTimer=null, pTimer=null, pStart=0, pageAnimTimer=null, pageAnimating=false, currentView='services';
-const ROT_MS=60000;
+// Service row — shown in the directory for all services
+function mkSvcRow(svc){
+  const d=document.createElement('div');
+  d.className='svc-row';
+  d.dataset.svc=svc.name;
+  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  const dotColors={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
+  const dotColor=dotColors[svc.ind]||'var(--unknown)';
+  const dotPulse=svc.ind!=='none'&&svc.ind!=='unknown'?' svc-dot-pulse':'';
+  const logos=logoSources(svc);
+  const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+  const preview=svc.ind!=='none'&&svc.title?svc.title:'';
+  d.innerHTML=`
+    <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
+    <div class="svc-icon-wrap">${logos.length?`<img src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${fallback}</span>`}</div>
+    <span class="svc-name">${svc.name}</span>
+    <span class="svc-inc-preview">${preview}</span>
+    <span class="svc-badge ${IC[svc.ind]||'ok'}">${svc.label}</span>`;
+  return d;
+}
+
+function nextLogoRow(img){
+  const sources=img.dataset.sources?img.dataset.sources.split('|'):[];
+  const idx=parseInt(img.dataset.idx||'0',10)+1;
+  if(idx>=sources.length){ img.style.display='none'; const fb=img.parentElement?.querySelector('span'); if(fb) fb.style.display='inline'; return; }
+  img.dataset.idx=String(idx);
+  img.src=sources[idx];
+}
+
+let currentView='services';
 
 let refreshFailCount=0;
 let lastSuccessfulRefresh=null;
@@ -2303,82 +1820,6 @@ function setStale(on){
   if(badge) badge.classList.toggle('show', on);
 }
 
-function goPage(idx){
-  const pages=[...document.querySelectorAll('.page')];
-  if(!pages.length) return;
-  if(pageAnimating) return;
-  idx=((idx%pages.length)+pages.length)%pages.length;
-
-  if(idx===cur){
-    syncViewDots();
-    resetProg();
-    return;
-  }
-
-  pageAnimating=true;
-  const prev=cur;
-  const forward=(idx>prev) || (prev===pages.length-1 && idx===0);
-  const outgoing=pages[prev];
-  const incoming=pages[idx];
-  const enterCls=forward?'enter-next':'enter-prev';
-  const leaveCls=forward?'leave-next':'leave-prev';
-
-  clearTimeout(pageAnimTimer);
-  pages.forEach(p=>p.classList.remove('enter-next','enter-prev','leave-next','leave-prev'));
-  outgoing.classList.add(leaveCls);
-
-  incoming.classList.add('active', enterCls);
-  incoming.querySelectorAll('.card').forEach(card=>{
-    card.classList.remove('tile-in','tile-out');
-    card.classList.add('tile-in');
-  });
-
-  pageAnimTimer=setTimeout(()=>{
-    outgoing.classList.remove('active', leaveCls);
-    outgoing.querySelectorAll('.card').forEach(card=>card.classList.remove('tile-in','tile-out'));
-    incoming.classList.remove(enterCls);
-    incoming.querySelectorAll('.card').forEach(card=>card.classList.remove('tile-in','tile-out'));
-    pageAnimating=false;
-  }, 620);
-
-  cur=idx;
-  syncViewDots();
-  resetProg();
-}
-
-function resetProg(){
-  clearInterval(pTimer);
-  const fill=document.getElementById('prog-fill');
-  pStart=Date.now();
-  fill.style.width='0%';
-  pTimer=setInterval(()=>{ fill.style.width=Math.min(100,(Date.now()-pStart)/ROT_MS*100)+'%'; },300);
-}
-
-function syncViewDots(){
-  const dots=[...document.querySelectorAll('.pdot')];
-  if(!dots.length) return;
-  const servicePages=document.querySelectorAll('.page').length;
-  const activeIdx=currentView==='network'?servicePages:Math.min(cur,Math.max(servicePages-1,0));
-  dots.forEach((d,i)=>d.classList.toggle('active',i===activeIdx));
-}
-
-function startRot(n){
-  clearInterval(rTimer);
-  if(n>0) rTimer=setInterval(()=>rotateViews(n),ROT_MS);
-}
-
-function rotateViews(totalPages){
-  if(currentView==='services'){
-    if(totalPages>1 && cur<totalPages-1){
-      goPage(cur+1);
-      return;
-    }
-    showView('network');
-    return;
-  }
-  showView('services');
-  goPage(0);
-}
 
 function updateIncidentPin(data){
   const pin=document.getElementById('incident-pin');
@@ -2426,172 +1867,86 @@ function updateStats(data){
 
   const fmeta=document.getElementById('f-meta');
   if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
+
+  // Dynamic title + favicon
+  const issues=wn+bd+mt+rt;
+  document.title=bd>0?`⚠ ${bd} Down · Service Status`:issues>0?`• ${issues} Issues · Service Status`:'Service Status';
+  const fav=document.querySelector('link[rel="icon"]');
+  if(fav){
+    const c=bd>0?'%23ef4444':issues>0?'%23f59e0b':'%2322c55e';
+    fav.href=`data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='${c}'/><circle cx='16' cy='16' r='7' fill='%23fff'/></svg>`;
+  }
 }
 
+
+const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
+window._lastResults=window._lastResults||{};
+
 async function init(){
-  if(isRefreshing) return; // don't overlap concurrent refreshes
+  if(isRefreshing) return;
   setRefreshing(true);
-
-  const wrap=document.getElementById('grid-wrap');
-  const dotsEl=document.getElementById('pdots');
-
   let results;
-  try {
-    results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))), i*120))));
-  } catch(e) {
+  try{
+    results=await Promise.all(SVCS.map((s,i)=>new Promise(res=>setTimeout(()=>fetchOne(s).then(res).catch(()=>res(errSvc(s))),i*80))));
+  }catch(e){
     refreshFailCount++;
     if(refreshFailCount>=2) setStale(true);
     setRefreshing(false);
     return;
   }
-
-  // Successful fetch
   refreshFailCount=0;
   lastSuccessfulRefresh=Date.now();
   setStale(false);
   setRefreshing(false);
-
-  // Attach category and flags from SVCS and alert on status changes
-  const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
-  const svcNoMiniMap=Object.fromEntries(SVCS.map(s=>[s.name, !!(s.noMini)]));
   results.forEach(s=>{
     s.cat=svcCatMap[s.name]||'app';
-    s.noMini=svcNoMiniMap[s.name]||false;
     const prev=window._pi[s.name];
-    // don't alert for unknown transitions
-    if(prev && prev==='none' && (s.ind==='minor' || s.ind==='major')){
-      const kind=s.ind==='major' ? 'outage' : 'degraded';
-      queueAlert(s, kind);
-    } else if(prev && (prev==='minor' || prev==='major') && s.ind==='none'){
-      queueAlert(s, 'restored');
+    if(prev && prev==='none' && (s.ind==='minor'||s.ind==='major')){
+      queueAlert(s, s.ind==='major'?'outage':'degraded');
+    }else if(prev && (prev==='minor'||prev==='major') && s.ind==='none'){
+      queueAlert(s,'restored');
     }
     window._pi[s.name]=s.ind;
+    window._lastResults[s.name]=s;
   });
   updateStats(results);
   updateIncidentPin(results);
+  renderServices(results);
+}
 
-  const W=wrap.clientWidth || 1280;
-  const H=wrap.clientHeight || 640;
-  const GAP=12;
-  const SECTION_HDR_H=32;
-  const cols=W>=1600 ? 4 : W>=960 ? 3 : 2;
-  const rowsPerPage=4; // 4 rows: mini (no-incident) cards = 1 row, normal = 2 rows, expanded = 3, large = 4
-  const CARD_H=Math.floor((H - GAP*(rowsPerPage-1)) / rowsPerPage);
-  // Header pages: same row count, cards slightly shorter to fit the section label
-  const hdrAvailH=H - SECTION_HDR_H - GAP;
-  const CARD_H_HDR=Math.floor((hdrAvailH - GAP*(rowsPerPage-1)) / rowsPerPage);
-  // A "normal" card occupies 2 rows; compact if that height is small
-  const normalCardH=CARD_H*2+GAP;
-  const compactCards=normalCardH<260;
-  const perPage=cols*rowsPerPage; // same card count on all pages
-
-  // Group and sort each category independently
-  const sort=(arr)=>[...arr].sort((a,b)=>{
-    const pd=(PRI[a.ind]||9)-(PRI[b.ind]||9);
-    return pd!==0 ? pd : a.name.localeCompare(b.name);
-  });
-  const makeGroup=(label, items)=>{
-    const sorted=sort(items);
-    const issues=sorted.filter(s=>s.ind!=='none' && s.ind!=='unknown').length;
-    const hasOutage=sorted.some(s=>s.ind==='major');
-    const hasDegraded=sorted.some(s=>s.ind==='minor' || s.ind==='rerouting');
-    return {label, items:sorted, issues, hasOutage, hasDegraded};
-  };
-  const groups=[
-    makeGroup('Applications & Platforms', results.filter(s=>s.cat==='app')),
-    makeGroup('Infrastructure',           results.filter(s=>s.cat==='infra'))
-  ].filter(g=>g.items.length);
-
-  // Compute iOS-style snap size for every item then bin-pack into pages
-  groups.forEach(g=>{
-    g.items=g.items.map(s=>({...s,...getCardSize(s,cols)}));
-  });
-
-  const pages=[];
-  for(const group of groups){
-    const packed=packToPages(group.items,cols,rowsPerPage);
-    packed.forEach((pageCards,idx)=>{
-      pages.push({
-        header:idx===0?group.label:null,
-        headerMeta:idx===0?{issues:group.issues,hasOutage:group.hasOutage,hasDegraded:group.hasDegraded}:null,
-        cards:pageCards
-      });
-    });
-  }
-  const totalPages=pages.length;
-
-  clearInterval(rTimer); clearInterval(pTimer);
-  wrap.innerHTML=''; dotsEl.innerHTML=''; cur=0; pageAnimating=false;
-
-  pages.forEach((pageData, p)=>{
-    const pg=document.createElement('div');
-    pg.className=`page ${p===0?'active':''}`;
-    // Always use the full column count so spanning works correctly
-    pg.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
-
-    // Row offset: pages with a section header reserve row 1 for the header label
-    const rowOffset=pageData.header ? 1 : 0;
-
-    if(pageData.header){
-      // Explicit rows: header row + rowsPerPage card rows
-      pg.style.gridTemplateRows=`${SECTION_HDR_H}px ${Array(rowsPerPage).fill(CARD_H_HDR+'px').join(' ')}`;
-      const hdr=document.createElement('div');
-      hdr.className='section-hdr';
-      const meta=pageData.headerMeta||{};
-      let badge='';
-      if(meta.issues>0){
-        const cls=meta.hasOutage?'outage':meta.hasDegraded?'degraded':'maint';
-        badge=`<span class="section-hdr-badge ${cls}">${meta.issues} issue${meta.issues!==1?'s':''}</span>`;
-      } else {
-        badge=`<span class="section-hdr-badge ok">All clear</span>`;
-      }
-      hdr.innerHTML=`<span>${pageData.header}</span>${badge}`;
-      pg.appendChild(hdr);
-    } else {
-      pg.style.gridTemplateRows=`${Array(rowsPerPage).fill(CARD_H+'px').join(' ')}`;
+// Per-service background polling — only re-renders what changed
+async function pollService(svc){
+  try{
+    const result=await fetchOne(svc);
+    result.cat=svcCatMap[result.name]||'app';
+    const prev=window._pi[result.name];
+    const prevResult=window._lastResults[result.name];
+    const changed=!prevResult||prev!==result.ind||prevResult.title!==result.title||prevResult.body!==result.body;
+    if(changed){
+      if(prev && prev==='none' && (result.ind==='minor'||result.ind==='major')) queueAlert(result, result.ind==='major'?'outage':'degraded');
+      else if(prev && (prev==='minor'||prev==='major') && result.ind==='none') queueAlert(result,'restored');
+      window._pi[result.name]=result.ind;
+      window._lastResults[result.name]=result;
+      // Full re-render: status change may move service between issues panel and directory
+      const allResults=Object.values(window._lastResults);
+      updateStats(allResults);
+      updateIncidentPin(allResults);
+      renderServices(allResults);
+      lastSuccessfulRefresh=Date.now();
+      setStale(false);
     }
+  }catch(e){}
+}
 
-    pageData.cards.forEach((s,i)=>{
-      const card=mkCard(s,i*30);
-      // Place card at its packed position and apply CSS span
-      card.style.gridColumn=`${s.gridCol} / span ${s.spanCol}`;
-      card.style.gridRow=`${s.gridRow+rowOffset} / span ${s.spanRow}`;
-      // Size classes keyed to the 4-row grid
-      // spanRow 1 = mini (handled by .mini), 2 = normal, 3 = tall, 4 = large
-      if(s.spanRow>=4)                           card.classList.add('span-large');
-      else if(s.spanRow>=3)                      card.classList.add('span-tall');
-      else if(s.spanRow>=2 && s.spanCol>=2)      card.classList.add('span-wide');
-      // spanRow=2 spanCol=1 → base styles (no extra class needed)
-      if(compactCards) card.classList.add('compact');
-      pg.appendChild(card);
-    });
-    wrap.appendChild(pg);
-
+function startPerServicePolling(){
+  SVCS.forEach((s,i)=>{
+    // Stagger so they don't all hit simultaneously, spread over the 2-min window
+    const offset=Math.round((i/SVCS.length)*110000)+5000;
+    setTimeout(()=>{
+      pollService(s);
+      setInterval(()=>pollService(s), 120000);
+    }, offset);
   });
-
-  const totalViews=totalPages+1; // service pages + network page
-  for(let p=0;p<totalViews;p++){
-    const dot=document.createElement('div');
-    dot.className=`pdot ${p===0?'active':''}`;
-    dot.title=p<totalPages?`Page ${p+1} of ${totalPages}`:'Network';
-    dot.addEventListener('click',()=>{
-      clearInterval(rTimer);
-      if(p<totalPages){
-        showView('services');
-        goPage(p);
-      }else{
-        showView('network');
-      }
-      startRot(totalPages);
-      resetProg();
-    });
-    dotsEl.appendChild(dot);
-  }
-
-  document.getElementById('prog-track').style.display=totalViews>1 ? '' : 'none';
-  showView('services');
-  startRot(totalPages);
-  if(totalViews>1) resetProg();
 }
 
 // Retry every 30s when stale; no-ops immediately when data is fresh
@@ -2601,15 +1956,6 @@ function scheduleRefresh(){
   refreshInterval = setInterval(()=>{ if(refreshFailCount>=2) init(); }, 30000);
 }
 
-// Screen Wake Lock — keeps the display on in kiosk mode
-let wakeLock = null;
-async function requestWakeLock(){
-  if(!('wakeLock' in navigator)) return;
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', () => { wakeLock = null; });
-  } catch(e) { /* silently ignore — not critical */ }
-}
 
 window.addEventListener('DOMContentLoaded',()=>{
   const testBtn=document.getElementById('test-alert-btn');
@@ -2618,62 +1964,24 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('pointerdown', primeAudio, {once:true, passive:true});
   window.addEventListener('keydown', primeAudio, {once:true});
 
-  let idleTimer;
-  const resetIdleTimer = () => {
-    document.body.classList.remove('idle');
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      document.body.classList.add('idle');
-    }, 3000);
-  };
-  window.addEventListener('mousemove', resetIdleTimer);
-  window.addEventListener('mousedown', resetIdleTimer);
-  window.addEventListener('keydown', resetIdleTimer);
-  window.addEventListener('touchstart', resetIdleTimer);
-  resetIdleTimer();
+  // Tab navigation
+  document.querySelectorAll('.nav-tab').forEach(t=>t.addEventListener('click',()=>showView(t.dataset.view)));
 
-  window.addEventListener('keydown', (e) => {
-    if(e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      const pages = document.querySelectorAll('.page');
-      if(currentView==='services' && pages.length > 1) {
-        clearInterval(rTimer);
-        goPage(cur + 1);
-        startRot(pages.length);
-      }
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      const pages = document.querySelectorAll('.page');
-      if(currentView==='services' && pages.length > 1) {
-        clearInterval(rTimer);
-        goPage(cur - 1);
-        startRot(pages.length);
-      }
-    }
-  });
+  // Footer refresh button
+  document.getElementById('f-refresh-btn')?.addEventListener('click',()=>{ if(!isRefreshing) init(); });
 
-  // Re-acquire wake lock and refresh data when the tab/window becomes visible again
+  // Refresh data when the tab/window becomes visible again
   document.addEventListener('visibilitychange', ()=>{
     if(document.hidden) return;
-    // Re-request wake lock (it's released when page is hidden)
-    requestWakeLock();
-    // If data is stale or it's been a long time since last refresh, update immediately
-    const staleThreshold = 3 * 60 * 1000; // 3 minutes
+    const staleThreshold = 3 * 60 * 1000;
     if(!lastSuccessfulRefresh || Date.now() - lastSuccessfulRefresh > staleThreshold){
       init();
     }
   });
 
-  // Request wake lock on load
-  requestWakeLock();
-
-  // Retest button on the Network page
-  const retestBtn=document.getElementById('net-retest-btn');
-  if(retestBtn) retestBtn.addEventListener('click',()=>{ if(!netTestRunning) runFullSpeedTest(); });
-
-  init();
-  setInterval(init, 120000); // normal 2-minute refresh cycle
-  scheduleRefresh();           // aggressive retry when stale
+  init().then(()=>startPerServicePolling());
+  scheduleRefresh();
 });
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
