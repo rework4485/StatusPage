@@ -593,6 +593,33 @@
     .leaflet-control-attribution { background:rgba(0,0,0,0.6); color:rgba(255,255,255,0.3); font-size:8px; }
     .leaflet-control-attribution a { color:rgba(255,255,255,0.4); }
 
+    /* ── Status summary banner ───────────────────────────────────────────────── */
+    .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-radius:12px; margin-bottom:8px; font-size:14px; font-weight:600; }
+    .status-summary.show { display:flex; }
+    .status-summary.ok { background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.18); color:#4ade80; }
+    .status-summary.warn { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
+    .status-summary.bad { background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.2); color:#f87171; }
+    .status-summary-count { font-size:13px; font-weight:400; opacity:0.65; }
+
+    /* ── Speed value 'testing' pulse ─────────────────────────────────────────── */
+    .net-speed-val.testing { opacity:0.45; animation:stalePulse 1.1s ease-in-out infinite; }
+
+    /* ── Endpoint latency jitter label ───────────────────────────────────────── */
+    .net-ep-jitter { font-size:11px; color:var(--muted); margin-top:1px; }
+    .net-ep-row.no-data .net-ep-barwrap { opacity:0.25; }
+    .net-ep-row.no-data .net-ep-val { color:var(--muted); font-weight:500; }
+
+    /* ── Connection info panel ───────────────────────────────────────────────── */
+    .net-info-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+    .net-info-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600; min-width:64px; flex-shrink:0; }
+
+    /* ── Run Speed Test button glow ──────────────────────────────────────────── */
+    .net-retest-btn:not(:disabled) { animation:btnGlow 3s ease-in-out infinite; }
+    @keyframes btnGlow { 0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0)} 50%{box-shadow:0 0 0 5px rgba(59,130,246,0.15)} }
+
+    /* ── Header stat operational count color ─────────────────────────────────── */
+    #n-ok { color:var(--ok) !important; }
+
     /* ── Mobile responsive ───────────────────────────────────────────────────── */
     @media (max-width: 640px) {
       .shell { padding:12px 14px 10px; gap:10px; }
@@ -657,6 +684,7 @@
     </div>
   </div>
   <div class="view active" id="view-services">
+    <div id="status-summary"></div>
     <div class="loading" id="loading-el">
       <div class="spinner"></div>
       <div class="load-t">Fetching service status…</div>
@@ -1277,7 +1305,7 @@ function calcAvg(arr){ return (!arr||!arr.length)?null:arr.reduce((a,b)=>a+b,0)/
 function pct90(arr){ if(!arr||!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*0.9)]||s[s.length-1]; }
 
 // ─── Download phase: streams bytes and fires concurrent pings ─────────────────
-async function runDownloadPhase(){
+async function runDownloadPhase(onProgress){
   const sizeMB=[1, 10, 25];
   const allSamples=[]; let cumulativeT=0; let allLat=[];
   let totalBits=0, totalSecs=0;
@@ -1305,6 +1333,7 @@ async function runDownloadPhase(){
               const mbps=(db*8)/dt/1e6;
               const t=cumulativeT+(now-t0)/1000;
               allSamples.push({t,mbps});
+              if(onProgress) onProgress(mbps);
               lastSampleT=now; lastSampleBytes=received;
             }
           }
@@ -1367,12 +1396,13 @@ async function runUploadPhase(){
   allLat=pings;
   const valid=streamResults.filter(Boolean);
 
+  const wallSecs=(performance.now()-t0)/1000;
   let finalMbps=null;
   if(valid.length>0){
-    // Sum per-stream Mbps: each stream measures its own share of bandwidth
-    finalMbps=valid.reduce((s,r)=>s+r.mbps, 0);
+    // Total bits sent / wall-clock time gives true aggregate upload throughput
+    const totalBits=valid.reduce((s,r)=>s+r.bits, 0);
+    finalMbps=wallSecs>0 ? (totalBits/wallSecs)/1e6 : null;
     // Build chart samples across the wall-clock window
-    const wallSecs=(performance.now()-t0)/1000;
     allSamples.push({t:0, mbps:0});
     allSamples.push({t:wallSecs*0.5, mbps:finalMbps*0.85});
     allSamples.push({t:wallSecs, mbps:finalMbps});
@@ -1476,11 +1506,11 @@ function updateServerInfo(meta){
   const ncType=nc ? (nc.effectiveType||nc.type||'') : '';
   const ncDown=nc&&nc.downlink ? nc.downlink+' Mbps' : '';
   const ncRtt=nc&&nc.rtt ? nc.rtt+' ms' : '';
-  const ncLine=ncType ? `<div class="net-info-line"><span class="net-info-icon">📶</span><span>Connection: <span class="net-info-val">${[ncType.toUpperCase(), ncDown, ncRtt].filter(Boolean).join(' · ')}</span></span></div>` : '';
+  const ncLine=ncType ? `<div class="net-info-line"><span class="net-info-dot" style="background:#a78bfa"></span><span class="net-info-label">Link</span><span class="net-info-val">${[ncType.toUpperCase(), ncDown, ncRtt].filter(Boolean).join(' · ')}</span></div>` : '';
   el.innerHTML=`
-    <div class="net-info-line"><span class="net-info-icon">📍</span><span>Location: <span class="net-info-val">${location}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🏢</span><span>Network: <span class="net-info-val">${org}</span></span></div>
-    <div class="net-info-line"><span class="net-info-icon">🌐</span><span>Your IP: <span class="net-info-val">${meta.query||'Unknown'}${ipBadge}</span></span></div>
+    <div class="net-info-line"><span class="net-info-dot" style="background:#f59e0b"></span><span class="net-info-label">Location</span><span class="net-info-val">${location}</span></div>
+    <div class="net-info-line"><span class="net-info-dot" style="background:#60a5fa"></span><span class="net-info-label">Network</span><span class="net-info-val">${org}</span></div>
+    <div class="net-info-line"><span class="net-info-dot" style="background:#4ade80"></span><span class="net-info-label">Your IP</span><span class="net-info-val">${meta.query||'Unknown'}${ipBadge}</span></div>
     ${ncLine}`;
 }
 
@@ -1567,11 +1597,11 @@ async function measureEndpointLatency(){
   const rows=endpoints.map((ep,i)=>{
     const {lat:v,jitter:j}=results[i]||{};
     const bar=v!=null ? `<div class="net-ep-bar" style="width:${Math.min(100,(v/200)*100).toFixed(0)}%;background:${ep.color}"></div>` : '';
-    const jitStr=j!=null ? `<div class="net-ep-jitter" style="color:${ep.color}88">±${j} ms</div>` : '';
-    return `<div class="net-ep-row">
+    const jitStr=j!=null ? `<div class="net-ep-jitter">±${j} ms</div>` : '';
+    return `<div class="net-ep-row${v==null?' no-data':''}">
       <div class="net-ep-label">${ep.label}</div>
       <div class="net-ep-barwrap">${bar}</div>
-      <div class="net-ep-val" style="color:${ep.color}">${v!=null?v+' ms':'—'}${jitStr}</div>
+      <div class="net-ep-val" style="color:${v!=null?ep.color:'inherit'}">${v!=null?v+' ms':'—'}${jitStr}</div>
     </div>`;
   }).join('');
   el.innerHTML=rows;
@@ -1608,14 +1638,25 @@ async function runFullSpeedTest(){
   const cdPanel=el('net-conn-details');
   if(cdPanel) cdPanel.style.display='none';
 
+  const fmtMbps=v=>v==null?'—':v<100?v.toFixed(1):v.toFixed(0);
+
   try{
-    // 1. Connection info (ip-api.com — free public API, CORS-open from all origins)
+    // 1. Connection info — ip-api.com (HTTP only on free tier), fallback to Cloudflare trace
     setNetPhase('Getting connection info…');
     let meta={};
     try{
       const r=await fetchWithOpts('http://ip-api.com/json/',{cache:'no-store'},8000);
       if(r.ok) meta=await r.json();
     }catch(e){}
+    if(!meta.query){
+      try{
+        const r=await fetchWithOpts('https://cloudflare.com/cdn-cgi/trace',{cache:'no-store'},5000);
+        const text=await r.text();
+        const kv={};
+        text.trim().split('\n').forEach(l=>{const i=l.indexOf('=');if(i>0)kv[l.slice(0,i)]=l.slice(i+1);});
+        if(kv.ip) meta={query:kv.ip,country:kv.loc||'',city:'',regionName:'',isp:'(via Cloudflare)'};
+      }catch(e){}
+    }
     if(meta.query){
       updateServerInfo(meta);
       showNetMap(meta);
@@ -1633,23 +1674,32 @@ async function runFullSpeedTest(){
     const loss=((20-unloadedLat.length)/20)*100;
     const fmtMs=v=>v!=null?Math.round(v):'—';
 
-    // 3. Download
+    // 3. Download — show real-time speed during streaming
     let dlResult={mbps:null,latencies:[],samples:[]};
     let ulResult={mbps:null,latencies:[],samples:[]};
     try{
       setNetPhase('Testing download speed…');
-      dlResult=await runDownloadPhase();
+      el('net-dl-val')?.classList.add('testing');
+      dlResult=await runDownloadPhase(mbps=>{
+        const dv=el('net-dl-val');
+        if(dv){dv.classList.remove('testing');dv.textContent=fmtMbps(mbps);}
+      });
+      el('net-dl-val')?.classList.remove('testing');
       const dlAvgLatTmp=calcAvg(dlResult.latencies);
       const dlJitTmp=calcJitter(dlResult.latencies);
       dlResult.avgLat=dlAvgLatTmp; dlResult.jit=dlJitTmp;
 
       // 4. Upload
       setNetPhase('Testing upload speed…');
+      el('net-ul-val')?.classList.add('testing');
       ulResult=await runUploadPhase();
+      el('net-ul-val')?.classList.remove('testing');
       const ulAvgLatTmp=calcAvg(ulResult.latencies);
       const ulJitTmp=calcJitter(ulResult.latencies);
       ulResult.avgLat=ulAvgLatTmp; ulResult.jit=ulJitTmp;
     }catch(e){
+      el('net-dl-val')?.classList.remove('testing');
+      el('net-ul-val')?.classList.remove('testing');
       setNetPhase('Speed test unavailable — server unreachable');
     }
     const dlAvgLat=dlResult.avgLat??null;
@@ -1657,9 +1707,9 @@ async function runFullSpeedTest(){
     const ulAvgLat=ulResult.avgLat??null;
     const ulJit=ulResult.jit??null;
 
-    // Populate all values only after test completion for stable display
-    const dv=el('net-dl-val'); if(dv) dv.textContent=dlResult.mbps!=null?dlResult.mbps.toFixed(0):'—';
-    const uv=el('net-ul-val'); if(uv) uv.textContent=ulResult.mbps!=null?ulResult.mbps.toFixed(0):'—';
+    // Populate final values
+    const dv=el('net-dl-val'); if(dv) dv.textContent=fmtMbps(dlResult.mbps);
+    const uv=el('net-ul-val'); if(uv) uv.textContent=fmtMbps(ulResult.mbps);
     const lv=el('net-lat-val'); if(lv) lv.textContent=fmtMs(avgLat);
     const jv=el('net-jit-val'); if(jv) jv.textContent=fmtMs(jit);
     const lsv=el('net-loss-val'); if(lsv) lsv.textContent=loss.toFixed(0);
@@ -2394,6 +2444,17 @@ function renderServices(results){
   };
   addGroup('Applications & Platforms', results.filter(s=>s.cat==='app'));
   addGroup('Infrastructure', results.filter(s=>s.cat==='infra'));
+  // Update overall status summary banner
+  const summary=document.getElementById('status-summary');
+  if(summary){
+    const total=results.length;
+    const issues=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=results.some(s=>s.ind==='major');
+    const cls=hasOutage?'bad':issues>0?'warn':'ok';
+    const msg=issues===0?'All Systems Operational':issues+' Issue'+(issues>1?'s':'')+' Detected';
+    summary.className='status-summary show '+cls;
+    summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
+  }
 }
 
 function mkCard(svc, delay){
