@@ -40,6 +40,8 @@ const ALLOWED_HOSTS = new Set([
   'www.apple.com',
   'developer.apple.com',
   'ip-api.com',
+  'free.freeipapi.com',
+  'ipinfo.io',
   'speed.cloudflare.com',
 ]);
 

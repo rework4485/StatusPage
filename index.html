@@ -1510,7 +1510,7 @@ function updateConnDetails(metaUrl){
   const grid=document.getElementById('net-conn-grid');
   if(!panel||!grid) return;
   try{
-    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('ip-api.com'));
+    const entries=performance.getEntriesByType('resource').filter(e=>e.name.includes('freeipapi.com')||e.name.includes('ip-api.com'));
     const e=entries[entries.length-1];
     if(!e||!e.connectEnd) return;
     const dns=Math.round(e.domainLookupEnd-e.domainLookupStart);
@@ -1632,12 +1632,16 @@ async function runFullSpeedTest(){
   const fmtMbps=v=>v==null?'—':v<100?v.toFixed(1):v.toFixed(0);
 
   try{
-    // 1. Connection info — ip-api.com (HTTP only on free tier), fallback to Cloudflare trace
+    // 1. Connection info — FreeIPAPI (HTTPS, CORS *), fallback to Cloudflare trace
     setNetPhase('Getting connection info…');
     let meta={};
     try{
-      const r=await fetchWithOpts('http://ip-api.com/json/',{cache:'no-store'},8000);
-      if(r.ok) meta=await r.json();
+      const r=await fetchWithOpts('https://free.freeipapi.com/api/json/',{cache:'no-store'},8000);
+      if(r.ok){
+        const d=await r.json();
+        // Normalise to same shape as ip-api.com response
+        if(d.ipAddress) meta={query:d.ipAddress,country:d.countryCode||'',city:d.cityName||'',regionName:d.regionName||'',isp:d.asnOrganization||''};
+      }
     }catch(e){}
     if(!meta.query){
       try{
