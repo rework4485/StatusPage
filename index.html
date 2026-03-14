@@ -153,11 +153,10 @@
     .view { display:none; }
     .view.active { display:block; }
     #services-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
-      gap:12px;
-      padding-bottom:24px;
-      align-items:start;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+      padding-bottom:28px;
     }
     .loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 0; }
     .card.tile-in { animation:tileIn 0.5s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--tile-delay, 0ms); }
@@ -209,7 +208,7 @@
     .c-icon.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); }
     .c-logo { width:26px; height:26px; border-radius:5px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
     .c-fallback { font-size:18px; font-weight:700; line-height:1; }
-    .c-name { font-size:clamp(14px, 1.2vw, 24px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+    .c-name { font-size:clamp(14px, 1.1vw, 20px); font-weight:700; letter-spacing:-0.02em; line-height:1.2; word-break:break-word; }
     .c-url { font-size:13px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
     .c-badge {
@@ -239,62 +238,45 @@
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card.compact .status-label { font-size:10px; padding:2px 6px; }
-    .card.dense .inc-title { font-size:clamp(13px, 1.05vw, 22px); }
-    .card.dense .inc-body { font-size:clamp(11px, 0.88vw, 18px); }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
-    .meta-updated { font-size:clamp(11px, 0.7vw, 14px); color:var(--muted); display:flex; align-items:center; gap:5px; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:4px; }
+    .meta-updated { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .meta-updated svg { width:12px; height:12px; opacity:0.6; }
-    .meta-tag { font-size:clamp(10px, 0.65vw, 13px); font-weight:500; color:var(--muted); padding:3px 7px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
+    .meta-tag { font-size:11px; font-weight:500; color:var(--muted); padding:3px 8px; border-radius:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); }
 
-    .card.compact .card-top { margin-bottom:7px; }
-    .card.compact .card-div { margin-bottom:7px; }
-    .card.compact .inc-block { padding:8px 10px; margin-bottom:6px; }
-    .card.compact .inc-label { margin-bottom:3px; }
-    .card.compact .inc-title { font-size:clamp(12px, 1.0vw, 20px); margin-bottom:2px; }
-    .card.compact .inc-body { font-size:clamp(11px, 0.85vw, 18px); }
-    .card.compact .meta-updated { font-size:clamp(10px, 0.65vw, 13px); }
-    .card.compact .meta-tag { font-size:clamp(10px, 0.62vw, 12px); }
+    /* ── Issues section (top panel) ─────────────────────────────────────────── */
+    .issues-section { display:flex; flex-direction:column; gap:10px; }
+    .issues-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--sub); }
+    .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
+    .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; align-items:stretch; }
 
-    /* iOS-style widget snap sizes — title/body scale up as cards get bigger */
-    .card.span-wide .inc-title  { font-size:clamp(14px, 1.25vw, 26px); }
-    .card.span-tall .inc-title  { font-size:clamp(15px, 1.35vw, 28px); }
-    .card.span-large .inc-title { font-size:clamp(16px, 1.5vw, 32px); }
-
-    .card.span-wide .inc-body   { font-size:clamp(13px, 1.0vw, 21px); }
-    .card.span-tall .inc-body   { font-size:clamp(13px, 1.05vw, 22px); }
-    .card.span-large .inc-body  { font-size:clamp(14px, 1.15vw, 24px); }
-
-    .card.span-wide .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
-    .card.span-tall .c-name     { font-size:clamp(15px, 1.3vw, 26px); }
-    .card.span-large .c-icon    { width:50px; height:50px; font-size:24px; }
-    .card.span-large .c-logo    { width:30px; height:30px; }
-    .card.span-large .c-name    { font-size:clamp(17px, 1.5vw, 30px); }
-    .card.span-large .c-badge   { font-size:clamp(11px, 0.78vw, 14px); padding:4px 10px; }
-
-    @media (min-width: 1400px) {
-      .inc-body { font-size:clamp(13px, 0.95vw + 0.1rem, 22px); }
-      .card.compact .inc-body { font-size:clamp(11px, 0.82vw, 18px); }
-      .card.dense .inc-body { font-size:clamp(12px, 0.88vw, 20px); }
-    }
-
-    /* Mini cards (no-incident half-size widgets) */
-    .card.mini {
-      padding:12px 16px;
-      justify-content:center;
-    }
-    .card.mini .card-div,
-    .card.mini .inc-block,
-    .card.mini .card-meta { display:none; }
-    .card.mini .card-top { margin-bottom:0; align-items:center; gap:10px; }
-    .card.mini .card-title-row { gap:10px; }
-    .card.mini .c-icon { width:56px; height:56px; border-radius:12px; font-size:27px; }
-    .card.mini .c-logo { width:40px; height:40px; }
-    .card.mini .c-fallback { font-size:20px; }
-    .card.mini .c-name { font-size:clamp(14px, 1.1vw, 20px); overflow:hidden; }
-    .card.mini .c-url { display:none; }
-    .card.mini .c-badge { font-size:12px; padding:4px 10px; }
-    .card.mini .c-name-block { min-width:0; }
+    /* ── Service directory (bottom panel) ───────────────────────────────────── */
+    .svc-directory { display:flex; flex-direction:column; gap:14px; }
+    .svc-cat-sec { display:flex; flex-direction:column; gap:6px; }
+    .svc-cat-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--sub); padding:2px 0; }
+    .svc-cat-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
+    .svc-cat-badge { font-size:10px; font-weight:600; letter-spacing:0.03em; padding:2px 8px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
+    .svc-cat-badge.ok { color:var(--ok); background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.18); }
+    .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
+    .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto auto; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.13s; }
+    .svc-row:last-child { border-bottom:none; }
+    .svc-row:hover { background:rgba(255,255,255,0.04); }
+    .svc-row:active { background:rgba(255,255,255,0.07); }
+    .svc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.3s; }
+    .svc-row:hover .svc-dot { box-shadow:0 0 0 3px rgba(255,255,255,0.05); }
+    .svc-icon-wrap { width:30px; height:30px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); overflow:hidden; }
+    .svc-icon-wrap img { width:22px; height:22px; border-radius:3px; object-fit:contain; background:rgba(255,255,255,0.9); padding:1px; }
+    .svc-name { font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+    .svc-inc-preview { font-size:12px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; display:none; }
+    @media (min-width:768px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto; } .svc-inc-preview { display:block; } }
+    .svc-badge { font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:3px 8px; border-radius:5px; flex-shrink:0; white-space:nowrap; }
+    .svc-badge.ok { color:var(--ok); background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.18); }
+    .svc-badge.warn { color:var(--warn); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); }
+    .svc-badge.bad { color:var(--bad); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); }
+    .svc-badge.maint { color:var(--maint); background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); }
+    .svc-badge.reroute { color:var(--reroute); background:rgba(20,184,166,0.1); border:1px solid rgba(20,184,166,0.18); }
+    .svc-badge.unknown { color:var(--unknown); background:rgba(107,114,128,0.1); border:1px solid rgba(107,114,128,0.18); }
 
     /* Net Connection widget */
     .net-grid { display:flex; flex-direction:column; gap:6px; }
@@ -589,8 +571,8 @@
     .net-ep-bar { height:100%; border-radius:2px; transition:width 0.5s ease; }
     .net-ep-val { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; width:44px; text-align:right; flex-shrink:0; }
 
-    /* Services grid section headers */
-    #services-grid .section-hdr { grid-column:1/-1; }
+    /* Issues grid responsive */
+    .issues-grid { container-type:inline-size; }
 
     /* Leaflet dark overrides */
     .leaflet-container { background:#0f0f11; }
@@ -633,7 +615,7 @@
       .hdr-left { flex-direction:column; align-items:flex-start; gap:8px; width:100%; }
       .hdr-right { flex-wrap:wrap; justify-content:flex-start; gap:10px; }
       .stats { gap:8px 14px; flex-wrap:wrap; }
-      #services-grid { grid-template-columns:1fr; }
+      .issues-grid { grid-template-columns:1fr; }
       .footer { flex-wrap:wrap; gap:8px; }
       /* Network page stacking */
       .net-page { flex-direction:column; }
@@ -1808,21 +1790,12 @@ function showView(view){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// When deployed to Cloudflare Pages or Vercel, /proxy handles CORS server-side
+// When deployed (Cloudflare Pages / Vercel), /proxy is a server-side function —
+// no CORS restrictions. Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
 const PROXIES=_IS_DEPLOYED
-  ?[u=>`/proxy?url=${encodeURIComponent(u)}`,u=>u,u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://cors.isomorphic-git.org/'+u]
-  :[u=>u,u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://cors.isomorphic-git.org/'+u];
-
-function proxyOrder(provider){
-  // When deployed, index 0 is the serverless /proxy endpoint — always try it first
-  if(_IS_DEPLOYED) return [0,1,2,3,4];
-  if(provider==='aws')     return [2,0,3,1];
-  if(provider==='azure')   return [1,2,3,0];
-  if(provider==='fastly'||provider==='apple'||provider==='appledeveloper'||provider==='ibm') return [1,2,3,0];
-  if(provider==='akamai')  return [1,0,2,3];
-  return (provider==='adobe'||provider==='follett') ? [1,0,2,3] : [0,1,2,3];
-}
+  ?[u=>`/proxy?url=${encodeURIComponent(u)}`,u=>u]
+  :[u=>u];
 
 async function fetchWithTimeout(url, timeout=15000){
   const controller=new AbortController();
@@ -1834,11 +1807,11 @@ async function fetchWithTimeout(url, timeout=15000){
   }
 }
 
-async function getText(url, provider){
+async function getText(url){
   let err;
-  for(const idx of proxyOrder(provider)){
+  for(const proxy of PROXIES){
     try {
-      const r=await fetchWithTimeout(PROXIES[idx](url));
+      const r=await fetchWithTimeout(proxy(url));
       if(!r.ok) throw new Error(String(r.status));
       return await r.text();
     } catch(e){ err=e; }
@@ -1846,8 +1819,8 @@ async function getText(url, provider){
   throw err;
 }
 
-async function getJson(url, provider){
-  const t=await getText(url, provider);
+async function getJson(url){
+  const t=await getText(url);
   return JSON.parse(t.replace(/^﻿/,''));
 }
 
@@ -1928,7 +1901,7 @@ function isOpenAdobeStatus(status){
 async function fetchOne(s){
   if(s.p==='adobe'){
     try {
-      const [registry, events]=await Promise.all([getJson(s.su, s.p), getJson(s.iu, s.p)]);
+      const [registry, events]=await Promise.all([getJson(s.su), getJson(s.iu)]);
       const ccEntry=Object.values(registry?.clouds||{}).find(c=>String(c?.name||'').toLowerCase()==='creative cloud');
       const ccId=ccEntry?.id;
       if(!ccId) return mk(s.name,'major','Adobe source format changed','Could not locate Creative Cloud in Adobe status registry.',new Date().toLocaleString(),s.hu);
@@ -1975,7 +1948,7 @@ async function fetchOne(s){
 
   if(s.p==='follett'){
     try {
-      const d=await getJson(s.su, s.p);
+      const d=await getJson(s.su);
       let ind='none';
       if(d.generalStatus==='issues') ind='minor';
       else if(d.generalStatus==='maintenance') ind='maintenance';
@@ -1987,7 +1960,7 @@ async function fetchOne(s){
 
   if(s.p==='statusio'){
     try {
-      const h=await getText(s.su, s.p);
+      const h=await getText(s.su);
       let ind='none';
       const statusBarMatch=h.match(/id=["']statusbar_text["'][^>]*>([^<]+)/i);
       const statusBarText=(statusBarMatch?.[1]||'').toLowerCase();
@@ -2008,9 +1981,9 @@ async function fetchOne(s){
     try {
       const compMap={'operational':'none','degraded_performance':'minor','partial_outage':'minor','major_outage':'major','under_maintenance':'maintenance'};
       const [sd,id,cd]=await Promise.all([
-        getJson(s.su, s.p),
-        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]})
+        getJson(s.su),
+        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]})
       ]);
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
       // Filter to only Duo Support and DUO72 components (case-insensitive)
@@ -2049,7 +2022,7 @@ async function fetchOne(s){
 
   if(s.p==='aws'){
     try {
-      const rss=await getText(s.su, s.p);
+      const rss=await getText(s.su);
       const items=parseAwsRssItems(rss)
         .filter(item=>isAwsNorthAmericaEvent({region_name:'', service_name:item.title, summary:item.description, description:item.description}))
         .filter(item=>isAwsRssItemFresh(item.pubDate));
@@ -2068,7 +2041,7 @@ async function fetchOne(s){
 
   if(s.p==='gcloud'){
     try {
-      const incidents=await getJson(s.su, s.p);
+      const incidents=await getJson(s.su);
       const active=(incidents||[]).filter(x=>!x.end);
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
       const top=mostRecentEvent(active) || active[0];
@@ -2084,7 +2057,7 @@ async function fetchOne(s){
 
   if(s.p==='gworkspace'){
     try {
-      const incidents=await getJson(s.su, s.p);
+      const incidents=await getJson(s.su);
       // incidents.json is an array; active = no end date yet
       const active=(incidents||[]).filter(x=>!x.end);
       if(!active.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
@@ -2103,7 +2076,7 @@ async function fetchOne(s){
 
   if(s.p==='azure'){
     try {
-      const html=await getText(s.su, s.p);
+      const html=await getText(s.su);
       const americasTable=extractAzureAmericasTable(html);
       if(!americasTable){
         return mk(s.name,'unknown','Azure status format changed','Could not locate the Americas status table.',new Date().toLocaleString(),s.hu);
@@ -2130,7 +2103,7 @@ async function fetchOne(s){
 
   if(s.p==='mbta'){
     try{
-      const data=await getJson(s.su,s.p);
+      const data=await getJson(s.su);
       const alerts=(data?.data||[]).filter(a=>{
         const lc=(a.attributes?.lifecycle||'').toUpperCase();
         return lc==='NEW'||lc==='ONGOING';
@@ -2154,10 +2127,10 @@ async function fetchOne(s){
   if(s.p==='cloudflare'){
     try {
       const [sd,id,cd,md]=await Promise.all([
-        getJson(s.su, s.p),
-        s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu, s.p).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
-        s.mu ? getJson(s.mu, s.p).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
+        getJson(s.su),
+        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
+        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
+        s.mu ? getJson(s.mu).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
       ]);
       let ind='none';
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -2301,8 +2274,8 @@ async function fetchOne(s){
   if(s.p==='oci'){
     try{
       const [st,comp]=await Promise.all([
-        getJson(s.su,s.p),
-        getJson(s.cu,s.p).catch(()=>null)
+        getJson(s.su),
+        getJson(s.cu).catch(()=>null)
       ]);
       let ind=normalizeIndicator(st?.status?.indicator||'none');
       const updated=st?.page?.updated_at?new Date(st.page.updated_at).toLocaleString():new Date().toLocaleString();
@@ -2326,7 +2299,7 @@ async function fetchOne(s){
 
   if(s.p==='ibm'){
     try{
-      const text=await getText(s.su,s.p);
+      const text=await getText(s.su);
       const doc=new DOMParser().parseFromString(text,'application/xml');
       const items=[...doc.querySelectorAll('item')];
       const cutoff=Date.now()-48*60*60*1000;
@@ -2349,7 +2322,7 @@ async function fetchOne(s){
 
   if(s.p==='apple'){
     try{
-      const data=JSON.parse(await getText(s.su,s.p));
+      const data=JSON.parse(await getText(s.su));
       const active=(data.services||[]).filter(sv=>
         (sv.events||[]).some(ev=>ev.eventStatus&&ev.eventStatus!=='resolved')
       );
@@ -2362,7 +2335,7 @@ async function fetchOne(s){
 
   if(s.p==='appledeveloper'){
     try{
-      const data=await getJson(s.su,s.p);
+      const data=await getJson(s.su);
       const active=(data.services||[]).filter(sv=>sv.statusType&&sv.statusType!=='');
       const ind=active.length?(active.some(sv=>sv.statusType==='Outage')?'major':'minor'):'none';
       const title=active.length?active.length+' service'+(active.length>1?'s':'')+' affected':'';
@@ -2373,8 +2346,8 @@ async function fetchOne(s){
 
   try {
     const [sd,id]=await Promise.all([
-      getJson(s.su, s.p),
-      s.iu ? getJson(s.iu, s.p).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
+      getJson(s.su),
+      s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
     ]);
     let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
@@ -2467,83 +2440,130 @@ function renderServices(results){
   const loadEl=document.getElementById('loading-el');
   if(loadEl) loadEl.style.display='none';
   const sort=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
-  const addGroup=(label,items)=>{
-    if(!items.length) return;
-    const issues=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
-    const hasOutage=items.some(s=>s.ind==='major');
-    const hasDegraded=items.some(s=>s.ind==='minor'||s.ind==='rerouting');
-    const cls=hasOutage?'outage':hasDegraded?'degraded':issues?'maint':'ok';
-    const badge=issues>0
-      ?`<span class="section-hdr-badge ${cls}">${issues} issue${issues!==1?'s':''}</span>`
-      :`<span class="section-hdr-badge ok">All clear</span>`;
-    const hdr=document.createElement('div');
-    hdr.className='section-hdr';
-    hdr.innerHTML=`<span>${label}</span>${badge}`;
-    grid.appendChild(hdr);
-    sort(items).forEach((s,i)=>grid.appendChild(mkCard(s,i*20)));
-  };
-  addGroup('Applications & Platforms', results.filter(s=>s.cat==='app'));
-  addGroup('Infrastructure', results.filter(s=>s.cat==='infra'));
-  addGroup('Transit', results.filter(s=>s.cat==='transit'));
-  // Update overall status summary banner
+
+  // ── Status summary banner ──────────────────────────────────────────────────
   const summary=document.getElementById('status-summary');
   if(summary){
     const total=results.length;
-    const issues=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const issueCount=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
     const hasOutage=results.some(s=>s.ind==='major');
-    const cls=hasOutage?'bad':issues>0?'warn':'ok';
-    const msg=issues===0?'All Systems Operational':issues+' Issue'+(issues>1?'s':'')+' Detected';
+    const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
+    const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
     summary.className='status-summary show '+cls;
     summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
   }
+
+  // ── Active Issues panel ────────────────────────────────────────────────────
+  const activeIssues=sort(results.filter(s=>s.ind!=='none'&&s.ind!=='unknown'));
+  if(activeIssues.length){
+    const sec=document.createElement('div');
+    sec.className='issues-section';
+    const hdr=document.createElement('div');
+    hdr.className='issues-hdr';
+    hdr.innerHTML=`<span>Active Issues</span><span class="issues-hdr-count">${activeIssues.length} service${activeIssues.length!==1?'s':''} affected</span>`;
+    sec.appendChild(hdr);
+    const ig=document.createElement('div');
+    ig.className='issues-grid';
+    activeIssues.forEach(s=>ig.appendChild(mkIncCard(s)));
+    sec.appendChild(ig);
+    grid.appendChild(sec);
+  }
+
+  // ── Service directory ──────────────────────────────────────────────────────
+  const dir=document.createElement('div');
+  dir.className='svc-directory';
+  const addSection=(label,items)=>{
+    if(!items.length) return;
+    const sec=document.createElement('div');
+    sec.className='svc-cat-sec';
+    const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=items.some(s=>s.ind==='major');
+    const badgeCls=hasOutage?'warn':issueCount>0?'warn':'ok';
+    const badgeTxt=issueCount===0?'All clear':issueCount+' issue'+(issueCount!==1?'s':'');
+    const hdr=document.createElement('div');
+    hdr.className='svc-cat-hdr';
+    hdr.innerHTML=`<span>${label}</span><span class="svc-cat-badge ${badgeCls}">${badgeTxt}</span>`;
+    sec.appendChild(hdr);
+    const tbl=document.createElement('div');
+    tbl.className='svc-table';
+    sort(items).forEach(s=>tbl.appendChild(mkSvcRow(s)));
+    sec.appendChild(tbl);
+    dir.appendChild(sec);
+  };
+  addSection('Applications & Platforms', results.filter(s=>s.cat==='app'));
+  addSection('Infrastructure', results.filter(s=>s.cat==='infra'));
+  addSection('Transit', results.filter(s=>s.cat==='transit'));
+  grid.appendChild(dir);
 }
 
-function mkCard(svc, delay){
+// Incident card — shown in the Active Issues panel for services with problems
+function mkIncCard(svc){
   const d=document.createElement('div');
-  const isMini=svc.ind==='none' && !svc.noMini;
-  d.className=`card ${CC[svc.ind]||''}${isMini?' mini':''}`;
+  d.className=`card ${CC[svc.ind]||''}`;
   d.dataset.svc=svc.name;
-  d.style.animationDelay=delay+'ms';
-  d.style.setProperty('--tile-delay', delay+'ms');
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
-
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
-  const incTitle=svc.ind==='none' ? (svc.title||'No incidents') : (svc.title||svc.label);
-  const incBody=svc.ind==='none' ? (svc.body||'All systems operating normally.') : (svc.body||'See the status page for full details.');
-  const urlHost=svc.url ? svc.url.replace(/^https?:\/\//,'').replace(/\/$/,'') : '';
+  const incTitle=svc.title||svc.label;
+  const incBody=svc.body||'See the status page for full details.';
+  const urlHost=svc.url?svc.url.replace(/^https?:\/\//,'').replace(/\/$/,''):'';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-  const labels=[svc.label, ...(svc.labels||[])].filter((v,i,a)=>v && a.indexOf(v)===i);
-  const statusLabels=labels.length>1 ? `<div class="status-labels">${labels.map(label=>`<span class="status-label">${label}</span>`).join('')}</div>` : '';
-  const densityScore=(incTitle.length*1.5)+(incBody.length)+(labels.join(' ').length*1.2);
-  if(densityScore>320) d.classList.add('dense');
-
-  // Mini cards only show the top bar (icon + name + badge); incident block is hidden via CSS
+  const labels=[svc.label,...(svc.labels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${l}</span>`).join('')}</div>`:'';
+  const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
+  const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length ? `<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name} logo" loading="lazy" decoding="async" onerror="nextLogo(this)">` : ""}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback || ICONS[svc.ind] || "?"}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${fallback||ICONS[svc.ind]||'?'}</span></div>
         <div class="c-name-block">
           <div class="c-name">${svc.name}</div>
-          ${!isMini && urlHost ? `<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>` : ''}
+          ${urlHost?`<a class="c-url" href="${svc.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${urlHost}</a>`:''}
         </div>
       </div>
       <div class="c-badge ${IC[svc.ind]||'ok'}">${svc.label}</div>
     </div>
-    ${isMini ? '' : `
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
-      <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${svc.ind==='none'?'Current Status':svc.ind==='rerouting'?'Traffic Notice':'Active Incident'}</div>
+      <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
       ${statusLabels}
       <div class="inc-title">${incTitle}</div>
       <div class="inc-body">${incBody}</div>
     </div>
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Updated ${svc.updated}</div>
-      <div class="meta-tag">${svc.ind==='none' ? '100% uptime' : svc.ind==='maintenance' ? 'Scheduled' : svc.ind==='rerouting' ? 'Rerouted' : 'Investigating'}${(svc.labels||[]).length>1 ? ' · Multi-status' : ''}</div>
-    </div>`}`;
+      <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
+    </div>`;
   return d;
+}
+
+// Service row — shown in the directory for all services
+function mkSvcRow(svc){
+  const d=document.createElement('div');
+  d.className='svc-row';
+  d.dataset.svc=svc.name;
+  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  const dotColors={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
+  const dotColor=dotColors[svc.ind]||'var(--unknown)';
+  const logos=logoSources(svc);
+  const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+  const preview=svc.ind!=='none'&&svc.title?svc.title:'';
+  d.innerHTML=`
+    <span class="svc-dot" style="background:${dotColor}"></span>
+    <div class="svc-icon-wrap">${logos.length?`<img src="${logos[0]}" data-sources="${logos.join('|')}" data-idx="0" alt="${svc.name}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${fallback}</span>`}</div>
+    <span class="svc-name">${svc.name}</span>
+    <span class="svc-inc-preview">${preview}</span>
+    <span class="svc-badge ${IC[svc.ind]||'ok'}">${svc.label}</span>`;
+  return d;
+}
+
+function nextLogoRow(img){
+  const sources=img.dataset.sources?img.dataset.sources.split('|'):[];
+  const idx=parseInt(img.dataset.idx||'0',10)+1;
+  if(idx>=sources.length){ img.style.display='none'; const fb=img.parentElement?.querySelector('span'); if(fb) fb.style.display='inline'; return; }
+  img.dataset.idx=String(idx);
+  img.src=sources[idx];
 }
 
 let currentView='services';
@@ -2661,29 +2681,11 @@ async function pollService(svc){
       else if(prev && (prev==='minor'||prev==='major') && result.ind==='none') queueAlert(result,'restored');
       window._pi[result.name]=result.ind;
       window._lastResults[result.name]=result;
-      // Patch just the changed card in the DOM
-      const existing=document.querySelector(`[data-svc="${CSS.escape(result.name)}"]`);
-      if(existing){
-        const newCard=mkCard(result,0);
-        newCard.style.animationDelay='0ms';
-        newCard.style.setProperty('--tile-delay','0ms');
-        existing.replaceWith(newCard);
-      }
-      // Update header stats and incident pin
+      // Full re-render: status change may move service between issues panel and directory
       const allResults=Object.values(window._lastResults);
       updateStats(allResults);
       updateIncidentPin(allResults);
-      // Update status summary banner
-      const summary=document.getElementById('status-summary');
-      if(summary){
-        const total=allResults.length;
-        const issues=allResults.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
-        const hasOutage=allResults.some(s=>s.ind==='major');
-        const cls=hasOutage?'bad':issues>0?'warn':'ok';
-        const msg=issues===0?'All Systems Operational':issues+' Issue'+(issues>1?'s':'')+' Detected';
-        summary.className='status-summary show '+cls;
-        summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
-      }
+      renderServices(allResults);
       lastSuccessfulRefresh=Date.now();
       setStale(false);
     }
