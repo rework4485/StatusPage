@@ -312,6 +312,11 @@
     .svc-row:active { background:rgba(255,255,255,0.065); }
     .svc-row:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; background:rgba(255,255,255,0.035); }
     .card:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .nav-tab:focus-visible,.filter-chip:focus-visible,
+    .f-board-btn:focus-visible,.f-theme-btn:focus-visible,.f-refresh-btn:focus-visible,
+    .test-btn:focus-visible,.net-refresh-btn:focus-visible,.net-run-btn:focus-visible,
+    .tv-exit-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .svc-search:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; }
     .svc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.3s; }
     .svc-row:hover .svc-dot { box-shadow:0 0 0 3px rgba(255,255,255,0.05); }
     .svc-icon-wrap { width:30px; height:30px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); overflow:hidden; }
@@ -627,8 +632,8 @@
     .svc-search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:18px; height:18px; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:none; border-radius:50%; color:var(--sub); cursor:pointer; font-size:11px; line-height:1; padding:0; transition:background 0.15s, color 0.15s; }
     .svc-search-clear:hover { background:rgba(255,255,255,0.18); color:var(--text); }
     .svc-search-wrap.has-query .svc-search-clear { display:flex; }
-    .light-mode .svc-search-clear { background:rgba(0,0,0,0.07); }
-    .light-mode .svc-search-clear:hover { background:rgba(0,0,0,0.14); }
+    .light-mode .svc-search-clear { background:rgba(0,0,0,0.1); color:var(--sub); }
+    .light-mode .svc-search-clear:hover { background:rgba(0,0,0,0.18); color:var(--text); }
 
     /* ── Collapsible category sections ─────────────────────────────────────── */
     .svc-cat-hdr { cursor:pointer; }
@@ -2219,7 +2224,7 @@ function _renderBoardWeatherBar(){
 function applyFilter(grid,filter){
   _curFilter=filter;
   grid.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===filter));
-  const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none':el.dataset.ind===filter);
+  const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none'&&el.dataset.ind!=='unknown':el.dataset.ind===filter);
   grid.querySelectorAll('.card[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
   grid.querySelectorAll('.svc-row[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
   const issuesSec=grid.querySelector('.issues-section');
@@ -2244,7 +2249,7 @@ function renderServices(results){
     const hasOutage=techOnly.some(s=>s.ind==='major');
     const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
-    const icon=hasOutage?'✗':issueCount>0?'⚠':'✓';
+    const icon=hasOutage?'✕':issueCount>0?'⚠':'✓';
     summary.className='status-summary show '+cls;
     summary.innerHTML=`<span>${icon}&ensp;${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
   }
