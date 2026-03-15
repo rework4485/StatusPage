@@ -639,24 +639,24 @@
 const SVCS=[
   // Applications & Education Platforms
   {name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio',cat:'app'},
-  {name:'HMH',su:'https://status.hmhco.com/api/v2/status.json',iu:'https://status.hmhco.com/api/v2/incidents.json',hu:'https://status.hmhco.com',cat:'app'},
+  {name:'HMH',su:'https://status.hmhco.com/api/v2/summary.json',hu:'https://status.hmhco.com',cat:'app'},
   {name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett',cat:'app'},
-  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/status.json',iu:'https://status.incidentiq.com/api/v2/incidents.json',hu:'https://status.incidentiq.com',cat:'app'},
-  {name:'Clever',su:'https://status.clever.com/api/v2/status.json',iu:'https://status.clever.com/api/v2/incidents.json',hu:'https://status.clever.com',cat:'app'},
-  {name:'Seesaw',su:'https://status.seesaw.me/api/v2/status.json',iu:'https://status.seesaw.me/api/v2/incidents.json',hu:'https://status.seesaw.me',cat:'app'},
-  {name:'Jamf',su:'https://status.jamf.com/api/v2/status.json',iu:'https://status.jamf.com/api/v2/incidents.json',hu:'https://status.jamf.com',cat:'app'},
-  {name:'Duo',su:'https://status.duo.com/api/v2/status.json',iu:'https://status.duo.com/api/v2/incidents.json',cu:'https://status.duo.com/api/v2/components.json',hu:'https://status.duo.com',p:'duo',cat:'app'},
-  {name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/status.json',iu:'https://status.imaginelearning.com/api/v2/incidents.json',hu:'https://status.imaginelearning.com',cat:'app'},
-  {name:'FinalSite',su:'https://status.finalsite.com/api/v2/status.json',iu:'https://status.finalsite.com/api/v2/incidents.json',hu:'https://status.finalsite.com',cat:'app'},
-  {name:'Dexcom',su:'https://status.dexcom.com/api/v2/status.json',iu:'https://status.dexcom.com/api/v2/incidents.json',hu:'https://status.dexcom.com',cat:'app'},
+  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/summary.json',hu:'https://status.incidentiq.com',cat:'app'},
+  {name:'Clever',su:'https://status.clever.com/api/v2/summary.json',hu:'https://status.clever.com',cat:'app'},
+  {name:'Seesaw',su:'https://status.seesaw.me/api/v2/summary.json',hu:'https://status.seesaw.me',cat:'app'},
+  {name:'Jamf',su:'https://status.jamf.com/api/v2/summary.json',hu:'https://status.jamf.com',cat:'app'},
+  {name:'Duo',su:'https://status.duo.com/api/v2/summary.json',hu:'https://status.duo.com',p:'duo',cat:'app'},
+  {name:'Imagine Learning',su:'https://status.imaginelearning.com/api/v2/summary.json',hu:'https://status.imaginelearning.com',cat:'app'},
+  {name:'FinalSite',su:'https://status.finalsite.com/api/v2/summary.json',hu:'https://status.finalsite.com',cat:'app'},
+  {name:'Dexcom',su:'https://status.dexcom.com/api/v2/summary.json',hu:'https://status.dexcom.com',cat:'app'},
   {name:'Adobe CC',su:'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',iu:'https://data.status.adobe.com/adobestatus/StatusEvents',hu:'https://status.adobe.com/cloud/creative_cloud',p:'adobe',cat:'app'},
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   {name:'Apple Services',su:'https://www.apple.com/support/systemstatus/data/system_status_en_US.js',hu:'https://www.apple.com/support/systemstatus/',p:'apple',cat:'app'},
   {name:'Apple Developer',su:'https://developer.apple.com/system-status/data/system_status_en_US.js',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
   // Infrastructure Providers
-  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/status.json',iu:'https://www.cloudflarestatus.com/api/v2/incidents.json',cu:'https://www.cloudflarestatus.com/api/v2/components.json',mu:'https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
-  {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/status.json',iu:'https://status.dnsfilter.com/api/v2/incidents.json',hu:'https://status.dnsfilter.com',cat:'infra'},
-  {name:'Meraki',su:'https://status.meraki.net/api/v2/status.json',iu:'https://status.meraki.net/api/v2/incidents.json',hu:'https://status.meraki.net',cat:'infra'},
+  {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/summary.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
+  {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/summary.json',hu:'https://status.dnsfilter.com',cat:'infra'},
+  {name:'Meraki',su:'https://status.meraki.net/api/v2/summary.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
   {name:'Azure',su:'https://azure.status.microsoft/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
@@ -664,8 +664,8 @@ const SVCS=[
   {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
   {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/status.json',iu:'https://www.akamaistatus.com/api/v2/incidents.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
-  {name:'Bunny.net',su:'https://status.bunny.net/api/v2/status.json',iu:'https://status.bunny.net/api/v2/incidents.json',hu:'https://status.bunny.net',cat:'infra'},
-  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/status.json',iu:'https://www.cacheflystatus.com/api/v2/incidents.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
+  {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
+  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
@@ -1018,39 +1018,24 @@ let _boardModeActive=new URLSearchParams(window.location.search).has('board');
 /* @routes-start — generated by scripts/build.js, do not edit manually */
 const ROUTE_KEYS = {
   "https://i-ready.status.io/": "iready-status",
-  "https://status.hmhco.com/api/v2/status.json": "hmh-status",
-  "https://status.hmhco.com/api/v2/incidents.json": "hmh-incidents",
+  "https://status.hmhco.com/api/v2/summary.json": "hmh-summary",
   "https://status.follettsoftware.com/rest/systemstatus": "follett-status",
-  "https://status.incidentiq.com/api/v2/status.json": "iiq-status",
-  "https://status.incidentiq.com/api/v2/incidents.json": "iiq-incidents",
-  "https://status.clever.com/api/v2/status.json": "clever-status",
-  "https://status.clever.com/api/v2/incidents.json": "clever-incidents",
-  "https://status.seesaw.me/api/v2/status.json": "seesaw-status",
-  "https://status.seesaw.me/api/v2/incidents.json": "seesaw-incidents",
-  "https://status.jamf.com/api/v2/status.json": "jamf-status",
-  "https://status.jamf.com/api/v2/incidents.json": "jamf-incidents",
-  "https://status.duo.com/api/v2/status.json": "duo-status",
-  "https://status.duo.com/api/v2/incidents.json": "duo-incidents",
-  "https://status.duo.com/api/v2/components.json": "duo-components",
-  "https://status.imaginelearning.com/api/v2/status.json": "imagine-status",
-  "https://status.imaginelearning.com/api/v2/incidents.json": "imagine-incidents",
-  "https://status.finalsite.com/api/v2/status.json": "finalsite-status",
-  "https://status.finalsite.com/api/v2/incidents.json": "finalsite-incidents",
-  "https://status.dexcom.com/api/v2/status.json": "dexcom-status",
-  "https://status.dexcom.com/api/v2/incidents.json": "dexcom-incidents",
+  "https://status.incidentiq.com/api/v2/summary.json": "iiq-summary",
+  "https://status.clever.com/api/v2/summary.json": "clever-summary",
+  "https://status.seesaw.me/api/v2/summary.json": "seesaw-summary",
+  "https://status.jamf.com/api/v2/summary.json": "jamf-summary",
+  "https://status.duo.com/api/v2/summary.json": "duo-summary",
+  "https://status.imaginelearning.com/api/v2/summary.json": "imagine-summary",
+  "https://status.finalsite.com/api/v2/summary.json": "finalsite-summary",
+  "https://status.dexcom.com/api/v2/summary.json": "dexcom-summary",
   "https://data.status.adobe.com/adobestatus/SnowServiceRegistry": "adobe-registry",
   "https://data.status.adobe.com/adobestatus/StatusEvents": "adobe-events",
   "https://www.google.com/appsstatus/dashboard/incidents.json": "gworkspace-incidents",
   "https://www.apple.com/support/systemstatus/data/system_status_en_US.js": "apple-status",
   "https://developer.apple.com/system-status/data/system_status_en_US.js": "appledev-status",
-  "https://www.cloudflarestatus.com/api/v2/status.json": "cf-status",
-  "https://www.cloudflarestatus.com/api/v2/incidents.json": "cf-incidents",
-  "https://www.cloudflarestatus.com/api/v2/components.json": "cf-components",
-  "https://www.cloudflarestatus.com/api/v2/scheduled-maintenances/active.json": "cf-maintenances",
-  "https://status.dnsfilter.com/api/v2/status.json": "dnsfilter-status",
-  "https://status.dnsfilter.com/api/v2/incidents.json": "dnsfilter-incidents",
-  "https://status.meraki.net/api/v2/status.json": "meraki-status",
-  "https://status.meraki.net/api/v2/incidents.json": "meraki-incidents",
+  "https://www.cloudflarestatus.com/api/v2/summary.json": "cf-summary",
+  "https://status.dnsfilter.com/api/v2/summary.json": "dnsfilter-summary",
+  "https://status.meraki.net/api/v2/summary.json": "meraki-summary",
   "https://status.aws.amazon.com/rss/all.rss": "aws-rss",
   "https://azure.status.microsoft/en-us/status/": "azure-status",
   "https://status.cloud.google.com/incidents.json": "gcloud-incidents",
@@ -1060,10 +1045,8 @@ const ROUTE_KEYS = {
   "https://www.akamaistatus.com/api/v2/status.json": "akamai-status",
   "https://www.akamaistatus.com/api/v2/incidents.json": "akamai-incidents",
   "https://www.fastlystatus.com/rss/": "fastly-rss",
-  "https://status.bunny.net/api/v2/status.json": "bunny-status",
-  "https://status.bunny.net/api/v2/incidents.json": "bunny-incidents",
-  "https://www.cacheflystatus.com/api/v2/status.json": "cachefly-status",
-  "https://www.cacheflystatus.com/api/v2/incidents.json": "cachefly-incidents",
+  "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
+  "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
   "https://uptime.quad9.net/api/v2/status.json": "quad9-status",
   "https://uptime.quad9.net/api/v2/incidents.json": "quad9-incidents",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
@@ -1280,11 +1263,8 @@ async function fetchOne(s){
   if(s.p==='duo'){
     try {
       const compMap={'operational':'none','degraded_performance':'minor','partial_outage':'minor','major_outage':'major','under_maintenance':'maintenance'};
-      const [sd,id,cd]=await Promise.all([
-        getJson(s.su),
-        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]})
-      ]);
+      const sum=await getJson(s.su);
+      const [sd,id,cd]=[sum,sum,sum];
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
       // Filter to only Duo Support and DUO72 components (case-insensitive)
       const watched=(cd?.components||[]).filter(c=>/duo support|duo72/i.test(c.name||''));
@@ -1498,12 +1478,8 @@ async function fetchOne(s){
 
   if(s.p==='cloudflare'){
     try {
-      const [sd,id,cd,md]=await Promise.all([
-        getJson(s.su),
-        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]}),
-        s.cu ? getJson(s.cu).catch(()=>({components:[]})) : Promise.resolve({components:[]}),
-        s.mu ? getJson(s.mu).catch(()=>({scheduled_maintenances:[]})) : Promise.resolve({scheduled_maintenances:[]})
-      ]);
+      const sum=await getJson(s.su);
+      const [sd,id,cd,md]=[sum,sum,sum,sum];
       let ind='none';
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
 
@@ -1784,10 +1760,8 @@ async function fetchOne(s){
   }
 
   try {
-    const [sd,id]=await Promise.all([
-      getJson(s.su),
-      s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
-    ]);
+    const sum=await getJson(s.su);
+    const [sd,id]=[sum,sum];
     let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
     const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
