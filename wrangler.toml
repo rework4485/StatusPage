@@ -1,8 +1,0 @@
-name = "status-page"
-main = "worker.js"
-compatibility_date = "2024-09-23"
-
-[assets]
-binding = "ASSETS"
-directory = "."
-not_found_handling = "single-page-application"
