@@ -2430,10 +2430,6 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
 
   // ── Internet Health cards ──────────────────────────────────────────────────
-  const COUNTRY_NAMES = {US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',CO:'Colombia',
-    AR:'Argentina',CL:'Chile',PE:'Peru',CR:'Costa Rica',PR:'Puerto Rico',DO:'Dominican Republic',
-    GT:'Guatemala',HN:'Honduras',PA:'Panama',JM:'Jamaica',TT:'Trinidad & Tobago',
-    BS:'Bahamas',BM:'Bermuda',GY:'Guyana',UY:'Uruguay',PY:'Paraguay',BO:'Bolivia',EC:'Ecuador'};
   const DS_LABELS = {'ping-slash24':'Ping probes','bgp':'BGP routing','ucsd-nt':'Darknet'};
 
   let iodaCard;
@@ -2442,23 +2438,25 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   } else if (iodaData._error) {
     iodaCard = `<div class="net-err">Unable to fetch IODA data — ${esc(iodaData._error)}</div>`;
   } else {
+    // Response: { data: [{ location: "country/US", location_name: "United States", datasource, score }] }
     const events = Array.isArray(iodaData?.data) ? iodaData.data : [];
     if (!events.length) {
       iodaCard = mkNetMetric('Status', mkNetBadge('No anomalies detected', 'ok'))
         + `<div class="net-note">IODA monitors BGP routing and active probing across North America over the last 24 hours.</div>`;
     } else {
-      // Group by country, pick highest-score event per country
+      // Group by country, keep highest-score event per country
       const byCountry = {};
       for (const e of events) {
-        const code = e.entityCode || e.entity?.code || '??';
-        if (!byCountry[code] || (e.score || 0) > (byCountry[code].score || 0)) byCountry[code] = e;
+        const code = (e.location || '').split('/')[1] || '??';
+        if (!byCountry[code] || (e.score || 0) > (byCountry[code].score || 0)) {
+          byCountry[code] = { ...e, _code: code };
+        }
       }
-      const entries = Object.entries(byCountry).sort((a,b)=>(b[1].score||0)-(a[1].score||0)).slice(0,5);
-      iodaCard = entries.map(([code, e]) => {
-        const score = e.score || 0;
-        const badge = score > 0.7 ? 'bad' : score > 0.3 ? 'warn' : 'muted';
+      const entries = Object.values(byCountry).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,5);
+      iodaCard = entries.map(e => {
         const dsLabel = DS_LABELS[e.datasource] || e.datasource || 'anomaly';
-        return mkNetMetric(esc(COUNTRY_NAMES[code] || code), mkNetBadge(esc(dsLabel), badge));
+        const name = e.location_name || e._code;
+        return mkNetMetric(esc(name), mkNetBadge(esc(dsLabel), 'warn'));
       }).join('') + `<div class="net-note">Source: IODA (Georgia Tech) · Last 24 h · North America</div>`;
     }
   }

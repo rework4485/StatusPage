@@ -85,7 +85,7 @@ async function fetchSpecialRoute(key, env) {
   if (key === 'ioda-na-outages') {
     const until = Math.floor(Date.now() / 1000);
     const from  = until - 86400;
-    const url = `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events/continent/NA?from=${from}&until=${until}&limit=50`;
+    const url = `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events?from=${from}&until=${until}&entityType=country&relatedTo=continent/NA&limit=50`;
     const resp = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': UA } });
     if (!resp.ok) throw new Error(`upstream ${resp.status}`);
     const body = await resp.text();
