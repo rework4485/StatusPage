@@ -482,6 +482,48 @@
     .status-summary.bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); color:#f87171; }
     .status-summary-count { font-size:12px; font-weight:400; opacity:0.6; }
 
+    /* ── Status filter chips ─────────────────────────────────────────────────── */
+    .filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:4px 0 8px; }
+    .filter-chip { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:20px; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:var(--font); white-space:nowrap; }
+    .filter-chip:hover:not(.active) { background:rgba(255,255,255,0.07); color:var(--text); }
+    .filter-chip.active { background:rgba(255,255,255,0.1); color:var(--text); border-color:rgba(255,255,255,0.2); }
+    .filter-chip.active.fc-bad  { background:rgba(239,68,68,0.12);  color:#f87171; border-color:rgba(239,68,68,0.3); }
+    .filter-chip.active.fc-warn { background:rgba(245,158,11,0.1);  color:#fbbf24; border-color:rgba(245,158,11,0.25); }
+    .filter-chip.active.fc-maint{ background:rgba(59,130,246,0.1);  color:#93c5fd; border-color:rgba(59,130,246,0.25); }
+
+    /* ── TV / Status board mode ──────────────────────────────────────────────── */
+    .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(18px,2.5vw,40px); overflow:hidden; }
+    .tv-board-hdr { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:clamp(14px,2vh,24px); flex-shrink:0; border-bottom:1px solid var(--border); padding-bottom:clamp(10px,1.5vh,18px); }
+    .tv-board-brand { display:flex; align-items:center; gap:10px; font-size:clamp(16px,1.8vw,28px); font-weight:800; letter-spacing:-0.02em; }
+    .tv-board-status { font-size:clamp(12px,1.2vw,18px); font-weight:700; padding:5px 16px; border-radius:100px; }
+    .tv-board-status.ok   { background:rgba(34,197,94,0.1);  border:1px solid rgba(34,197,94,0.25);  color:#4ade80; }
+    .tv-board-status.warn { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);  color:#fbbf24; }
+    .tv-board-status.bad  { background:rgba(239,68,68,0.1);  border:1px solid rgba(239,68,68,0.3);   color:#f87171; }
+    .tv-clock { font-size:clamp(14px,1.5vw,24px); font-weight:600; font-variant-numeric:tabular-nums; color:var(--sub); flex-shrink:0; }
+    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(150px,14vw,210px),1fr)); gap:clamp(10px,1.1vw,16px); overflow:hidden; align-content:start; }
+    .tv-tile { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:clamp(11px,1.1vw,16px); display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; }
+    .tv-tile:hover { background:rgba(255,255,255,0.06); }
+    .tv-tile.cb { background:rgba(239,68,68,0.08);  border-color:rgba(239,68,68,0.25); }
+    .tv-tile.cw { background:rgba(245,158,11,0.07); border-color:rgba(245,158,11,0.22); }
+    .tv-tile.cm { background:rgba(59,130,246,0.07); border-color:rgba(59,130,246,0.22); }
+    .tv-tile-top { display:flex; align-items:center; gap:8px; min-width:0; }
+    .tv-tile-logo { width:clamp(20px,1.8vw,28px); height:clamp(20px,1.8vw,28px); border-radius:5px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-tile-logo-fb { width:clamp(20px,1.8vw,28px); height:clamp(20px,1.8vw,28px); border-radius:5px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(10px,1vw,14px); font-weight:700; flex-shrink:0; }
+    .tv-tile-name { font-size:clamp(11px,1vw,15px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-badge { font-size:clamp(9px,0.8vw,12px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-tile-badge.ok    { color:var(--ok); }
+    .tv-tile-badge.warn  { color:var(--warn); }
+    .tv-tile-badge.bad   { color:var(--bad); }
+    .tv-tile-badge.maint { color:var(--maint); }
+    .tv-tile-badge.reroute{ color:var(--reroute); }
+    .tv-tile-badge.unknown{ color:var(--unknown); }
+    .tv-tile-inc { font-size:clamp(9px,0.75vw,11px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1.2vh,16px); flex-shrink:0; }
+    .tv-exit-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 13px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
+    .tv-exit-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
+    .tv-updated { font-size:11px; color:var(--muted); }
+    .f-board-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 11px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
+    .f-board-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
 
     /* ── Header stat operational count color ─────────────────────────────────── */
     #n-ok { color:var(--ok) !important; }
@@ -587,6 +629,7 @@
     <div class="f-left">
       <div class="f-meta" id="f-meta"></div>
     </div>
+    <button class="f-board-btn" id="f-board-btn" type="button" title="Open status board">Board</button>
     <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
   </div>
 </div>
@@ -970,6 +1013,7 @@ function showView(view){
 // When deployed (Vercel), /proxy is a server-side function available as a CORS fallback.
 // Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
+let _boardModeActive=new URLSearchParams(window.location.search).has('board');
 
 /* @routes-start — generated by scripts/build.js, do not edit manually */
 const ROUTE_KEYS = {
@@ -1828,6 +1872,21 @@ function nextLogo(img){
   img.src=sources[idx];
 }
 
+let _curFilter='all';
+let _lastResults=[];
+let _boardClockTimer=null,_boardLastUpdate=null;
+
+function applyFilter(grid,filter){
+  _curFilter=filter;
+  grid.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===filter));
+  const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none':el.dataset.ind===filter);
+  grid.querySelectorAll('.card[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
+  grid.querySelectorAll('.svc-row[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
+  const issuesSec=grid.querySelector('.issues-section');
+  if(issuesSec) issuesSec.style.display=[...issuesSec.querySelectorAll('.card')].some(c=>c.style.display!=='none')?'':'none';
+  grid.querySelectorAll('.svc-cat-sec').forEach(sec=>{ sec.style.display=[...sec.querySelectorAll('.svc-row')].some(r=>r.style.display!=='none')?'':'none'; });
+}
+
 function renderServices(results){
   const grid=document.getElementById('services-grid');
   if(!grid) return;
@@ -1924,6 +1983,105 @@ function renderServices(results){
   addSection('Infrastructure', results.filter(s=>s.cat==='infra'), infraIcon);
   addSection('Transit', results.filter(s=>s.cat==='transit'), transitIcon);
   grid.appendChild(dir);
+
+  // ── Filter bar ──────────────────────────────────────────────────────────────
+  _lastResults=results;
+  const issueN=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+  const outageN=results.filter(s=>s.ind==='major').length;
+  const degradedN=results.filter(s=>s.ind==='minor').length;
+  const maintN=results.filter(s=>s.ind==='maintenance').length;
+  // Reset stale filter if the filtered category is now empty
+  if(_curFilter==='issues'&&issueN===0) _curFilter='all';
+  else if(_curFilter!=='all'&&_curFilter!=='issues'&&!results.some(s=>s.ind===_curFilter)) _curFilter='all';
+  const chipDefs=[
+    {key:'all',label:`All (${results.length})`,cls:''},
+    {key:'issues',label:`Issues (${issueN})`,cls:'',skip:issueN===0},
+    {key:'major',label:`Outages (${outageN})`,cls:'fc-bad',skip:outageN===0},
+    {key:'minor',label:`Degraded (${degradedN})`,cls:'fc-warn',skip:degradedN===0},
+    {key:'maintenance',label:`Maintenance (${maintN})`,cls:'fc-maint',skip:maintN===0},
+  ];
+  const fb=document.createElement('div');
+  fb.className='filter-bar';
+  chipDefs.filter(c=>!c.skip).forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='filter-chip'+(c.cls?' '+c.cls:'')+(_curFilter===c.key?' active':'');
+    btn.dataset.filter=c.key;
+    btn.textContent=c.label;
+    btn.addEventListener('click',()=>applyFilter(grid,c.key));
+    fb.appendChild(btn);
+  });
+  grid.insertBefore(fb,grid.firstChild);
+  if(_curFilter!=='all') applyFilter(grid,_curFilter);
+
+  // Update board if active
+  if(_boardModeActive) renderBoardView(results);
+}
+
+function renderBoardView(results){
+  _boardLastUpdate=Date.now();
+  let board=document.getElementById('tv-board');
+  if(!board){
+    board=document.createElement('div');
+    board.id='tv-board';
+    board.className='tv-board';
+    document.body.appendChild(board);
+  }
+  const srt=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
+  const sorted=srt(results);
+  const issueCount=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+  const outageCount=results.filter(s=>s.ind==='major').length;
+  const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
+  const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
+  const tilesHTML=sorted.map(svc=>{
+    const logos=logoSources(svc);
+    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+    const logoEl=logos.length
+      ?`<img class="tv-tile-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
+      :`<div class="tv-tile-logo-fb">${esc(fallback)}</div>`;
+    const incPreview=svc.ind!=='none'&&svc.title?svc.title:'';
+    return `<div class="tv-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+      <div class="tv-tile-top">${logoEl}<span class="tv-tile-name">${esc(svc.name)}</span></div>
+      <div class="tv-tile-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
+      ${incPreview?`<div class="tv-tile-inc">${esc(incPreview)}</div>`:''}
+    </div>`;
+  }).join('');
+  board.innerHTML=`
+    <div class="tv-board-hdr">
+      <div class="tv-board-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
+        Service Status
+      </div>
+      <div class="tv-board-status ${statusCls}">${statusMsg}</div>
+      <div class="tv-clock" id="tv-clock"></div>
+    </div>
+    <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
+    <div class="tv-board-footer">
+      <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
+      <span class="tv-updated" id="tv-updated"></span>
+    </div>`;
+  document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
+  document.getElementById('tv-tiles').addEventListener('click',e=>{
+    const tile=e.target.closest('.tv-tile');
+    if(tile&&tile.dataset.url) window.open(tile.dataset.url,'_blank','noopener');
+  });
+  clearInterval(_boardClockTimer);
+  const tick=()=>{
+    const cl=document.getElementById('tv-clock');
+    if(cl) cl.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const up=document.getElementById('tv-updated');
+    if(up&&_boardLastUpdate) up.textContent='Updated '+fmtFetchAge(_boardLastUpdate)+' ago';
+  };
+  tick();
+  _boardClockTimer=setInterval(tick,1000);
+}
+
+function exitBoardMode(){
+  clearInterval(_boardClockTimer);
+  _boardModeActive=false;
+  document.getElementById('tv-board')?.remove();
+  const url=new URL(window.location);
+  url.searchParams.delete('board');
+  window.history.replaceState({},'',url);
 }
 
 // Incident card — shown in the Active Issues panel for services with problems
@@ -1931,6 +2089,7 @@ function mkIncCard(svc){
   const d=document.createElement('div');
   d.className=`card ${CC[svc.ind]||''}`;
   d.dataset.svc=svc.name;
+  d.dataset.ind=svc.ind;
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
@@ -1973,6 +2132,7 @@ function mkSvcRow(svc){
   const d=document.createElement('div');
   d.className='svc-row';
   d.dataset.svc=svc.name;
+  d.dataset.ind=svc.ind;
   if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
   const dotColors={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
   const dotColor=dotColors[svc.ind]||'var(--unknown)';
@@ -2577,6 +2737,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Footer refresh button
   document.getElementById('f-refresh-btn')?.addEventListener('click',()=>{
     if(!isRefreshing) _startRefresh();
+  });
+
+  // Board mode — footer button and Escape to exit
+  document.getElementById('f-board-btn')?.addEventListener('click',()=>{
+    _boardModeActive=true;
+    const url=new URL(window.location); url.searchParams.set('board','');
+    window.history.replaceState({},'',url);
+    if(_lastResults.length) renderBoardView(_lastResults);
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&_boardModeActive&&!e.defaultPrevented) exitBoardMode();
   });
 
   // Refresh data when the tab/window becomes visible again
