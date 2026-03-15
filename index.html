@@ -1198,14 +1198,16 @@ function _applyMuteState(){
 }
 
 // ── Last-outage timestamp tracking ───────────────────────────────────────
-const _lastOutageTS=(()=>{ try{return JSON.parse(localStorage.getItem('svc-last-issue')||'{}');}catch{return{};} })();
+const _lastOutageTS=(()=>{ try{ const v=JSON.parse(localStorage.getItem('svc-last-issue')||'{}'); return(v&&typeof v==='object'&&!Array.isArray(v))?v:{}; }catch{return{};} })();
 function _recordIssue(name){
   _lastOutageTS[name]=Date.now();
   try{localStorage.setItem('svc-last-issue',JSON.stringify(_lastOutageTS));}catch{}
 }
 
 // ── 30-day uptime log ─────────────────────────────────────────────────────
-const _uptimeLog=(()=>{ try{return JSON.parse(localStorage.getItem('svc-uptime')||'{}');}catch{return{};} })();
+const _uptimeLog=(()=>{ try{ const v=JSON.parse(localStorage.getItem('svc-uptime')||'{}'); return(v&&typeof v==='object'&&!Array.isArray(v))?v:{}; }catch{return{};} })();
+let _uptimeFlushTimer=null;
+function _flushUptimeLog(){ try{localStorage.setItem('svc-uptime',JSON.stringify(_uptimeLog));}catch{} }
 function _recordUptimeCheck(name,hasIssue){
   if(!_uptimeLog[name]) _uptimeLog[name]={};
   const today=new Date().toISOString().slice(0,10);
@@ -1215,7 +1217,9 @@ function _recordUptimeCheck(name,hasIssue){
   // Prune >35-day-old entries
   const cutoff=new Date(Date.now()-35*86400000).toISOString().slice(0,10);
   Object.keys(_uptimeLog[name]).forEach(d=>{ if(d<cutoff) delete _uptimeLog[name][d]; });
-  try{localStorage.setItem('svc-uptime',JSON.stringify(_uptimeLog));}catch{}
+  // Batch writes: flush at most once every 5 seconds across all concurrent checks
+  clearTimeout(_uptimeFlushTimer);
+  _uptimeFlushTimer=setTimeout(_flushUptimeLog,5000);
 }
 function _getUptime(name){
   const log=_uptimeLog[name];
@@ -3141,7 +3145,7 @@ function mkNetBadge(label, type) {
 function mkShimmer() {
   return '<div class="net-shimmer net-shimmer-wide"></div><div class="net-shimmer net-shimmer-mid"></div><div class="net-shimmer net-shimmer-short"></div>';
 }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 // Truncate at a word boundary with ellipsis
 function trunc(s,n){ s=String(s||''); if(s.length<=n) return s; const cut=s.lastIndexOf(' ',n); return (cut>n/2?s.slice(0,cut):s.slice(0,n))+'…'; }
 
@@ -3561,6 +3565,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
     clearInterval(refreshInterval);
     clearInterval(_wxTimer);
+    clearTimeout(_uptimeFlushTimer);
+    _flushUptimeLog();
   });
 });
 </script>
