@@ -41,6 +41,41 @@
         --text: #18181b; --sub: #52525b; --muted: #a1a1aa;
       }
     }
+    /* Light mode: flip transparent-white UI surfaces to transparent-black for readability */
+    .light-mode .nav-tab,
+    .light-mode .filter-chip,
+    .light-mode .f-board-btn,
+    .light-mode .f-refresh-btn,
+    .light-mode .f-theme-btn,
+    .light-mode .tv-exit-btn,
+    .light-mode .test-btn,
+    .light-mode .net-refresh-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .nav-tab.active,
+    .light-mode .filter-chip.active { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.18); color:var(--text); }
+    .light-mode .nav-tab:hover:not(.active),
+    .light-mode .filter-chip:hover:not(.active),
+    .light-mode .f-board-btn:hover,
+    .light-mode .f-refresh-btn:hover,
+    .light-mode .f-theme-btn:hover,
+    .light-mode .tv-exit-btn:hover,
+    .light-mode .net-refresh-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.16); }
+    .light-mode .net-run-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .net-run-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.18); }
+    .light-mode .svc-icon-wrap { background:rgba(0,0,0,0.05); }
+    .light-mode .svc-row:hover { background:rgba(0,0,0,0.03); }
+    .light-mode .svc-row:active { background:rgba(0,0,0,0.06); }
+    .light-mode .spinner { border-color:rgba(0,0,0,0.1); border-top-color:#3b82f6; }
+    .light-mode .card:hover { border-color:rgba(0,0,0,0.15); }
+    .light-mode .status-label,
+    .light-mode .meta-tag,
+    .light-mode .issues-hdr-count { background:rgba(0,0,0,0.04); }
+    .light-mode .net-card-icon { background:rgba(0,0,0,0.06); }
+    .light-mode .net-badge-muted { background:rgba(0,0,0,0.04); }
+    .light-mode .speed-bar { background:rgba(0,0,0,0.08); }
+    .light-mode .tv-tile { background:rgba(0,0,0,0.02); }
+    .light-mode .tv-tile:hover { background:rgba(0,0,0,0.05); }
+    .light-mode .tv-tile-logo-fb { background:rgba(0,0,0,0.08); }
+    .light-mode .inc-body { scrollbar-color:rgba(0,0,0,0.15) transparent; }
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body {
       min-height:100%;
@@ -529,6 +564,8 @@
     .tv-tile-badge.reroute{ color:var(--reroute); }
     .tv-tile-badge.unknown{ color:var(--unknown); }
     .tv-tile-inc { font-size:clamp(9px,0.75vw,11px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-title { font-size:clamp(9px,0.8vw,12px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-body { font-size:clamp(8px,0.72vw,11px); color:var(--sub); line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
     .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1.2vh,16px); flex-shrink:0; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 13px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
@@ -655,7 +692,7 @@ const SVCS=[
   {name:'i-Ready',su:'https://i-ready.status.io/',iu:'https://i-ready.status.io/',hu:'https://i-ready.status.io/',p:'statusio',cat:'app'},
   {name:'HMH',su:'https://status.hmhco.com/api/v2/summary.json',hu:'https://status.hmhco.com',cat:'app'},
   {name:'Follett',su:'https://status.follettsoftware.com/rest/systemstatus',iu:null,hu:'https://status.follettsoftware.com',p:'follett',cat:'app'},
-  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/summary.json',hu:'https://status.incidentiq.com',cat:'app'},
+  {name:'IncidentIQ',su:'https://status.incidentiq.com/api/v2/summary.json',hu:'https://status.incidentiq.com',p:'iiq',cat:'app'},
   {name:'Clever',su:'https://status.clever.com/api/v2/summary.json',hu:'https://status.clever.com',cat:'app'},
   {name:'Seesaw',su:'https://status.seesaw.me/api/v2/summary.json',hu:'https://status.seesaw.me',cat:'app'},
   {name:'Jamf',su:'https://status.jamf.com/api/v2/summary.json',hu:'https://status.jamf.com',cat:'app'},
@@ -683,7 +720,7 @@ const SVCS=[
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
-  {name:'MBTA South Coast Rail',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/commuter-rail',p:'mbta',cat:'transit'},
+  {name:'MBTA Fall River / New Bedford',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-NewBedford/timetable',p:'mbta',cat:'transit'},
 ];
 
 window._pi = window._pi || {};
@@ -1476,8 +1513,9 @@ async function fetchOne(s){
       if(serviceAlerts.length>1){
         const extras=serviceAlerts.slice(1).map(a=>{
           const aEff=a.attributes?.effect||'';
+          const aDesc=a.attributes?.short_header||a.attributes?.header||'';
           return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+
-            (a.attributes?.short_header?' — '+a.attributes.short_header.substring(0,60):'');
+            (aDesc?' — '+aDesc.substring(0,80):'');
         });
         parts.push(extras.join('\n'));
       }
@@ -1769,6 +1807,47 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
+  if(s.p==='iiq'){
+    // Filter out incidents/maintenances that only affect the "User Integrations" component group
+    // (third-party integrations managed by vendors, not by us)
+    try{
+      const sum=await getJson(s.su);
+      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const comps=sum?.components||[];
+      // Find the "User Integrations" group component and collect all child component IDs
+      const uiGroupId=comps.find(c=>c.group&&/user integrations?/i.test(c.name||''))?.id;
+      const uiChildIds=new Set(
+        uiGroupId ? comps.filter(c=>c.group_id===uiGroupId).map(c=>c.id) : []
+      );
+      const isOnlyUI=inc=>{
+        const affected=(inc.components||[]).map(c=>c.id);
+        return affected.length>0 && affected.every(id=>uiChildIds.has(id));
+      };
+      const activeStatuses=['investigating','identified','monitoring'];
+      const active=(sum?.incidents||[]).filter(x=>activeStatuses.includes((x.status||'').toLowerCase())&&!isOnlyUI(x));
+      const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase())&&!isOnlyUI(x));
+      let ind=normalizeIndicator(sum?.status?.indicator||'none');
+      let title='',body='';
+      if(active.length){
+        const a=mostRecentEvent(active)||active[0];
+        if(ind==='none'){ const imp=normalizeIndicator(a.impact||'none'); if(imp!=='none') ind=imp; }
+        title=a.name||'';
+        let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
+        body=desc;
+      } else if(activeMaint.length){
+        const a=activeMaint[0];
+        ind='maintenance';
+        title=a.name||'';
+        let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
+        body=desc;
+      } else {
+        // Only User-Integrations maintenance active — treat as operational
+        ind='none';
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const sum=await getJson(s.su);
     const [sd,id]=[sum,sum];
@@ -2022,11 +2101,12 @@ function renderBoardView(results){
     const logoEl=logos.length
       ?`<img class="tv-tile-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
       :`<div class="tv-tile-logo-fb">${esc(fallback)}</div>`;
-    const incPreview=svc.ind!=='none'&&svc.title?svc.title:'';
+    const hasInc=svc.ind!=='none'&&svc.title;
     return `<div class="tv-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
       <div class="tv-tile-top">${logoEl}<span class="tv-tile-name">${esc(svc.name)}</span></div>
       <div class="tv-tile-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
-      ${incPreview?`<div class="tv-tile-inc">${esc(incPreview)}</div>`:''}
+      ${hasInc?`<div class="tv-tile-title">${esc(svc.title)}</div>`:''}
+      ${hasInc&&svc.body?`<div class="tv-tile-body">${esc(svc.body)}</div>`:''}
     </div>`;
   }).join('');
   board.innerHTML=`
@@ -2739,11 +2819,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(t==='system') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme',t);
     const isDark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('light-mode',!isDark);
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content',isDark?'#09090b':'#f4f4f5');
     const btn=document.getElementById('f-theme-btn');
     if(btn){ btn.textContent=THEME_ICONS[t]; btn.title=THEME_TITLES[t]; }
   }
-  const _savedTheme=localStorage.getItem('theme')||'system';
+  const _savedTheme=localStorage.getItem('theme')||'dark';
   applyTheme(_savedTheme);
   document.getElementById('f-theme-btn')?.addEventListener('click',()=>{
     const cur=localStorage.getItem('theme')||'system';
