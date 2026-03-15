@@ -30,6 +30,17 @@
       --muted: #52525b;
       --font: 'Inter', system-ui, sans-serif;
     }
+    /* ── Light mode ─────────────────────────────────────────────────────────── */
+    :root[data-theme="light"] {
+      --bg: #f4f4f5; --card: #ffffff; --border: rgba(0,0,0,0.09);
+      --text: #18181b; --sub: #52525b; --muted: #a1a1aa;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #f4f4f5; --card: #ffffff; --border: rgba(0,0,0,0.09);
+        --text: #18181b; --sub: #52525b; --muted: #a1a1aa;
+      }
+    }
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body {
       min-height:100%;
@@ -524,6 +535,8 @@
     .tv-updated { font-size:11px; color:var(--muted); }
     .f-board-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 11px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .f-board-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
+    .f-theme-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
+    .f-theme-btn:hover { background:rgba(128,128,128,0.12); color:var(--text); }
 
     /* ── Header stat operational count color ─────────────────────────────────── */
     #n-ok { color:var(--ok) !important; }
@@ -629,6 +642,7 @@
     <div class="f-left">
       <div class="f-meta" id="f-meta"></div>
     </div>
+    <button class="f-theme-btn" id="f-theme-btn" type="button" title="Toggle light/dark mode">☀</button>
     <button class="f-board-btn" id="f-board-btn" type="button" title="Open status board">Board</button>
     <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
   </div>
@@ -662,11 +676,11 @@ const SVCS=[
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
   {name:'Oracle Cloud',su:'https://ocistatus.oraclecloud.com/api/v2/status.json',cu:'https://ocistatus.oraclecloud.com/api/v2/components.json',hu:'https://ocistatus.oraclecloud.com',p:'oci',cat:'infra'},
   {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
-  {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/status.json',iu:'https://www.akamaistatus.com/api/v2/incidents.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
+  {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/summary.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
-  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/status.json',iu:'https://uptime.quad9.net/api/v2/incidents.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
+  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
   {name:'MBTA South Coast Rail',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/commuter-rail',p:'mbta',cat:'transit'},
@@ -1042,13 +1056,11 @@ const ROUTE_KEYS = {
   "https://ocistatus.oraclecloud.com/api/v2/status.json": "oci-status",
   "https://ocistatus.oraclecloud.com/api/v2/components.json": "oci-components",
   "https://cloud.ibm.com/status/api/notifications/feed.rss": "ibm-rss",
-  "https://www.akamaistatus.com/api/v2/status.json": "akamai-status",
-  "https://www.akamaistatus.com/api/v2/incidents.json": "akamai-incidents",
+  "https://www.akamaistatus.com/api/v2/summary.json": "akamai-summary",
   "https://www.fastlystatus.com/rss/": "fastly-rss",
   "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
   "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
-  "https://uptime.quad9.net/api/v2/status.json": "quad9-status",
-  "https://uptime.quad9.net/api/v2/incidents.json": "quad9-incidents",
+  "https://uptime.quad9.net/api/v2/summary.json": "quad9-summary",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE": "mbta-southcoast",
   "https://cloudflare.com/cdn-cgi/trace": "cf-trace",
@@ -1737,10 +1749,8 @@ async function fetchOne(s){
     // IATA codes of Quad9 PoPs in the United States
     const US_IATA=new Set(['ABQ','ANC','ATL','AUS','BNA','BOS','BUF','BWI','CLT','CMH','CVG','DAL','DCA','DEN','DFW','DSM','DTW','EWR','FLL','HNL','HOU','IAD','IAH','IND','JAX','JFK','KCI','LAS','LAX','LGA','LGB','LIT','MCO','MDW','MEM','MIA','MKE','MSP','MSY','OAK','OGG','OKC','OMA','ONT','ORD','ORF','PAO','PDX','PBI','PHL','PHX','PIT','RDU','RIC','RSW','SAT','SAN','SEA','SFO','SJC','SLC','SMF','SNA','SRQ','STL','TPA','TUL','TUS']);
     try{
-      const [sd,id]=await Promise.all([
-        getJson(s.su),
-        s.iu ? getJson(s.iu).catch(()=>({incidents:[]})) : Promise.resolve({incidents:[]})
-      ]);
+      const sum=await getJson(s.su);
+      const [sd,id]=[sum,sum];
       const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
       const active=(id?.incidents||[]).filter(x=>{
         if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
@@ -2720,8 +2730,41 @@ window.addEventListener('DOMContentLoaded',()=>{
     window.history.replaceState({},'',url);
     if(_lastResults.length) renderBoardView(_lastResults);
   });
+
+  // Theme toggle (system → light → dark → system)
+  const THEMES=['system','light','dark'];
+  const THEME_ICONS={system:'☀',light:'☀',dark:'☾'};
+  const THEME_TITLES={system:'Theme: system (click for light)',light:'Theme: light (click for dark)',dark:'Theme: dark (click for system)'};
+  function applyTheme(t){
+    if(t==='system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme',t);
+    const isDark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',isDark?'#09090b':'#f4f4f5');
+    const btn=document.getElementById('f-theme-btn');
+    if(btn){ btn.textContent=THEME_ICONS[t]; btn.title=THEME_TITLES[t]; }
+  }
+  const _savedTheme=localStorage.getItem('theme')||'system';
+  applyTheme(_savedTheme);
+  document.getElementById('f-theme-btn')?.addEventListener('click',()=>{
+    const cur=localStorage.getItem('theme')||'system';
+    const next=THEMES[(THEMES.indexOf(cur)+1)%THEMES.length];
+    localStorage.setItem('theme',next);
+    applyTheme(next);
+  });
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'&&_boardModeActive&&!e.defaultPrevented) exitBoardMode();
+  });
+
+  // Keyboard shortcuts (/, R, Escape-to-clear-search)
+  document.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea,select,[contenteditable]')) return;
+    if(e.metaKey||e.ctrlKey) return;
+    if(e.key==='/'){ e.preventDefault(); document.querySelector('.svc-search')?.focus(); }
+    else if(e.key==='r'||e.key==='R'){ e.preventDefault(); if(!isRefreshing) _startRefresh(); }
+    else if(e.key==='Escape'&&!_boardModeActive){
+      const srch=document.querySelector('.svc-search');
+      if(srch&&srch.value){ srch.value=''; srch.dispatchEvent(new Event('input')); }
+    }
   });
 
   // Refresh data when the tab/window becomes visible again
