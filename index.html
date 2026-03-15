@@ -303,11 +303,14 @@
     .svc-cat-badge { font-size:10px; font-weight:600; letter-spacing:0.03em; padding:2px 8px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
     .svc-cat-badge.ok { color:var(--ok); background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.18); }
     .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
+    .svc-cat-badge.bad { color:var(--bad); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); }
     .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
     .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:46px; }
     .svc-row:last-child { border-bottom:none; }
     .svc-row:hover { background:rgba(255,255,255,0.035); }
     .svc-row:active { background:rgba(255,255,255,0.065); }
+    .svc-row:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; background:rgba(255,255,255,0.035); }
+    .card:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
     .svc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.3s; }
     .svc-row:hover .svc-dot { box-shadow:0 0 0 3px rgba(255,255,255,0.05); }
     .svc-icon-wrap { width:30px; height:30px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); overflow:hidden; }
@@ -470,9 +473,12 @@
 
     /* ── Nav tabs ────────────────────────────────────────────────────────────── */
     .nav-tabs { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-    .nav-tab { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.01em; font-family:var(--font); }
+    .nav-tab { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.01em; font-family:var(--font); display:inline-flex; align-items:center; gap:0; }
     .nav-tab.active { background:rgba(255,255,255,0.1); color:var(--text); border-color:rgba(255,255,255,0.2); }
     .nav-tab:hover:not(.active) { background:rgba(255,255,255,0.07); color:var(--text); }
+    .tab-badge { display:inline-flex; align-items:center; justify-content:center; background:rgba(239,68,68,0.18); color:#fca5a5; border-radius:10px; font-size:10px; font-weight:700; padding:1px 5px; min-width:17px; margin-left:6px; line-height:1.4; letter-spacing:0; }
+    .nav-tab.active .tab-badge { background:rgba(239,68,68,0.22); }
+    .light-mode .tab-badge { background:rgba(239,68,68,0.12); color:#dc2626; }
 
     /* ── Network diagnostics view ─────────────────────────────────────────── */
     .net-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:4px 0 20px; }
@@ -628,11 +634,16 @@
 
     /* ── Service search filter ─────────────────────────────────────────────── */
     .svc-search-wrap { position:relative; margin-bottom:6px; }
-    .svc-search { width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font); font-size:13px; padding:8px 14px 8px 38px; outline:none; transition:border-color 0.2s, background 0.2s; -webkit-appearance:none; appearance:none; }
+    .svc-search { width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font); font-size:13px; padding:8px 36px 8px 38px; outline:none; transition:border-color 0.2s, background 0.2s; -webkit-appearance:none; appearance:none; }
     .svc-search:focus { border-color:rgba(255,255,255,0.16); background:rgba(255,255,255,0.05); }
     .svc-search::placeholder { color:var(--muted); }
     .svc-search::-webkit-search-cancel-button { -webkit-appearance:none; }
     .svc-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--muted); pointer-events:none; }
+    .svc-search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:18px; height:18px; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:none; border-radius:50%; color:var(--sub); cursor:pointer; font-size:11px; line-height:1; padding:0; transition:background 0.15s, color 0.15s; }
+    .svc-search-clear:hover { background:rgba(255,255,255,0.18); color:var(--text); }
+    .svc-search-wrap.has-query .svc-search-clear { display:flex; }
+    .light-mode .svc-search-clear { background:rgba(0,0,0,0.07); }
+    .light-mode .svc-search-clear:hover { background:rgba(0,0,0,0.14); }
 
     /* ── Collapsible category sections ─────────────────────────────────────── */
     .svc-cat-hdr { cursor:pointer; }
@@ -2238,8 +2249,9 @@ function renderServices(results){
     const hasOutage=techOnly.some(s=>s.ind==='major');
     const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
+    const icon=hasOutage?'✗':issueCount>0?'⚠':'✓';
     summary.className='status-summary show '+cls;
-    summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
+    summary.innerHTML=`<span>${icon}&ensp;${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
   }
 
   // ── Active Issues panel (all services incl. transit) ──────────────────────
@@ -2266,26 +2278,27 @@ function renderServices(results){
   // ── Search/filter bar ──────────────────────────────────────────────────────
   const searchWrap=document.createElement('div');
   searchWrap.className='svc-search-wrap';
-  searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false">`;
+  searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false"><button class="svc-search-clear" type="button" title="Clear search" tabindex="-1">✕</button>`;
   dir.appendChild(searchWrap);
   const srch=searchWrap.querySelector('.svc-search');
+  const srchClear=searchWrap.querySelector('.svc-search-clear');
   let _srchTimer=null;
-  srch.addEventListener('input',()=>{
-    clearTimeout(_srchTimer);
-    _srchTimer=setTimeout(()=>{
-      const q=srch.value.trim().toLowerCase();
-      dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
-        let any=false;
-        sec.querySelectorAll('.svc-row').forEach(row=>{
-          const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
-          row.style.display=match?'':'none';
-          if(match) any=true;
-        });
-        sec.style.display=any?'':'none';
-        if(q&&any) sec.classList.remove('collapsed');
+  const _doSearch=()=>{
+    const q=srch.value.trim().toLowerCase();
+    searchWrap.classList.toggle('has-query',q.length>0);
+    dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
+      let any=false;
+      sec.querySelectorAll('.svc-row').forEach(row=>{
+        const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
+        row.style.display=match?'':'none';
+        if(match) any=true;
       });
-    },150);
-  });
+      sec.style.display=any?'':'none';
+      if(q&&any) sec.classList.remove('collapsed');
+    });
+  };
+  srch.addEventListener('input',()=>{ clearTimeout(_srchTimer); _srchTimer=setTimeout(_doSearch,150); });
+  srchClear.addEventListener('click',()=>{ srch.value=''; _doSearch(); srch.focus(); });
 
   const addSection=(label,items,icon)=>{
     if(!items.length) return;
@@ -2295,7 +2308,7 @@ function renderServices(results){
     sec.className='svc-cat-sec'+(isCollapsed?' collapsed':'');
     const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
     const hasOutage=items.some(s=>s.ind==='major');
-    const badgeCls=hasOutage?'warn':issueCount>0?'warn':'ok';
+    const badgeCls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const badgeTxt=issueCount===0?'All clear':issueCount+' issue'+(issueCount!==1?'s':'');
     const hdr=document.createElement('div');
     hdr.className='svc-cat-hdr';
@@ -2559,7 +2572,13 @@ function mkIncCard(svc){
   d.className=`card ${CC[svc.ind]||''}`;
   d.dataset.svc=svc.name;
   d.dataset.ind=svc.ind;
-  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  if(svc.url){
+    d.tabIndex=0;
+    d.setAttribute('role','button');
+    d.setAttribute('aria-label',svc.name+' — '+svc.label+'. Click to open status page.');
+    d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+    d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); window.open(svc.url,'_blank','noopener'); } });
+  }
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
   const incTitle=svc.title||svc.label;
@@ -2602,7 +2621,13 @@ function mkSvcRow(svc){
   d.className='svc-row';
   d.dataset.svc=svc.name;
   d.dataset.ind=svc.ind;
-  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  if(svc.url){
+    d.tabIndex=0;
+    d.setAttribute('role','button');
+    d.setAttribute('aria-label',svc.name+' — '+svc.label);
+    d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+    d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); window.open(svc.url,'_blank','noopener'); } });
+  }
   const dotColors={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
   const dotColor=dotColors[svc.ind]||'var(--unknown)';
   const dotPulse=svc.ind!=='none'&&svc.ind!=='unknown'?' svc-dot-pulse':'';
@@ -2690,11 +2715,17 @@ function updateStats(data){
   else statUnknown.classList.remove('show');
 
   const fmeta=document.getElementById('f-meta');
-  if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
+  if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
 
   // Dynamic title + favicon
   const issues=wn+bd+mt+rt;
   document.title=bd>0?`⚠ ${bd} Down · Service Status`:issues>0?`• ${issues} Issues · Service Status`:'Service Status';
+  // Update nav tab badge
+  const svcTab=document.querySelector('.nav-tab[data-view="services"]');
+  if(svcTab){
+    const badge=issues>0?`<span class="tab-badge">${issues}</span>`:'';
+    svcTab.innerHTML='Services'+badge;
+  }
   const fav=document.querySelector('link[rel="icon"]');
   if(fav){
     const c=bd>0?'%23ef4444':issues>0?'%23f59e0b':'%2322c55e';
