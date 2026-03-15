@@ -30,6 +30,8 @@
     "bunny-summary":        "https://status.bunny.net/api/v2/summary.json",
     "cachefly-summary":     "https://www.cacheflystatus.com/api/v2/summary.json",
     "quad9-summary":        "https://uptime.quad9.net/api/v2/summary.json",
+    "mimecast-summary":     "https://status.mimecast.com/api/v2/summary.json",
+    "wasabi-summary":       "https://status.wasabi.com/api/v2/summary.json",
     "mbta-providence":      "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE",
     "mbta-southcoast":      "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE",
     "cf-trace":             "https://cloudflare.com/cdn-cgi/trace",

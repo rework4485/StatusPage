@@ -574,6 +574,15 @@
     .tv-net-ok { color:var(--ok); font-weight:600; }
     .tv-net-warn { color:var(--warn); font-weight:600; }
     .tv-net-ts { font-size:0.82em; color:var(--muted); margin-left:auto; white-space:nowrap; }
+    /* Alert toast shown on board when a voice announcement fires */
+    .tv-alert-toast { position:absolute; top:clamp(12px,2vh,24px); right:clamp(12px,2vw,28px); display:flex; align-items:center; gap:10px; padding:12px 20px; background:rgba(10,10,12,0.95); border:1px solid rgba(255,255,255,0.18); border-radius:12px; font-size:clamp(13px,1.2vw,18px); font-weight:600; z-index:300; backdrop-filter:blur(10px); box-shadow:0 8px 32px rgba(0,0,0,0.5); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
+    .tv-alert-toast.tv-alert-hide { opacity:0; transform:translateY(-10px); }
+    .tv-alert-toast.ind-major { border-color:rgba(239,68,68,0.5); }
+    .tv-alert-toast.ind-minor { border-color:rgba(245,158,11,0.5); }
+    .tv-alert-toast.ind-none  { border-color:rgba(34,197,94,0.5); }
+    .tv-alert-svc { color:var(--text); }
+    .tv-alert-msg { color:var(--sub); font-weight:500; }
+    @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
     .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1.2vh,16px); flex-shrink:0; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 13px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
@@ -726,6 +735,10 @@ const SVCS=[
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
+  {name:'Mimecast',su:'https://status.mimecast.com/api/v2/summary.json',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
+  {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
+  // Local / Weather
+  {name:'Local Weather',su:'https://api.weather.gov/',hu:'https://www.weather.gov/',p:'weather',cat:'local'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
   {name:'MBTA Fall River / New Bedford',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-NewBedford/timetable',p:'mbta',cat:'transit'},
@@ -1011,7 +1024,23 @@ function queueAlert(svc, kind) {
   // Cap queue to prevent overflow during connectivity blips
   if (alertQueue.length >= MAX_ALERT_QUEUE) return;
   alertQueue.push({ svc, kind });
+  if (_boardModeActive) _showBoardAlert(svc, kind);
   processAlertQueue();
+}
+
+function _showBoardAlert(svc, kind) {
+  const board = document.getElementById('tv-board');
+  if (!board) return;
+  const icon = kind==='outage'?'🔴':kind==='degraded'?'🟡':'🟢';
+  const msg  = kind==='outage'?'Outage Detected':kind==='degraded'?'Service Degraded':'Restored';
+  const indCls = kind==='outage'?'ind-major':kind==='degraded'?'ind-minor':'ind-none';
+  const el = document.createElement('div');
+  el.className = `tv-alert-toast ${indCls}`;
+  el.innerHTML = `${icon} <span class="tv-alert-svc">${esc(svc.name)}</span><span class="tv-alert-msg">— ${msg}</span>`;
+  board.style.position='relative';
+  board.appendChild(el);
+  setTimeout(()=>el.classList.add('tv-alert-hide'), 6000);
+  setTimeout(()=>el.remove(), 7000);
 }
 
 function showStatusBanner(svc, kind){
@@ -1106,6 +1135,8 @@ const ROUTE_KEYS = {
   "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
   "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
   "https://uptime.quad9.net/api/v2/summary.json": "quad9-summary",
+  "https://status.mimecast.com/api/v2/summary.json": "mimecast-summary",
+  "https://status.wasabi.com/api/v2/summary.json": "wasabi-summary",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE": "mbta-southcoast",
   "https://cloudflare.com/cdn-cgi/trace": "cf-trace",
@@ -1494,15 +1525,15 @@ async function fetchOne(s){
       const cause=attr.cause?CAUSE_LABEL[attr.cause]||null:null;
       const timeframe=attr.timeframe||null;
 
-      // Build title: effect label + cause if meaningful
-      const titleParts=[effectLabel];
-      if(cause&&cause!=='Unknown') titleParts.push('('+cause+')');
+      // Build title: use short_header (specific) if available, otherwise effectLabel
+      const shortHdr=attr.short_header||attr.header||'';
+      const titleParts=[];
+      if(shortHdr) titleParts.push(shortHdr.substring(0,100));
+      else { titleParts.push(effectLabel); if(cause&&cause!=='Unknown') titleParts.push('('+cause+')'); }
       const title=titleParts.join(' ');
 
-      // Build body: short header + timeframe + affected routes + additional alerts
+      // Build body: timeframe + affected routes + additional alerts
       const parts=[];
-      const shortHdr=attr.short_header||attr.header||'';
-      if(shortHdr) parts.push(shortHdr);
       if(timeframe) parts.push('When: '+timeframe);
 
       // Affected route names from relationships
@@ -1856,6 +1887,131 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
+  if(s.p==='weather'){
+    // National Weather Service — no API key required, CORS supported
+    try{
+      // Get lat/lon from session cache or ip-api (no permission needed)
+      let lat,lon,locName='';
+      const cached=sessionStorage.getItem('_wx_coords');
+      if(cached){ try{const c=JSON.parse(cached);lat=c.lat;lon=c.lon;locName=c.name||'';}catch{} }
+      if(!lat){
+        const ipd=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null).catch(()=>null);
+        if(!ipd?.lat) return mk(s.name,'unknown','Location unavailable','Cannot determine your location for weather lookup.',new Date().toLocaleString(),s.hu);
+        lat=ipd.lat; lon=ipd.lon;
+        locName=(ipd.city||'')+(ipd.regionName?', '+ipd.regionName:'');
+        sessionStorage.setItem('_wx_coords',JSON.stringify({lat,lon,name:locName}));
+      }
+      const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
+      if(!pt?.properties) return mk(s.name,'unknown','NWS Unavailable','Weather data not available for this location. NWS covers US locations only.',new Date().toLocaleString(),s.hu);
+      const city=pt.properties.relativeLocation?.properties?.city||locName;
+      const state=pt.properties.relativeLocation?.properties?.state||'';
+      const displayLoc=city+(state?' '+state:'');
+      const forecastUrl=pt.properties.forecast;
+      const [forecastR,alertsR]=await Promise.allSettled([
+        fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+        fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+      ]);
+      const period=forecastR.value?.properties?.periods?.[0];
+      const wxAlerts=(alertsR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
+      // Indicator: any active weather warnings
+      let ind='none';
+      if(wxAlerts.some(a=>/warning/i.test(a.properties?.event||''))) ind='minor';
+      else if(wxAlerts.some(a=>/watch/i.test(a.properties?.event||''))) ind='minor';
+      else if(wxAlerts.length) ind='maintenance';
+      const tempStr=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
+      const condStr=period?.shortForecast||'';
+      const icon=period?.isDaytime===false?'🌙':condStr.match(/sunny|clear/i)?'☀️':condStr.match(/cloud/i)?'⛅':condStr.match(/rain|shower/i)?'🌧':condStr.match(/snow/i)?'❄️':condStr.match(/thunder|storm/i)?'⛈':'🌡';
+      const title=`${icon} ${tempStr}${condStr?' · '+condStr:''}`;
+      const parts=[];
+      if(displayLoc) parts.push(displayLoc);
+      wxAlerts.slice(0,3).forEach(a=>{
+        const ev=a.properties?.event||'';
+        const hl=a.properties?.headline||'';
+        parts.push(`⚠ ${ev}${hl?' — '+hl.substring(0,120):''}`)
+      });
+      if(period?.detailedForecast) parts.push(period.detailedForecast.substring(0,240));
+      return mk(s.name,ind,title,parts.join('\n'),new Date().toLocaleString(),s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='mimecast'){
+    // Mimecast — filter to US B Grid components only
+    try{
+      const sum=await getJson(s.su);
+      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const comps=sum?.components||[];
+      // Find the "US B" grid group and its children
+      const usBGroup=comps.find(c=>c.group&&/us.?b\b|united states.?b\b/i.test(c.name||''));
+      const usBId=usBGroup?.id;
+      const usBChildren=usBId?comps.filter(c=>c.group_id===usBId):comps.filter(c=>/us.?b/i.test(c.name||''));
+      const watched=usBChildren.length?usBChildren:comps; // fallback to all if no US B found
+      const watchedIds=new Set(watched.map(c=>c.id));
+      const active=(sum?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        const affected=(x.components||[]).map(c=>c.id);
+        return !affected.length||affected.some(id=>watchedIds.has(id));
+      });
+      const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>{
+        if(!['in_progress','verifying'].includes((x.status||'').toLowerCase())) return false;
+        const affected=(x.components||[]).map(c=>c.id);
+        return !affected.length||affected.some(id=>watchedIds.has(id));
+      });
+      let ind=normalizeIndicator(sum?.status?.indicator||'none');
+      // Override with component-level status
+      const worstComp=watched.reduce((worst,c)=>{
+        const ci=normalizeIndicator(c.status);
+        return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;
+      },'none');
+      if(worstComp!=='none') ind=worstComp;
+      let title='',body='';
+      if(active.length){
+        const a=mostRecentEvent(active)||active[0];
+        title=a.name||'';
+        let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
+        body=desc;
+        if(ind==='none'){ const imp=normalizeIndicator(a.impact||'none'); if(imp!=='none') ind=imp; }
+      } else if(activeMaint.length){
+        ind='maintenance'; title=activeMaint[0].name||'';
+        let desc=latestUpdateBody(activeMaint[0]); if(!desc) desc=stripHtml(activeMaint[0].description||'');
+        body=desc;
+      }
+      if(usBChildren.length&&!usBGroup) body=(body?body+'\n':'')+'(Monitoring US B Grid)';
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='wasabi'){
+    // Wasabi — filter to US region components
+    try{
+      const sum=await getJson(s.su);
+      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const comps=sum?.components||[];
+      // US components: names containing "us-east", "us-west", "us-central" or parent group "US"
+      const usGroupIds=new Set(comps.filter(c=>c.group&&/\bus\b|united states/i.test(c.name||'')).map(c=>c.id));
+      const usComps=comps.filter(c=>usGroupIds.has(c.group_id)||/\bus-/i.test(c.name||'')||(c.group&&/\bus\b/i.test(c.name||'')));
+      const watched=usComps.length?usComps:comps;
+      const watchedIds=new Set(watched.map(c=>c.id));
+      const active=(sum?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        const affected=(x.components||[]).map(c=>c.id);
+        return !affected.length||affected.some(id=>watchedIds.has(id));
+      });
+      let ind='none';
+      const worstComp=watched.reduce((worst,c)=>{const ci=normalizeIndicator(c.status);return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;},'none');
+      if(worstComp!=='none') ind=worstComp;
+      let title='',body='';
+      if(active.length){
+        const a=mostRecentEvent(active)||active[0];
+        if(ind==='none'){ const imp=normalizeIndicator(a.impact||'none'); if(imp!=='none') ind=imp; }
+        title=a.name||''; let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||''); body=desc;
+      } else if((sum?.scheduled_maintenances||[]).some(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase()))){
+        const m=(sum.scheduled_maintenances||[]).find(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase()));
+        ind='maintenance'; title=m.name||''; body=latestUpdateBody(m)||stripHtml(m.description||'');
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const sum=await getJson(s.su);
     const [sd,id]=[sum,sum];
@@ -1967,19 +2123,20 @@ function renderServices(results){
   if(loadEl) loadEl.style.display='none';
   const sort=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
 
-  // ── Status summary banner ──────────────────────────────────────────────────
+  // ── Status summary banner (excludes transit from issue count) ─────────────
+  const techOnly=results.filter(s=>svcCatMap[s.name]!=='transit');
   const summary=document.getElementById('status-summary');
   if(summary){
-    const total=results.length;
-    const issueCount=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
-    const hasOutage=results.some(s=>s.ind==='major');
+    const total=techOnly.length;
+    const issueCount=techOnly.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+    const hasOutage=techOnly.some(s=>s.ind==='major');
     const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
     summary.className='status-summary show '+cls;
     summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
   }
 
-  // ── Active Issues panel ────────────────────────────────────────────────────
+  // ── Active Issues panel (all services incl. transit) ──────────────────────
   const activeIssues=sort(results.filter(s=>s.ind!=='none'&&s.ind!=='unknown'));
   if(activeIssues.length){
     const sec=document.createElement('div');
@@ -2051,17 +2208,21 @@ function renderServices(results){
   const appIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`;
   const infraIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6" stroke-width="3"/><line x1="6" y1="18" x2="6.01" y2="18" stroke-width="3"/></svg>`;
   const transitIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="13" rx="2"/><path d="M8 16v3m8-3v3M3 16h18"/><circle cx="8.5" cy="10" r="1.5"/><circle cx="15.5" cy="10" r="1.5"/><line x1="4" y1="7" x2="20" y2="7"/></svg>`;
+  const localIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18"/><path d="M12 3c-2 3-3 5.5-3 9s1 6 3 9"/></svg>`;
   addSection('Applications & Platforms', results.filter(s=>s.cat==='app'), appIcon);
   addSection('Infrastructure', results.filter(s=>s.cat==='infra'), infraIcon);
+  addSection('Local', results.filter(s=>s.cat==='local'), localIcon);
   addSection('Transit', results.filter(s=>s.cat==='transit'), transitIcon);
   grid.appendChild(dir);
 
   // ── Filter bar ──────────────────────────────────────────────────────────────
   _lastResults=results;
-  const issueN=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
-  const outageN=results.filter(s=>s.ind==='major').length;
-  const degradedN=results.filter(s=>s.ind==='minor').length;
-  const maintN=results.filter(s=>s.ind==='maintenance').length;
+  // Filter chip counts exclude transit services (MBTA etc.)
+  const chipBase=results.filter(s=>svcCatMap[s.name]!=='transit');
+  const issueN=chipBase.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+  const outageN=chipBase.filter(s=>s.ind==='major').length;
+  const degradedN=chipBase.filter(s=>s.ind==='minor').length;
+  const maintN=chipBase.filter(s=>s.ind==='maintenance').length;
   // Reset stale filter if the filtered category is now empty
   if(_curFilter==='issues'&&issueN===0) _curFilter='all';
   else if(_curFilter!=='all'&&_curFilter!=='issues'&&!results.some(s=>s.ind===_curFilter)) _curFilter='all';
@@ -2104,31 +2265,33 @@ function _optimizeBoardLayout(){
   const hdrEl=board.querySelector('.tv-board-hdr');
   const netEl=board.querySelector('.tv-net-bar');
   const footEl=board.querySelector('.tv-board-footer');
-  const gap=Math.max(8,Math.round(availW*0.007));
-  const used=(hdrEl?hdrEl.offsetHeight:0)+(netEl?netEl.offsetHeight+gap:0)+(footEl?footEl.offsetHeight+gap:0);
-  const availH=board.clientHeight-padV-used-gap;
-  // Find column count that maximises tile area while keeping tiles at least 80px tall
+  const gap=Math.max(10,Math.round(availW*0.007));
+  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+(netEl?netEl.offsetHeight+gap:0)+(footEl?footEl.offsetHeight+gap:0);
+  const availH=board.clientHeight-padV-used;
+  // Cap columns so tiles stay readable — based on natural aspect ratio of screen
+  const maxCols=Math.min(n,Math.max(3,Math.ceil(Math.sqrt(n*(availW/Math.max(availH,1))))));
   let bestCols=1,bestScore=-1;
-  for(let c=1;c<=n;c++){
+  for(let c=1;c<=maxCols;c++){
     const r=Math.ceil(n/c);
     const tW=(availW-gap*(c-1))/c;
     const tH=(availH-gap*(r-1))/r;
-    if(tH<70||tW<100) continue;
+    if(tH<90||tW<160) continue; // minimum readable tile size
     const score=tW*tH;
     if(score>bestScore){bestScore=score;bestCols=c;}
   }
   tilesEl.style.gridTemplateColumns=`repeat(${bestCols},1fr)`;
   tilesEl.style.gridAutoRows=`1fr`;
   tilesEl.style.gap=gap+'px';
-  // Scale body text: clamp based on tile width
   const tileW=Math.floor((availW-gap*(bestCols-1))/bestCols);
   const tileH=Math.floor((availH-gap*(Math.ceil(n/bestCols)-1))/Math.ceil(n/bestCols));
-  const fs=Math.max(9,Math.min(14,Math.floor(tileW/18)));
-  const nameFs=Math.max(11,Math.min(16,Math.floor(tileW/16)));
+  // TV-readable font sizes — minimum 14px names, 11px body
+  const nameFs=Math.max(14,Math.min(22,Math.floor(tileW/12)));
+  const bodyFs=Math.max(11,Math.min(15,Math.floor(tileW/16)));
+  const logoSz=Math.max(20,Math.min(32,Math.floor(nameFs*1.4)));
   tilesEl.querySelectorAll('.tv-tile-name').forEach(el=>el.style.fontSize=nameFs+'px');
-  tilesEl.querySelectorAll('.tv-tile-badge,.tv-tile-title,.tv-tile-body,.tv-tile-inc').forEach(el=>el.style.fontSize=fs+'px');
-  // Collapse body lines when tiles are short
-  const bodyLines=tileH<140?2:3;
+  tilesEl.querySelectorAll('.tv-tile-badge,.tv-tile-title,.tv-tile-body,.tv-tile-inc').forEach(el=>el.style.fontSize=bodyFs+'px');
+  tilesEl.querySelectorAll('.tv-tile-logo,.tv-tile-logo-fb').forEach(el=>{el.style.width=logoSz+'px';el.style.height=logoSz+'px';});
+  const bodyLines=tileH<130?2:3;
   tilesEl.querySelectorAll('.tv-tile-body').forEach(el=>el.style.webkitLineClamp=bodyLines);
 }
 
@@ -2138,14 +2301,16 @@ async function _fetchBoardNet(){
   const bar=document.getElementById('tv-net-bar');
   if(bar) bar.dataset.loading='1';
   try{
-    const [cfR,metaR,latR]=await Promise.allSettled([
+    const [cfR,metaR,latR,gLatR,resolverR]=await Promise.allSettled([
       _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
       _netDirectJson('https://speed.cloudflare.com/meta'),
       measureLatency('https://cloudflare.com/cdn-cgi/trace',3),
+      measureLatency('https://dns.google/generate_204',3,true),
+      detectDohResolver(),
     ]);
-    _boardNetInfo={cf:cfR.value||{},meta:metaR.value||{},lat:latR.value||null,ts:Date.now()};
+    _boardNetInfo={cf:cfR.value||{},meta:metaR.value||{},lat:latR.value||null,gLat:gLatR.value||null,resolver:resolverR.value||null,ts:Date.now()};
   }catch{
-    _boardNetInfo={cf:{},meta:{},lat:null,ts:Date.now()};
+    _boardNetInfo={cf:{},meta:{},lat:null,gLat:null,resolver:null,ts:Date.now()};
   }
   _boardNetFetching=false;
   _renderBoardNetBar();
@@ -2155,25 +2320,35 @@ function _renderBoardNetBar(){
   const bar=document.getElementById('tv-net-bar');
   if(!bar) return;
   if(!_boardNetInfo){ bar.innerHTML='<span class="tv-net-lbl">Network</span> Loading…'; return; }
-  const {cf,meta,lat,ts}=_boardNetInfo;
+  const {cf,meta,lat,gLat,resolver,ts}=_boardNetInfo;
   const ip=cf.ip||'—';
   const isp=meta.asOrganization||'—';
   const metaColo=(meta.colo&&typeof meta.colo==='object')?meta.colo:null;
   const colo=metaColo?.iata||(typeof meta.colo==='string'?meta.colo:null)||cf.colo||'—';
   const city=metaColo?.city||'';
   const edgeStr=city?colo+' · '+city:colo;
-  const latStr=lat?lat.min+' ms min':null;
+  const latStr=lat?lat.min+' ms':null;
+  const gLatStr=gLat?gLat.min+' ms':null;
   const http=cf.http||meta.httpProtocol||null;
+  const tls=cf.tls||null;
   const isIPv6=(cf.ip||'').includes(':');
   const warp=cf.warp==='on';
+  // DNS provider
+  const resolverAddr=resolver?.ip||null;
+  const resolverClass=resolverAddr?classifyResolver(resolverAddr):{isDoh:false,provider:''};
+  const geoOrg=resolver?.geo?(resolver.geo.includes(' - ')?resolver.geo.split(' - ').slice(1).join(' - ').trim():resolver.geo):null;
+  const dnsProvider=resolverClass.isDoh?resolverClass.provider:(geoOrg?geoOrg.replace(/,?\s*(Inc|LLC|Ltd|Corp|GmbH)\.?\s*$/i,'').trim():null);
   const sep=`<span class="tv-net-sep">·</span>`;
   const parts=[
     `<span class="tv-net-item"><span class="tv-net-lbl">IP</span>${esc(ip)}</span>`,
     `<span class="tv-net-item"><span class="tv-net-lbl">ISP</span>${esc(isp)}</span>`,
-    `<span class="tv-net-item"><span class="tv-net-lbl">Edge</span>${esc(edgeStr)}</span>`,
-    latStr?`<span class="tv-net-item"><span class="tv-net-lbl">RTT</span>${esc(latStr)}</span>`:'',
+    `<span class="tv-net-item"><span class="tv-net-lbl">CF Edge</span>${esc(edgeStr)}</span>`,
+    latStr?`<span class="tv-net-item"><span class="tv-net-lbl">RTT CF</span>${esc(latStr)}</span>`:'',
+    gLatStr?`<span class="tv-net-item"><span class="tv-net-lbl">RTT Google</span>${esc(gLatStr)}</span>`:'',
     http?`<span class="tv-net-item"><span class="tv-net-lbl">Proto</span><span class="${/3/.test(http)?'tv-net-ok':'tv-net-warn'}">${esc(http)}</span></span>`:'',
+    tls?`<span class="tv-net-item"><span class="tv-net-lbl">TLS</span><span class="${tls==='TLSv1.3'?'tv-net-ok':''}">${esc(tls)}</span></span>`:'',
     `<span class="tv-net-item"><span class="${isIPv6?'tv-net-ok':''}">${isIPv6?'IPv6':'IPv4'}</span></span>`,
+    dnsProvider?`<span class="tv-net-item"><span class="tv-net-lbl">DNS</span>${esc(dnsProvider)}</span>`:'',
     warp?`<span class="tv-net-item tv-net-ok">WARP</span>`:'',
     ts?`<span class="tv-net-ts">net updated ${fmtFetchAge(ts)}</span>`:'',
   ].filter(Boolean);
@@ -2199,8 +2374,9 @@ function renderBoardView(results){
   }
   const srt=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
   const sorted=srt(results);
-  const issueCount=results.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
-  const outageCount=results.filter(s=>s.ind==='major').length;
+  const techSvcs=results.filter(s=>{const sv=SVCS.find(x=>x.name===s.name);return !sv||sv.cat!=='transit';});
+  const issueCount=techSvcs.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
+  const outageCount=techSvcs.filter(s=>s.ind==='major').length;
   const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
   const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
   const tilesHTML=sorted.map(svc=>{
@@ -2362,7 +2538,7 @@ function updateIncidentPin(data){
   if(!pin) return;
 
   const active=data
-    .filter(s=>s.ind!=='none' && s.ind!=='unknown')
+    .filter(s=>svcCatMap[s.name]!=='transit' && s.ind!=='none' && s.ind!=='unknown')
     .sort((a,b)=>{
       const pd=(PRI[a.ind]||9)-(PRI[b.ind]||9);
       return pd!==0 ? pd : a.name.localeCompare(b.name);
@@ -2380,12 +2556,13 @@ function updateIncidentPin(data){
 
 
 function updateStats(data){
-  const ok=data.filter(s=>s.ind==='none').length;
-  const wn=data.filter(s=>s.ind==='minor').length;
-  const bd=data.filter(s=>s.ind==='major').length;
-  const mt=data.filter(s=>s.ind==='maintenance').length;
-  const rt=data.filter(s=>s.ind==='rerouting').length;
-  const un=data.filter(s=>s.ind==='unknown').length;
+  const d=data.filter(s=>svcCatMap[s.name]!=='transit'); // exclude transit from tech stats
+  const ok=d.filter(s=>s.ind==='none').length;
+  const wn=d.filter(s=>s.ind==='minor').length;
+  const bd=d.filter(s=>s.ind==='major').length;
+  const mt=d.filter(s=>s.ind==='maintenance').length;
+  const rt=d.filter(s=>s.ind==='rerouting').length;
+  const un=d.filter(s=>s.ind==='unknown').length;
   document.getElementById('n-ok').textContent=ok;
   document.getElementById('n-warn').textContent=wn;
   document.getElementById('n-bad').textContent=bd;
