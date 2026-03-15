@@ -546,8 +546,8 @@
     .tv-board-status.warn { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);  color:#fbbf24; }
     .tv-board-status.bad  { background:rgba(239,68,68,0.1);  border:1px solid rgba(239,68,68,0.3);   color:#f87171; }
     .tv-clock { font-size:clamp(14px,1.5vw,24px); font-weight:600; font-variant-numeric:tabular-nums; color:var(--sub); flex-shrink:0; }
-    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(150px,14vw,210px),1fr)); gap:clamp(10px,1.1vw,16px); overflow:hidden; align-content:start; }
-    .tv-tile { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:clamp(11px,1.1vw,16px); display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; }
+    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(140px,13vw,220px),1fr)); grid-auto-rows:1fr; gap:clamp(8px,0.9vw,14px); overflow:hidden; min-height:0; }
+    .tv-tile { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:clamp(10px,1vw,16px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; min-height:0; justify-content:center; }
     .tv-tile:hover { background:rgba(255,255,255,0.06); }
     .tv-tile.cb { background:rgba(239,68,68,0.08);  border-color:rgba(239,68,68,0.25); }
     .tv-tile.cw { background:rgba(245,158,11,0.07); border-color:rgba(245,158,11,0.22); }
@@ -2089,6 +2089,49 @@ function renderServices(results){
   if(_boardModeActive) renderBoardView(results);
 }
 
+let _boardResizeObs=null;
+function _optimizeBoardLayout(){
+  const board=document.getElementById('tv-board');
+  if(!board) return;
+  const tilesEl=document.getElementById('tv-tiles');
+  if(!tilesEl) return;
+  const n=tilesEl.querySelectorAll('.tv-tile').length;
+  if(!n) return;
+  const cs=getComputedStyle(board);
+  const padH=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
+  const padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  const availW=board.clientWidth-padH;
+  const hdrEl=board.querySelector('.tv-board-hdr');
+  const netEl=board.querySelector('.tv-net-bar');
+  const footEl=board.querySelector('.tv-board-footer');
+  const gap=Math.max(8,Math.round(availW*0.007));
+  const used=(hdrEl?hdrEl.offsetHeight:0)+(netEl?netEl.offsetHeight+gap:0)+(footEl?footEl.offsetHeight+gap:0);
+  const availH=board.clientHeight-padV-used-gap;
+  // Find column count that maximises tile area while keeping tiles at least 80px tall
+  let bestCols=1,bestScore=-1;
+  for(let c=1;c<=n;c++){
+    const r=Math.ceil(n/c);
+    const tW=(availW-gap*(c-1))/c;
+    const tH=(availH-gap*(r-1))/r;
+    if(tH<70||tW<100) continue;
+    const score=tW*tH;
+    if(score>bestScore){bestScore=score;bestCols=c;}
+  }
+  tilesEl.style.gridTemplateColumns=`repeat(${bestCols},1fr)`;
+  tilesEl.style.gridAutoRows=`1fr`;
+  tilesEl.style.gap=gap+'px';
+  // Scale body text: clamp based on tile width
+  const tileW=Math.floor((availW-gap*(bestCols-1))/bestCols);
+  const tileH=Math.floor((availH-gap*(Math.ceil(n/bestCols)-1))/Math.ceil(n/bestCols));
+  const fs=Math.max(9,Math.min(14,Math.floor(tileW/18)));
+  const nameFs=Math.max(11,Math.min(16,Math.floor(tileW/16)));
+  tilesEl.querySelectorAll('.tv-tile-name').forEach(el=>el.style.fontSize=nameFs+'px');
+  tilesEl.querySelectorAll('.tv-tile-badge,.tv-tile-title,.tv-tile-body,.tv-tile-inc').forEach(el=>el.style.fontSize=fs+'px');
+  // Collapse body lines when tiles are short
+  const bodyLines=tileH<140?2:3;
+  tilesEl.querySelectorAll('.tv-tile-body').forEach(el=>el.style.webkitLineClamp=bodyLines);
+}
+
 async function _fetchBoardNet(){
   if(_boardNetFetching) return;
   _boardNetFetching=true;
@@ -2135,6 +2178,7 @@ function _renderBoardNetBar(){
     ts?`<span class="tv-net-ts">net updated ${fmtFetchAge(ts)}</span>`:'',
   ].filter(Boolean);
   bar.innerHTML=parts.join(sep);
+  _optimizeBoardLayout();
 }
 
 function _startBoardNet(){
@@ -2189,6 +2233,11 @@ function renderBoardView(results){
       <span class="tv-updated" id="tv-updated"></span>
     </div>`;
   _renderBoardNetBar();
+  _optimizeBoardLayout();
+  // Re-optimize on window resize
+  if(_boardResizeObs) _boardResizeObs.disconnect();
+  _boardResizeObs=new ResizeObserver(()=>_optimizeBoardLayout());
+  _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
   document.getElementById('tv-tiles').addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -2209,6 +2258,7 @@ function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
+  if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
   const url=new URL(window.location);
