@@ -10,6 +10,7 @@
   <meta name="theme-color" content="#09090b">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2322c55e'/><circle cx='16' cy='16' r='7' fill='%23fff'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin fetchpriority="high">
@@ -92,6 +93,7 @@
       filter:blur(60px);
       opacity:0.22;
       animation:ambientFloat 18s ease-in-out infinite;
+      will-change:transform;
     }
     body::before {
       width:44vw;
@@ -303,11 +305,19 @@
     .svc-cat-badge { font-size:10px; font-weight:600; letter-spacing:0.03em; padding:2px 8px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
     .svc-cat-badge.ok { color:var(--ok); background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.18); }
     .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
+    .svc-cat-badge.bad { color:var(--bad); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); }
     .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
     .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:46px; }
     .svc-row:last-child { border-bottom:none; }
     .svc-row:hover { background:rgba(255,255,255,0.035); }
     .svc-row:active { background:rgba(255,255,255,0.065); }
+    .svc-row:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; background:rgba(255,255,255,0.035); }
+    .card:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .nav-tab:focus-visible,.filter-chip:focus-visible,
+    .f-board-btn:focus-visible,.f-theme-btn:focus-visible,.f-refresh-btn:focus-visible,
+    .test-btn:focus-visible,.net-refresh-btn:focus-visible,.net-run-btn:focus-visible,
+    .tv-exit-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .svc-search:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; }
     .svc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.3s; }
     .svc-row:hover .svc-dot { box-shadow:0 0 0 3px rgba(255,255,255,0.05); }
     .svc-icon-wrap { width:30px; height:30px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); overflow:hidden; }
@@ -386,7 +396,7 @@
     .status-banner-time {
       height:5px;
       transform-origin:left;
-      animation:bannerLife 30s linear forwards;
+      animation:bannerLife var(--banner-duration,30s) linear forwards;
     }
     .status-banner.degraded .status-banner-time { background:linear-gradient(90deg,#f59e0b,#f97316); }
     .status-banner.outage .status-banner-time { background:linear-gradient(90deg,#ef4444,#dc2626); }
@@ -451,28 +461,15 @@
     .hdr:not(:hover) .test-btn { opacity:0; pointer-events:none; }
     .test-btn { transition:opacity 0.3s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
 
-    /* Category section headers inside the card grid */
-    .section-hdr {
-      grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 10px;
-      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--sub); padding: 0 2px; pointer-events: none; user-select: none;
-    }
-    .section-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .section-hdr-badge {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: none;
-      padding: 2px 9px; border-radius: 6px; white-space: nowrap;
-    }
-    .section-hdr-badge.ok { color: var(--ok); background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.18); }
-    .section-hdr-badge.degraded { color: var(--warn); background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
-    .section-hdr-badge.outage { color: var(--bad); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
-    .section-hdr-badge.maint { color: var(--maint); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
 
     /* ── Nav tabs ────────────────────────────────────────────────────────────── */
     .nav-tabs { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-    .nav-tab { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.01em; font-family:var(--font); }
+    .nav-tab { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.01em; font-family:var(--font); display:inline-flex; align-items:center; gap:0; }
     .nav-tab.active { background:rgba(255,255,255,0.1); color:var(--text); border-color:rgba(255,255,255,0.2); }
     .nav-tab:hover:not(.active) { background:rgba(255,255,255,0.07); color:var(--text); }
+    .tab-badge { display:inline-flex; align-items:center; justify-content:center; background:rgba(239,68,68,0.18); color:#fca5a5; border-radius:10px; font-size:10px; font-weight:700; padding:1px 5px; min-width:17px; margin-left:6px; line-height:1.4; letter-spacing:0; }
+    .nav-tab.active .tab-badge { background:rgba(239,68,68,0.22); }
+    .light-mode .tab-badge { background:rgba(239,68,68,0.12); color:#dc2626; }
 
     /* ── Network diagnostics view ─────────────────────────────────────────── */
     .net-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:4px 0 20px; }
@@ -628,11 +625,16 @@
 
     /* ── Service search filter ─────────────────────────────────────────────── */
     .svc-search-wrap { position:relative; margin-bottom:6px; }
-    .svc-search { width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font); font-size:13px; padding:8px 14px 8px 38px; outline:none; transition:border-color 0.2s, background 0.2s; -webkit-appearance:none; appearance:none; }
+    .svc-search { width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font); font-size:13px; padding:8px 36px 8px 38px; outline:none; transition:border-color 0.2s, background 0.2s; -webkit-appearance:none; appearance:none; }
     .svc-search:focus { border-color:rgba(255,255,255,0.16); background:rgba(255,255,255,0.05); }
     .svc-search::placeholder { color:var(--muted); }
     .svc-search::-webkit-search-cancel-button { -webkit-appearance:none; }
     .svc-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--muted); pointer-events:none; }
+    .svc-search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:18px; height:18px; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:none; border-radius:50%; color:var(--sub); cursor:pointer; font-size:11px; line-height:1; padding:0; transition:background 0.15s, color 0.15s; }
+    .svc-search-clear:hover { background:rgba(255,255,255,0.18); color:var(--text); }
+    .svc-search-wrap.has-query .svc-search-clear { display:flex; }
+    .light-mode .svc-search-clear { background:rgba(0,0,0,0.1); color:var(--sub); }
+    .light-mode .svc-search-clear:hover { background:rgba(0,0,0,0.18); color:var(--text); }
 
     /* ── Collapsible category sections ─────────────────────────────────────── */
     .svc-cat-hdr { cursor:pointer; }
@@ -653,6 +655,49 @@
     .f-refresh-btn:hover { color:var(--sub); }
     .f-refresh-btn:active { transform:rotate(180deg); }
     .f-refresh-btn:disabled { opacity:0.3; cursor:default; }
+
+    /* ── Mute / DND toggle ─────────────────────────────────────────────────── */
+    .f-mute-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
+    .f-mute-btn:hover { background:rgba(128,128,128,0.12); color:var(--text); }
+    .f-mute-btn.muted { color:var(--bad); border-color:rgba(239,68,68,0.25); background:rgba(239,68,68,0.04); }
+    .f-mute-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .light-mode .f-mute-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .f-mute-btn:hover { background:rgba(0,0,0,0.08); }
+
+    /* ── Service row uptime badge ───────────────────────────────────────────── */
+    .svc-uptime { font-size:10px; font-weight:600; letter-spacing:0.02em; padding:2px 6px; border-radius:4px; flex-shrink:0; white-space:nowrap; display:none; align-items:center; }
+    .svc-uptime.up-ok   { color:var(--ok);   background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.15); }
+    .svc-uptime.up-warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15); }
+    .svc-uptime.up-bad  { color:var(--bad);  background:rgba(239,68,68,0.08);  border:1px solid rgba(239,68,68,0.15); }
+    @media (min-width:1300px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto auto; } .svc-uptime { display:inline-flex; } }
+
+    /* ── Incident body show-more ────────────────────────────────────────────── */
+    .inc-body-wrap { position:relative; }
+    .inc-body-wrap .inc-body { max-height:none; overflow-y:visible; }
+    .inc-body-wrap.clamped .inc-body { max-height:120px; overflow:hidden; }
+    .inc-body-fade { position:absolute; bottom:0; left:0; right:0; height:36px; pointer-events:none; background:linear-gradient(transparent, var(--card)); }
+    .inc-body-wrap:not(.clamped) .inc-body-fade { opacity:0; }
+    .inc-show-more { font-size:11px; font-weight:600; color:var(--muted); background:none; border:none; padding:3px 0 0; cursor:pointer; font-family:var(--font); transition:color 0.15s; text-align:left; display:block; }
+    .inc-show-more:hover { color:var(--sub); }
+
+    /* ── Board minimal mode ─────────────────────────────────────────────────── */
+    .tv-board-minimal .tv-tiles,
+    .tv-board-minimal .tv-net-bar,
+    .tv-board-minimal .tv-wx-bar { display:none !important; }
+    .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
+    .tv-board-minimal .tv-minimal-status { display:flex; }
+    .tv-minimal-msg { font-size:clamp(48px,8vw,120px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; text-align:center; }
+    .tv-minimal-clock { font-size:clamp(20px,2.5vw,42px); font-weight:500; color:var(--sub); font-variant-numeric:tabular-nums; }
+
+    /* ── Search highlight ───────────────────────────────────────────────────── */
+    .svc-name mark { background:rgba(59,130,246,0.22); color:var(--text); border-radius:2px; padding:0 1px; font-style:normal; font-weight:inherit; }
+    .light-mode .svc-name mark { background:rgba(59,130,246,0.16); }
+
+    /* ── Net traceroute bar ─────────────────────────────────────────────────── */
+    .trace-bar { height:4px; border-radius:2px; background:rgba(255,255,255,0.07); margin-top:6px; overflow:hidden; }
+    .trace-bar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--ok),#16a34a); transition:width 0.4s ease; }
+    .trace-bar-fill.warn { background:linear-gradient(90deg,var(--warn),#d97706); }
+    .trace-bar-fill.bad  { background:linear-gradient(90deg,var(--bad),#dc2626); }
   </style>
 </head>
 <body>
@@ -713,6 +758,7 @@
     <div class="f-left">
       <div class="f-meta" id="f-meta"></div>
     </div>
+    <button class="f-mute-btn" id="f-mute-btn" type="button" title="Mute notifications">🔔</button>
     <button class="f-theme-btn" id="f-theme-btn" type="button" title="Toggle light/dark mode">☀</button>
     <button class="f-board-btn" id="f-board-btn" type="button" title="Open status board">Board</button>
     <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
@@ -760,8 +806,23 @@ const SVCS=[
 ];
 
 window._pi = window._pi || {};
-const PRI={major:1,minor:2,maintenance:3,rerouting:3,unknown:4,none:5};
-const LABELS={none:'Operational',minor:'Degraded',major:'Outage',maintenance:'Maintenance',rerouting:'Traffic Rerouted',unknown:'Unknown'};
+// ── Status configuration (single source of truth for all status-derived values) ──
+const STATUS_CFG={
+  none:        {pri:5, label:'Operational',      icon:'✓', card:'',   ic:'ok',      block:'ok-block',      color:'var(--ok)'},
+  minor:       {pri:2, label:'Degraded',          icon:'⚠', card:'cw', ic:'warn',    block:'warn-block',    color:'var(--warn)'},
+  major:       {pri:1, label:'Outage',            icon:'✕', card:'cb', ic:'bad',     block:'bad-block',     color:'var(--bad)'},
+  maintenance: {pri:3, label:'Maintenance',       icon:'⚙', card:'cm', ic:'maint',   block:'maint-block',   color:'var(--maint)'},
+  rerouting:   {pri:3, label:'Traffic Rerouted',  icon:'⇄', card:'cr', ic:'reroute', block:'reroute-block', color:'var(--reroute)'},
+  unknown:     {pri:4, label:'Unknown',           icon:'?', card:'cu', ic:'unknown', block:'unknown-block', color:'var(--unknown)'},
+};
+const _sce=Object.entries(STATUS_CFG);
+const PRI         =Object.fromEntries(_sce.map(([k,v])=>[k,v.pri]));
+const LABELS      =Object.fromEntries(_sce.map(([k,v])=>[k,v.label]));
+const ICONS       =Object.fromEntries(_sce.map(([k,v])=>[k,v.icon]));
+const CC          =Object.fromEntries(_sce.map(([k,v])=>[k,v.card]));
+const IC          =Object.fromEntries(_sce.map(([k,v])=>[k,v.ic]));
+const BLOCK_CLS   =Object.fromEntries(_sce.map(([k,v])=>[k,v.block]));
+const LABEL_COLOR =Object.fromEntries(_sce.map(([k,v])=>[k,v.color]));
 
 function normalizeIndicator(ind){
   const val=String(ind||'none').toLowerCase().trim();
@@ -974,6 +1035,7 @@ function getPreferredVoice(){
 }
 
 function speakBannerStatus(serviceName, kind){
+  if(_alertsMuted) return;
   if(!('speechSynthesis' in window)) return;
   const status=TTS_STATUS_LABEL[kind] || 'Status Updated';
   const utterance=new SpeechSynthesisUtterance(`${serviceName}. ${status}.`);
@@ -991,6 +1053,7 @@ if('speechSynthesis' in window){
 }
 
 function chime(kind){
+  if(_alertsMuted) return;
   const play=(c,startAt)=>{
     if(kind==='outage'){
       tone(c,startAt,740,0.2,'triangle',0.16);
@@ -1038,6 +1101,7 @@ function queueAlert(svc, kind) {
   if (alertQueue.some(a => a.svc.name === svc.name && a.kind === kind)) return;
   // Cap queue to prevent overflow during connectivity blips
   if (alertQueue.length >= MAX_ALERT_QUEUE) return;
+  if(kind==='outage'||kind==='degraded') _recordIssue(svc.name);
   alertQueue.push({ svc, kind });
   if (_boardModeActive) _showBoardAlert(svc, kind);
   processAlertQueue();
@@ -1117,6 +1181,55 @@ function showView(view){
 // Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
 let _boardModeActive=new URLSearchParams(window.location.search).has('board');
+const _boardMinimal=new URLSearchParams(window.location.search).has('minimal');
+const _boardBannerSecs=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('speed'),10); return(Number.isFinite(v)&&v>=5&&v<=120)?v:30; })();
+const _boardAutoReload=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('reload'),10); return(Number.isFinite(v)&&v>=3&&v<=50)?v:0; })();
+// Set banner duration CSS variable from URL param
+document.documentElement.style.setProperty('--banner-duration',_boardBannerSecs+'s');
+
+// ── Mute / DND state ──────────────────────────────────────────────────────
+let _alertsMuted=localStorage.getItem('alerts-muted')==='1';
+function _applyMuteState(){
+  const btn=document.getElementById('f-mute-btn');
+  if(!btn) return;
+  btn.textContent=_alertsMuted?'🔕':'🔔';
+  btn.classList.toggle('muted',_alertsMuted);
+  btn.title=_alertsMuted?'Notifications muted (click to unmute)':'Mute notifications';
+}
+
+// ── Last-outage timestamp tracking ───────────────────────────────────────
+const _lastOutageTS=(()=>{ try{ const v=JSON.parse(localStorage.getItem('svc-last-issue')||'{}'); return(v&&typeof v==='object'&&!Array.isArray(v))?v:{}; }catch{return{};} })();
+function _recordIssue(name){
+  _lastOutageTS[name]=Date.now();
+  try{localStorage.setItem('svc-last-issue',JSON.stringify(_lastOutageTS));}catch{}
+}
+
+// ── 30-day uptime log ─────────────────────────────────────────────────────
+const _uptimeLog=(()=>{ try{ const v=JSON.parse(localStorage.getItem('svc-uptime')||'{}'); return(v&&typeof v==='object'&&!Array.isArray(v))?v:{}; }catch{return{};} })();
+let _uptimeFlushTimer=null;
+function _flushUptimeLog(){ try{localStorage.setItem('svc-uptime',JSON.stringify(_uptimeLog));}catch{} }
+function _recordUptimeCheck(name,hasIssue){
+  if(!_uptimeLog[name]) _uptimeLog[name]={};
+  const today=new Date().toISOString().slice(0,10);
+  if(!_uptimeLog[name][today]) _uptimeLog[name][today]={c:0,i:0};
+  _uptimeLog[name][today].c++;
+  if(hasIssue) _uptimeLog[name][today].i++;
+  // Prune >35-day-old entries
+  const cutoff=new Date(Date.now()-35*86400000).toISOString().slice(0,10);
+  Object.keys(_uptimeLog[name]).forEach(d=>{ if(d<cutoff) delete _uptimeLog[name][d]; });
+  // Batch writes: flush at most once every 5 seconds across all concurrent checks
+  clearTimeout(_uptimeFlushTimer);
+  _uptimeFlushTimer=setTimeout(_flushUptimeLog,5000);
+}
+function _getUptime(name){
+  const log=_uptimeLog[name];
+  if(!log) return null;
+  const cutoff=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+  let total=0,issues=0;
+  for(const[d,v] of Object.entries(log)){ if(d>=cutoff){total+=v.c;issues+=v.i;} }
+  if(total<5) return null;
+  return Math.round(((total-issues)/total)*1000)/10;
+}
 
 /* @routes-start — generated by scripts/build.js, do not edit manually */
 const ROUTE_KEYS = {
@@ -1266,6 +1379,19 @@ function fmtFetchAge(fetchedAt){
   if(mins<60) return mins+'m ago';
   const hrs=Math.floor(mins/60);
   return hrs+'h ago';
+}
+
+// Relative time for longer durations (last outage, footer update time)
+function fmtRelTime(ts){
+  const secs=Math.floor((Date.now()-ts)/1000);
+  if(secs<60) return 'just now';
+  if(secs<3600) return Math.floor(secs/60)+'m ago';
+  if(secs<86400) return Math.floor(secs/3600)+'h ago';
+  const days=Math.floor(secs/86400);
+  if(days<14) return days+' day'+(days!==1?'s':'')+' ago';
+  const weeks=Math.floor(days/7);
+  if(weeks<8) return weeks+' week'+(weeks!==1?'s':'')+' ago';
+  return Math.floor(days/30)+'mo ago';
 }
 
 const STALE_MS=5*60*1000; // 5 minutes
@@ -2058,7 +2184,6 @@ async function fetchOne(s){
   } catch { return errSvc(s); }
 }
 
-const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙',rerouting:'⇄',unknown:'?'};
 const LOGO_DOMAINS={
   'i-Ready':'curriculumassociates.com',
   'HMH':'hmhco.com',
@@ -2089,12 +2214,11 @@ const LOGO_DOMAINS={
   'Apple Services':'apple.com',
   'Apple Developer':'developer.apple.com',
 };
-const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
-const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
-const BLOCK_CLS={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block',rerouting:'reroute-block',unknown:'unknown-block'};
-const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
 
+const _logoCache=new Map();
 function logoSources(svc){
+  const key=svc.name+'|'+(svc.url||'');
+  if(_logoCache.has(key)) return _logoCache.get(key);
   const sources=[];
   const companyDomain=LOGO_DOMAINS[svc.name] || '';
   let statusHost='';
@@ -2108,7 +2232,15 @@ function logoSources(svc){
     sources.push(`https://icons.duckduckgo.com/ip3/${statusHost}.ico`);
     sources.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(statusHost)}&sz=64`);
   }
-  return [...new Set(sources.filter(Boolean))];
+  const result=[...new Set(sources.filter(Boolean))];
+  _logoCache.set(key,result);
+  return result;
+}
+
+function _safeOpen(url){
+  if(!url) return;
+  try{ const u=new URL(url); if(u.protocol!=='https:'&&u.protocol!=='http:') return; }catch{ return; }
+  window.open(url,'_blank','noopener,noreferrer');
 }
 
 function nextLogo(img){
@@ -2213,7 +2345,7 @@ function _renderBoardWeatherBar(){
 function applyFilter(grid,filter){
   _curFilter=filter;
   grid.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===filter));
-  const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none':el.dataset.ind===filter);
+  const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none'&&el.dataset.ind!=='unknown':el.dataset.ind===filter);
   grid.querySelectorAll('.card[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
   grid.querySelectorAll('.svc-row[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
   const issuesSec=grid.querySelector('.issues-section');
@@ -2224,6 +2356,7 @@ function applyFilter(grid,filter){
 function renderServices(results){
   const grid=document.getElementById('services-grid');
   if(!grid) return;
+  const _prevSearch=(grid.querySelector('.svc-search')||{}).value||'';
   grid.innerHTML='';
   const loadEl=document.getElementById('loading-el');
   if(loadEl) loadEl.style.display='none';
@@ -2238,8 +2371,9 @@ function renderServices(results){
     const hasOutage=techOnly.some(s=>s.ind==='major');
     const cls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const msg=issueCount===0?'All Systems Operational':issueCount+' Issue'+(issueCount>1?'s':'')+' Detected';
+    const icon=hasOutage?'✕':issueCount>0?'⚠':'✓';
     summary.className='status-summary show '+cls;
-    summary.innerHTML=`<span>${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
+    summary.innerHTML=`<span>${icon}&ensp;${msg}</span><span class="status-summary-count">${total} services monitored</span>`;
   }
 
   // ── Active Issues panel (all services incl. transit) ──────────────────────
@@ -2266,26 +2400,41 @@ function renderServices(results){
   // ── Search/filter bar ──────────────────────────────────────────────────────
   const searchWrap=document.createElement('div');
   searchWrap.className='svc-search-wrap';
-  searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false">`;
+  searchWrap.innerHTML=`<svg class="svc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" class="svc-search" placeholder="Filter services…" autocomplete="off" spellcheck="false"><button class="svc-search-clear" type="button" title="Clear search" tabindex="-1">✕</button>`;
   dir.appendChild(searchWrap);
   const srch=searchWrap.querySelector('.svc-search');
+  const srchClear=searchWrap.querySelector('.svc-search-clear');
+  if(_prevSearch){ srch.value=_prevSearch; searchWrap.classList.add('has-query'); }
   let _srchTimer=null;
-  srch.addEventListener('input',()=>{
-    clearTimeout(_srchTimer);
-    _srchTimer=setTimeout(()=>{
-      const q=srch.value.trim().toLowerCase();
-      dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
-        let any=false;
-        sec.querySelectorAll('.svc-row').forEach(row=>{
-          const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
-          row.style.display=match?'':'none';
-          if(match) any=true;
-        });
-        sec.style.display=any?'':'none';
-        if(q&&any) sec.classList.remove('collapsed');
+  const _doSearch=()=>{
+    const q=srch.value.trim();
+    const qLow=q.toLowerCase();
+    searchWrap.classList.toggle('has-query',q.length>0);
+    dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
+      let any=false;
+      sec.querySelectorAll('.svc-row').forEach(row=>{
+        const rawName=row.dataset.svc||'';
+        const match=!qLow||rawName.toLowerCase().includes(qLow);
+        row.style.display=match?'':'none';
+        if(match) any=true;
+        // Highlight matched substring in service name
+        const nameEl=row.querySelector('.svc-name');
+        if(nameEl){
+          if(qLow&&match&&rawName.toLowerCase().includes(qLow)){
+            const idx=rawName.toLowerCase().indexOf(qLow);
+            nameEl.innerHTML=esc(rawName.slice(0,idx))+'<mark>'+esc(rawName.slice(idx,idx+q.length))+'</mark>'+esc(rawName.slice(idx+q.length));
+          } else {
+            nameEl.textContent=rawName;
+          }
+        }
       });
-    },150);
-  });
+      sec.style.display=any?'':'none';
+      if(q&&any) sec.classList.remove('collapsed');
+    });
+  };
+  srch.addEventListener('input',()=>{ clearTimeout(_srchTimer); _srchTimer=setTimeout(_doSearch,150); });
+  srchClear.addEventListener('click',()=>{ srch.value=''; _doSearch(); srch.focus(); });
+  if(_prevSearch) _doSearch();
 
   const addSection=(label,items,icon)=>{
     if(!items.length) return;
@@ -2295,7 +2444,7 @@ function renderServices(results){
     sec.className='svc-cat-sec'+(isCollapsed?' collapsed':'');
     const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
     const hasOutage=items.some(s=>s.ind==='major');
-    const badgeCls=hasOutage?'warn':issueCount>0?'warn':'ok';
+    const badgeCls=hasOutage?'bad':issueCount>0?'warn':'ok';
     const badgeTxt=issueCount===0?'All clear':issueCount+' issue'+(issueCount!==1?'s':'');
     const hdr=document.createElement('div');
     hdr.className='svc-cat-hdr';
@@ -2488,11 +2637,12 @@ function renderBoardView(results){
   const outageCount=techSvcs.filter(s=>s.ind==='major').length;
   const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
   const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
+  const statusColor=outageCount>0?'var(--bad)':issueCount>0?'var(--warn)':'var(--ok)';
   const tilesHTML=sorted.map(svc=>{
     const logos=logoSources(svc);
     const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
     const logoEl=logos.length
-      ?`<img class="tv-tile-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
+      ?`<img class="tv-tile-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
       :`<div class="tv-tile-logo-fb">${esc(fallback)}</div>`;
     const hasInc=svc.ind!=='none'&&svc.title;
     return `<div class="tv-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
@@ -2502,6 +2652,7 @@ function renderBoardView(results){
       ${hasInc&&svc.body?`<div class="tv-tile-body">${esc(svc.body)}</div>`:''}
     </div>`;
   }).join('');
+  board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
     <div class="tv-board-hdr">
       <div class="tv-board-brand">
@@ -2513,6 +2664,10 @@ function renderBoardView(results){
     </div>
     <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-wx-bar" id="tv-wx-bar" style="display:none"></div>
+    <div class="tv-minimal-status">
+      <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
+      <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
+    </div>
     <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
@@ -2523,17 +2678,24 @@ function renderBoardView(results){
   _optimizeBoardLayout();
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
-  _boardResizeObs=new ResizeObserver(()=>_optimizeBoardLayout());
+  let _roDebounce=null;
+  _boardResizeObs=new ResizeObserver(()=>{ clearTimeout(_roDebounce); _roDebounce=setTimeout(_optimizeBoardLayout,60); });
   _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
-  document.getElementById('tv-tiles').addEventListener('click',e=>{
+  const tilesEl=document.getElementById('tv-tiles');
+  tilesEl.addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
-    if(tile&&tile.dataset.url) window.open(tile.dataset.url,'_blank','noopener');
+    if(tile&&tile.dataset.url) _safeOpen(tile.dataset.url);
   });
+  tilesEl.addEventListener('error',e=>{
+    if(e.target.matches('.tv-tile-logo')) e.target.style.display='none';
+  },true);
   clearInterval(_boardClockTimer);
   const tick=()=>{
     const cl=document.getElementById('tv-clock');
     if(cl) cl.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const mc=document.getElementById('tv-minimal-clock');
+    if(mc) mc.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
     const up=document.getElementById('tv-updated');
     if(up&&_boardLastUpdate) up.textContent='Updated '+fmtFetchAge(_boardLastUpdate)+' ago';
   };
@@ -2559,7 +2721,13 @@ function mkIncCard(svc){
   d.className=`card ${CC[svc.ind]||''}`;
   d.dataset.svc=svc.name;
   d.dataset.ind=svc.ind;
-  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  if(svc.url){
+    d.tabIndex=0;
+    d.setAttribute('role','button');
+    d.setAttribute('aria-label',svc.name+' — '+svc.label+'. Click to open status page.');
+    d.addEventListener('click',()=>_safeOpen(svc.url));
+    d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); _safeOpen(svc.url); } });
+  }
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
   const incTitle=svc.title||svc.label;
@@ -2571,13 +2739,17 @@ function mkIncCard(svc){
   const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${esc(l)}</span>`).join('')}</div>`:'';
   const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
+  const needsClamp=incBody.length>250;
+  const bodyHtml=needsClamp
+    ?`<div class="inc-body-wrap clamped"><div class="inc-body">${esc(incBody)}</div><div class="inc-body-fade"></div></div><button class="inc-show-more" type="button">Show more ▾</button>`
+    :`<div class="inc-body">${esc(incBody)}</div>`;
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
-        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${esc(fallback)||ICONS[svc.ind]||'?'}</span></div>
+        <div class="c-icon ${IC[svc.ind]||'ok'}">${logos.length?`<img class="c-logo" src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async">`:''}<span class="c-fallback" style="display:${logos.length?'none':'inline'}">${esc(fallback)||ICONS[svc.ind]||'?'}</span></div>
         <div class="c-name-block">
           <div class="c-name">${esc(svc.name)}</div>
-          ${urlHost?`<a class="c-url" href="${esc(svc.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${esc(urlHost)}</a>`:''}
+          ${urlHost?`<a class="c-url" href="${esc(svc.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${esc(urlHost)}</a>`:''}
         </div>
       </div>
       <div class="c-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
@@ -2587,12 +2759,22 @@ function mkIncCard(svc){
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
       ${statusLabels}
       <div class="inc-title">${esc(incTitle)}</div>
-      <div class="inc-body">${esc(incBody)}</div>
+      ${bodyHtml}
     </div>
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
       <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
     </div>`;
+  d.querySelector('.c-url')?.addEventListener('click',e=>e.stopPropagation());
+  const cLogoImg=d.querySelector('.c-logo');
+  if(cLogoImg) cLogoImg.addEventListener('error',function(){ nextLogo(this); },{once:false});
+  d.querySelector('.inc-show-more')?.addEventListener('click',e=>{
+    e.stopPropagation();
+    const wrap=d.querySelector('.inc-body-wrap');
+    if(!wrap) return;
+    const clamped=wrap.classList.toggle('clamped');
+    e.target.textContent=clamped?'Show more ▾':'Show less ▴';
+  });
   return d;
 }
 
@@ -2602,29 +2784,38 @@ function mkSvcRow(svc){
   d.className='svc-row';
   d.dataset.svc=svc.name;
   d.dataset.ind=svc.ind;
-  if(svc.url) d.addEventListener('click',()=>window.open(svc.url,'_blank','noopener'));
+  if(svc.url){
+    d.tabIndex=0;
+    d.setAttribute('role','button');
+    d.setAttribute('aria-label',svc.name+' — '+svc.label);
+    d.addEventListener('click',()=>_safeOpen(svc.url));
+    d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); _safeOpen(svc.url); } });
+  }
   const dotColors={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
   const dotColor=dotColors[svc.ind]||'var(--unknown)';
   const dotPulse=svc.ind!=='none'&&svc.ind!=='unknown'?' svc-dot-pulse':'';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-  const preview=svc.ind!=='none'&&svc.title?svc.title:'';
+  const lastTs=_lastOutageTS[svc.name];
+  const preview=svc.ind!=='none'&&svc.title?svc.title:(svc.ind==='none'&&lastTs?'Last issue: '+fmtRelTime(lastTs):'');
+  const uptime=_getUptime(svc.name);
+  const uptimeCls=uptime===null?'':(uptime>=99?'up-ok':uptime>=95?'up-warn':'up-bad');
+  const uptimeEl=uptime!==null?`<span class="svc-uptime ${uptimeCls}">${uptime}%</span>`:'<span class="svc-uptime"></span>';
   d.innerHTML=`
     <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
-    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${esc(fallback)}</span>`}</div>
-    <span class="svc-name">${esc(svc.name)}</span>
+    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async"><span style="display:none">${esc(fallback)}</span>`:`<span>${esc(fallback)}</span>`}</div>
+    <span class="svc-name" data-raw="${esc(svc.name)}">${esc(svc.name)}</span>
     <span class="svc-inc-preview">${esc(preview)}</span>
+    ${uptimeEl}
     <span class="svc-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</span>`;
+  if(logos.length){
+    const rowImg=d.querySelector('.svc-icon-wrap img');
+    if(rowImg) rowImg.addEventListener('error',function(){ nextLogo(this); },{once:false});
+  }
   return d;
 }
 
-function nextLogoRow(img){
-  const sources=img.dataset.sources?img.dataset.sources.split('|'):[];
-  const idx=parseInt(img.dataset.idx||'0',10)+1;
-  if(idx>=sources.length){ img.style.display='none'; const fb=img.parentElement?.querySelector('span'); if(fb) fb.style.display='inline'; return; }
-  img.dataset.idx=String(idx);
-  img.src=sources[idx];
-}
+
 
 let currentView='services';
 
@@ -2689,12 +2880,17 @@ function updateStats(data){
   if(un>0) statUnknown.classList.add('show');
   else statUnknown.classList.remove('show');
 
-  const fmeta=document.getElementById('f-meta');
-  if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
+  _renderFooterMeta();
 
   // Dynamic title + favicon
   const issues=wn+bd+mt+rt;
   document.title=bd>0?`⚠ ${bd} Down · Service Status`:issues>0?`• ${issues} Issues · Service Status`:'Service Status';
+  // Update nav tab badge
+  const svcTab=document.querySelector('.nav-tab[data-view="services"]');
+  if(svcTab){
+    const badge=issues>0?`<span class="tab-badge">${issues}</span>`:'';
+    svcTab.innerHTML='Services'+badge;
+  }
   const fav=document.querySelector('link[rel="icon"]');
   if(fav){
     const c=bd>0?'%23ef4444':issues>0?'%23f59e0b':'%2322c55e';
@@ -2702,6 +2898,13 @@ function updateStats(data){
   }
 }
 
+
+function _renderFooterMeta(){
+  const fmeta=document.getElementById('f-meta');
+  if(!fmeta) return;
+  const ago=lastSuccessfulRefresh?'Updated '+fmtRelTime(lastSuccessfulRefresh):'Loading…';
+  fmeta.textContent=ago+'  ·  '+SVCS.length+' services monitored';
+}
 
 const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
 window._lastResults=window._lastResults||{};
@@ -2715,6 +2918,9 @@ async function init(){
   }catch(e){
     refreshFailCount++;
     if(refreshFailCount>=2) setStale(true);
+    if(_boardModeActive&&_boardAutoReload&&refreshFailCount>=_boardAutoReload){
+      setTimeout(()=>window.location.reload(),2000);
+    }
     setRefreshing(false);
     return;
   }
@@ -2732,6 +2938,7 @@ async function init(){
     }
     window._pi[s.name]=s.ind;
     window._lastResults[s.name]=s;
+    _recordUptimeCheck(s.name, s.ind!=='none'&&s.ind!=='unknown');
   });
   updateStats(results);
   updateIncidentPin(results);
@@ -2751,6 +2958,7 @@ async function pollService(svc){
       else if(prev && (prev==='minor'||prev==='major') && result.ind==='none') queueAlert(result,'restored');
       window._pi[result.name]=result.ind;
       window._lastResults[result.name]=result;
+      _recordUptimeCheck(result.name, result.ind!=='none'&&result.ind!=='unknown');
       // Full re-render: status change may move service between issues panel and directory
       const allResults=Object.values(window._lastResults);
       updateStats(allResults);
@@ -2842,6 +3050,7 @@ async function _netProxyJson(key) {
 async function measureLatency(url, count, noCors) {
   count = count || 5;
   const times = [];
+  let lost = 0;
   const baseOpts = noCors ? { mode: 'no-cors' } : {};
   for (let i = 0; i < count; i++) {
     const sep = url.includes('?') ? '&' : '?';
@@ -2852,7 +3061,7 @@ async function measureLatency(url, count, noCors) {
       await fetch(url + sep + '_t=' + Date.now(), { ...baseOpts, signal: ctrl.signal });
       clearTimeout(timer);
       times.push(performance.now() - t);
-    } catch(e) {}
+    } catch(e) { lost++; }
     if (i < count - 1) await new Promise(r => setTimeout(r, 80));
   }
   if (!times.length) return null;
@@ -2860,6 +3069,7 @@ async function measureLatency(url, count, noCors) {
   return {
     min: Math.round(times[0]),
     avg: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+    loss: Math.round((lost / count) * 100),
   };
 }
 
@@ -2935,14 +3145,14 @@ function mkNetBadge(label, type) {
 function mkShimmer() {
   return '<div class="net-shimmer net-shimmer-wide"></div><div class="net-shimmer net-shimmer-mid"></div><div class="net-shimmer net-shimmer-short"></div>';
 }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 // Truncate at a word boundary with ellipsis
 function trunc(s,n){ s=String(s||''); if(s.length<=n) return s; const cut=s.lastIndexOf(' ',n); return (cut>n/2?s.slice(0,cut):s.slice(0,n))+'…'; }
 
 let netDiagRan = false;
 let netDiagRunning = false;
 
-function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarData) {
+function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaData, radarData) {
   const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
   const warp = cf.warp === 'on';
   const publicIp = esc(cf.ip || ip.query || '—');
@@ -2967,7 +3177,9 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   const cfCountry = esc(metaColo?.cca2 || meta.country || cf.loc || '—');
   const cfHttpProto = esc(cf.http || meta.httpProtocol || '—');
   const httpBadge = /3/.test(cfHttpProto) ? mkNetBadge(cfHttpProto, 'ok') : mkNetBadge(cfHttpProto || '—', 'warn');
-  const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg') : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
+  // Packet loss in latency rows
+  const _lossStr = lat => (lat && lat.loss > 0) ? ` · <span class="net-badge net-badge-${lat.loss > 20 ? 'bad' : 'warn'}" style="font-size:11px;padding:1px 6px">${lat.loss}% loss</span>` : '';
+  const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg' + _lossStr(cfLat)) : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
   const cfCard = mkNetMetric('Data Center', cfColo + ' · ' + cfCity)
     + mkNetMetric('Country', cfCountry)
     + mkNetMetric('HTTP Protocol', httpBadge)
@@ -3014,16 +3226,48 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
         ? mkNetBadge(esc(resolverProvider), 'ok')
         : mkNetBadge(esc(resolverProvider || 'ISP / Private DNS'), 'muted'))
     : '<span class="net-err">Could not determine</span>';
+  // DNS leak check: compare HTTP traffic org vs DNS resolver org
+  const httpOrg = meta.asOrganization || null;
+  let leakRow = '';
+  if (httpOrg && (shortOrg || resolverClassification.provider)) {
+    const httpOrgLow = httpOrg.toLowerCase();
+    const dnsOrgLow = (shortOrg || resolverClassification.provider).toLowerCase();
+    const sameNetwork = httpOrgLow.split(/\s+/).some(w => w.length > 4 && dnsOrgLow.includes(w))
+      || dnsOrgLow.split(/\s+/).some(w => w.length > 4 && httpOrgLow.includes(w))
+      || knownPublicDns; // public DNS providers intentionally differ from HTTP traffic ASN
+    const leakBadge = sameNetwork
+      ? mkNetBadge('Traffic &amp; DNS match', 'ok')
+      : mkNetBadge('Different ASNs — possible DNS leak if on VPN', 'warn');
+    leakRow = mkNetMetric('DNS Leak Check', leakBadge);
+  }
   const dnsCard = resolverDisplay
     + mkNetMetric('Public DNS Provider', pubDnsBadge)
+    + leakRow
     + `<div class="net-note">Shows the recursive DNS resolver your browser used to look up this page. Public DNS providers (Cloudflare, Google, Quad9, etc.) offer privacy and filtering features.</div>`;
 
   const gLatCard = gLat
-    ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg')
+    ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg' + _lossStr(gLat))
       + `<div class="net-note">Google uses Anycast BGP routing. Latency reflects your nearest Google PoP via dns.google.</div>`
     : `<div class="net-err" style="padding:10px 0">Unable to reach dns.google — may be blocked by network policy or CORS.</div>`;
 
-  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
+  // Traceroute-lite card
+  const maxLat = Math.max(1, ...(traceHops||[]).filter(h=>h.lat).map(h=>h.lat.avg));
+  const traceCard = (traceHops && traceHops.length)
+    ? traceHops.map(h => {
+        if (!h.lat) return mkNetMetric(esc(h.label), '<span class="net-err">Unreachable</span>');
+        const pct = Math.min(100, Math.round((h.lat.avg / maxLat) * 100));
+        const qual = h.lat.avg < 40 ? '' : h.lat.avg < 120 ? 'warn' : 'bad';
+        const lossNote = h.lat.loss > 0 ? ` · ${h.lat.loss}% loss` : '';
+        return `<div class="net-metric" style="flex-direction:column;align-items:stretch;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span class="net-metric-label">${esc(h.label)}</span><span class="net-metric-val">${h.lat.min} ms min · ${h.lat.avg} ms avg${lossNote}</span></div>
+          <div class="trace-bar"><div class="trace-bar-fill ${qual}" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('') + `<div class="net-note">Latency to major CDN and cloud endpoints. Lower is better; values reflect your network path to each provider.</div>`
+    : `<div class="net-err">Path quality unavailable.</div>`;
+
+  const navConnSaveData = navConn && navConn.saveData;
+  const saveDataWarn = navConnSaveData ? `<div class="net-err" style="color:var(--warn);margin-bottom:8px">⚠ Data Saver is enabled — this test uses ~40 MB.</div>` : '';
+  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div>${saveDataWarn}<button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
 
   // ── Internet Health cards ──────────────────────────────────────────────────
   const DS_LABELS = {'ping-slash24':'Ping probes','bgp':'BGP routing','ucsd-nt':'Darknet'};
@@ -3087,6 +3331,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
     mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support',  protoCard),
     mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',   dnsCard),
     mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',       gLatCard),
+    mkNetCard('nc-trace',     _netIcons.signal,  'Path Quality',      traceCard),
     mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',        speedCard),
     `<div class="net-section-hdr">Internet Health · North America</div>`,
     mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', iodaCard),
@@ -3094,6 +3339,20 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   ].join('');
 
   document.getElementById('net-speed-run-btn')?.addEventListener('click', runSpeedTest);
+}
+
+// Traceroute-lite: parallel latency to several major network endpoints
+const _TRACE_HOPS=[
+  {label:'Cloudflare CDN', url:'https://cloudflare.com/cdn-cgi/trace', noCors:false},
+  {label:'Google Anycast',  url:'https://dns.google/generate_204',      noCors:true},
+  {label:'Amazon AWS',      url:'https://aws.amazon.com/favicon.ico',   noCors:true},
+  {label:'Microsoft Azure', url:'https://azure.microsoft.com/favicon.ico', noCors:true},
+];
+async function measureTraceroute(){
+  const results=await Promise.allSettled(
+    _TRACE_HOPS.map(h=>measureLatency(h.url,3,h.noCors).then(r=>({...h,lat:r})))
+  );
+  return results.map((r,i)=>r.status==='fulfilled'?r.value:{..._TRACE_HOPS[i],lat:null});
 }
 
 async function runNetworkDiag() {
@@ -3114,13 +3373,14 @@ async function runNetworkDiag() {
     mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support', mkShimmer()),
     mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',  mkShimmer()),
     mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',      mkShimmer()),
+    mkNetCard('nc-trace',     _netIcons.signal,  'Path Quality',     mkShimmer()),
     mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',       mkShimmer()),
     `<div class="net-section-hdr">Internet Health · North America</div>`,
     mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', mkShimmer()),
     mkNetCard('nc-radar',     _netIcons.radar,   'Cloudflare Radar', mkShimmer()),
   ].join('');
 
-  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR, iodaR, radarR] = await Promise.allSettled([
+  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR, traceR, iodaR, radarR] = await Promise.allSettled([
     // Direct fetches — these endpoints support CORS and must bypass the proxy
     // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
     _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
@@ -3133,6 +3393,8 @@ async function runNetworkDiag() {
     // Latency pings are already direct (fetchWithTimeout, no proxy)
     measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
     measureLatency('https://dns.google/generate_204', 5, true),
+    // Traceroute-lite — parallel latency to major CDN/cloud endpoints
+    measureTraceroute(),
     // Internet health — server-side proxy routes (dynamic timestamps / auth)
     _netProxyJson('ioda-na-outages').catch(e => ({ _error: String(e) })),
     _netProxyJson('radar-us-anomalies').catch(e => ({ _error: String(e) })),
@@ -3145,6 +3407,7 @@ async function runNetworkDiag() {
     resolverIpR.value || null,
     cfLatR.value     || null,
     gLatR.value      || null,
+    traceR.value     || [],
     iodaR.value      || null,
     radarR.value     || null
   );
@@ -3163,7 +3426,10 @@ async function runSpeedTest() {
   ]);
 
   const card = document.getElementById('nc-speed');
-  if (!card) return;
+  if (!card) {
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Run Speed Test'; }
+    return;
+  }
   const body = card.querySelector('.net-card-hdr');
   // Remove everything after the header
   let next = body && body.nextSibling;
@@ -3192,6 +3458,17 @@ async function runSpeedTest() {
 window.addEventListener('DOMContentLoaded',()=>{
   const testBtn=document.getElementById('test-alert-btn');
   if(testBtn) testBtn.addEventListener('click', runAlertTest);
+
+  // Mute button
+  document.getElementById('f-mute-btn')?.addEventListener('click',()=>{
+    _alertsMuted=!_alertsMuted;
+    localStorage.setItem('alerts-muted',_alertsMuted?'1':'0');
+    _applyMuteState();
+  });
+  _applyMuteState();
+
+  // Keep footer "Updated X ago" text fresh every 30s
+  setInterval(_renderFooterMeta, 30000);
 
   window.addEventListener('pointerdown', primeAudio, {once:true, passive:true});
   window.addEventListener('keydown', primeAudio, {once:true});
@@ -3259,9 +3536,18 @@ window.addEventListener('DOMContentLoaded',()=>{
     }
   });
 
-  // Refresh data when the tab/window becomes visible again
+  // Pause/resume board network polling with page visibility
   document.addEventListener('visibilitychange', ()=>{
+    if(_boardModeActive&&_boardNetTimer){
+      if(document.hidden){
+        clearInterval(_boardNetTimer);
+        _boardNetTimer=null;
+      } else {
+        _startBoardNet();
+      }
+    }
     if(document.hidden) return;
+    // Refresh data when the tab/window becomes visible again
     const staleThreshold = 3 * 60 * 1000;
     if(!lastSuccessfulRefresh || Date.now() - lastSuccessfulRefresh > staleThreshold){
       _startRefresh();
@@ -3279,6 +3565,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
     clearInterval(refreshInterval);
     clearInterval(_wxTimer);
+    clearTimeout(_uptimeFlushTimer);
+    _flushUptimeLog();
   });
 });
 </script>
