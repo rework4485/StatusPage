@@ -2636,7 +2636,7 @@ function mkSvcRow(svc){
   const preview=svc.ind!=='none'&&svc.title?svc.title:'';
   d.innerHTML=`
     <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
-    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:`<span>${esc(fallback)}</span>`}</div>
+    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)"><span style="display:none">${esc(fallback)}</span>`:`<span>${esc(fallback)}</span>`}</div>
     <span class="svc-name">${esc(svc.name)}</span>
     <span class="svc-inc-preview">${esc(preview)}</span>
     <span class="svc-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</span>`;
@@ -3188,7 +3188,10 @@ async function runSpeedTest() {
   ]);
 
   const card = document.getElementById('nc-speed');
-  if (!card) return;
+  if (!card) {
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Run Speed Test'; }
+    return;
+  }
   const body = card.querySelector('.net-card-hdr');
   // Remove everything after the header
   let next = body && body.nextSibling;
