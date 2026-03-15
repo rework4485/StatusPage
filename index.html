@@ -395,7 +395,7 @@
     .status-banner-time {
       height:5px;
       transform-origin:left;
-      animation:bannerLife 30s linear forwards;
+      animation:bannerLife var(--banner-duration,30s) linear forwards;
     }
     .status-banner.degraded .status-banner-time { background:linear-gradient(90deg,#f59e0b,#f97316); }
     .status-banner.outage .status-banner-time { background:linear-gradient(90deg,#ef4444,#dc2626); }
@@ -654,6 +654,49 @@
     .f-refresh-btn:hover { color:var(--sub); }
     .f-refresh-btn:active { transform:rotate(180deg); }
     .f-refresh-btn:disabled { opacity:0.3; cursor:default; }
+
+    /* ── Mute / DND toggle ─────────────────────────────────────────────────── */
+    .f-mute-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
+    .f-mute-btn:hover { background:rgba(128,128,128,0.12); color:var(--text); }
+    .f-mute-btn.muted { color:var(--bad); border-color:rgba(239,68,68,0.25); background:rgba(239,68,68,0.04); }
+    .f-mute-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .light-mode .f-mute-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .f-mute-btn:hover { background:rgba(0,0,0,0.08); }
+
+    /* ── Service row uptime badge ───────────────────────────────────────────── */
+    .svc-uptime { font-size:10px; font-weight:600; letter-spacing:0.02em; padding:2px 6px; border-radius:4px; flex-shrink:0; white-space:nowrap; display:none; align-items:center; }
+    .svc-uptime.up-ok   { color:var(--ok);   background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.15); }
+    .svc-uptime.up-warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15); }
+    .svc-uptime.up-bad  { color:var(--bad);  background:rgba(239,68,68,0.08);  border:1px solid rgba(239,68,68,0.15); }
+    @media (min-width:1300px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto auto; } .svc-uptime { display:inline-flex; } }
+
+    /* ── Incident body show-more ────────────────────────────────────────────── */
+    .inc-body-wrap { position:relative; }
+    .inc-body-wrap .inc-body { max-height:none; overflow-y:visible; }
+    .inc-body-wrap.clamped .inc-body { max-height:120px; overflow:hidden; }
+    .inc-body-fade { position:absolute; bottom:0; left:0; right:0; height:36px; pointer-events:none; background:linear-gradient(transparent, var(--card)); }
+    .inc-body-wrap:not(.clamped) .inc-body-fade { opacity:0; }
+    .inc-show-more { font-size:11px; font-weight:600; color:var(--muted); background:none; border:none; padding:3px 0 0; cursor:pointer; font-family:var(--font); transition:color 0.15s; text-align:left; display:block; }
+    .inc-show-more:hover { color:var(--sub); }
+
+    /* ── Board minimal mode ─────────────────────────────────────────────────── */
+    .tv-board-minimal .tv-tiles,
+    .tv-board-minimal .tv-net-bar,
+    .tv-board-minimal .tv-wx-bar { display:none !important; }
+    .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
+    .tv-board-minimal .tv-minimal-status { display:flex; }
+    .tv-minimal-msg { font-size:clamp(48px,8vw,120px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; text-align:center; }
+    .tv-minimal-clock { font-size:clamp(20px,2.5vw,42px); font-weight:500; color:var(--sub); font-variant-numeric:tabular-nums; }
+
+    /* ── Search highlight ───────────────────────────────────────────────────── */
+    .svc-name mark { background:rgba(59,130,246,0.22); color:var(--text); border-radius:2px; padding:0 1px; font-style:normal; font-weight:inherit; }
+    .light-mode .svc-name mark { background:rgba(59,130,246,0.16); }
+
+    /* ── Net traceroute bar ─────────────────────────────────────────────────── */
+    .trace-bar { height:4px; border-radius:2px; background:rgba(255,255,255,0.07); margin-top:6px; overflow:hidden; }
+    .trace-bar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--ok),#16a34a); transition:width 0.4s ease; }
+    .trace-bar-fill.warn { background:linear-gradient(90deg,var(--warn),#d97706); }
+    .trace-bar-fill.bad  { background:linear-gradient(90deg,var(--bad),#dc2626); }
   </style>
 </head>
 <body>
@@ -714,6 +757,7 @@
     <div class="f-left">
       <div class="f-meta" id="f-meta"></div>
     </div>
+    <button class="f-mute-btn" id="f-mute-btn" type="button" title="Mute notifications">🔔</button>
     <button class="f-theme-btn" id="f-theme-btn" type="button" title="Toggle light/dark mode">☀</button>
     <button class="f-board-btn" id="f-board-btn" type="button" title="Open status board">Board</button>
     <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
@@ -990,6 +1034,7 @@ function getPreferredVoice(){
 }
 
 function speakBannerStatus(serviceName, kind){
+  if(_alertsMuted) return;
   if(!('speechSynthesis' in window)) return;
   const status=TTS_STATUS_LABEL[kind] || 'Status Updated';
   const utterance=new SpeechSynthesisUtterance(`${serviceName}. ${status}.`);
@@ -1007,6 +1052,7 @@ if('speechSynthesis' in window){
 }
 
 function chime(kind){
+  if(_alertsMuted) return;
   const play=(c,startAt)=>{
     if(kind==='outage'){
       tone(c,startAt,740,0.2,'triangle',0.16);
@@ -1054,6 +1100,7 @@ function queueAlert(svc, kind) {
   if (alertQueue.some(a => a.svc.name === svc.name && a.kind === kind)) return;
   // Cap queue to prevent overflow during connectivity blips
   if (alertQueue.length >= MAX_ALERT_QUEUE) return;
+  if(kind==='outage'||kind==='degraded') _recordIssue(svc.name);
   alertQueue.push({ svc, kind });
   if (_boardModeActive) _showBoardAlert(svc, kind);
   processAlertQueue();
@@ -1133,6 +1180,51 @@ function showView(view){
 // Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
 let _boardModeActive=new URLSearchParams(window.location.search).has('board');
+const _boardMinimal=new URLSearchParams(window.location.search).has('minimal');
+const _boardBannerSecs=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('speed'),10); return(Number.isFinite(v)&&v>=5&&v<=120)?v:30; })();
+const _boardAutoReload=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('reload'),10); return(Number.isFinite(v)&&v>=3&&v<=50)?v:0; })();
+// Set banner duration CSS variable from URL param
+document.documentElement.style.setProperty('--banner-duration',_boardBannerSecs+'s');
+
+// ── Mute / DND state ──────────────────────────────────────────────────────
+let _alertsMuted=localStorage.getItem('alerts-muted')==='1';
+function _applyMuteState(){
+  const btn=document.getElementById('f-mute-btn');
+  if(!btn) return;
+  btn.textContent=_alertsMuted?'🔕':'🔔';
+  btn.classList.toggle('muted',_alertsMuted);
+  btn.title=_alertsMuted?'Notifications muted (click to unmute)':'Mute notifications';
+}
+
+// ── Last-outage timestamp tracking ───────────────────────────────────────
+const _lastOutageTS=(()=>{ try{return JSON.parse(localStorage.getItem('svc-last-issue')||'{}');}catch{return{};} })();
+function _recordIssue(name){
+  _lastOutageTS[name]=Date.now();
+  try{localStorage.setItem('svc-last-issue',JSON.stringify(_lastOutageTS));}catch{}
+}
+
+// ── 30-day uptime log ─────────────────────────────────────────────────────
+const _uptimeLog=(()=>{ try{return JSON.parse(localStorage.getItem('svc-uptime')||'{}');}catch{return{};} })();
+function _recordUptimeCheck(name,hasIssue){
+  if(!_uptimeLog[name]) _uptimeLog[name]={};
+  const today=new Date().toISOString().slice(0,10);
+  if(!_uptimeLog[name][today]) _uptimeLog[name][today]={c:0,i:0};
+  _uptimeLog[name][today].c++;
+  if(hasIssue) _uptimeLog[name][today].i++;
+  // Prune >35-day-old entries
+  const cutoff=new Date(Date.now()-35*86400000).toISOString().slice(0,10);
+  Object.keys(_uptimeLog[name]).forEach(d=>{ if(d<cutoff) delete _uptimeLog[name][d]; });
+  try{localStorage.setItem('svc-uptime',JSON.stringify(_uptimeLog));}catch{}
+}
+function _getUptime(name){
+  const log=_uptimeLog[name];
+  if(!log) return null;
+  const cutoff=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+  let total=0,issues=0;
+  for(const[d,v] of Object.entries(log)){ if(d>=cutoff){total+=v.c;issues+=v.i;} }
+  if(total<5) return null;
+  return Math.round(((total-issues)/total)*1000)/10;
+}
 
 /* @routes-start — generated by scripts/build.js, do not edit manually */
 const ROUTE_KEYS = {
@@ -1282,6 +1374,19 @@ function fmtFetchAge(fetchedAt){
   if(mins<60) return mins+'m ago';
   const hrs=Math.floor(mins/60);
   return hrs+'h ago';
+}
+
+// Relative time for longer durations (last outage, footer update time)
+function fmtRelTime(ts){
+  const secs=Math.floor((Date.now()-ts)/1000);
+  if(secs<60) return 'just now';
+  if(secs<3600) return Math.floor(secs/60)+'m ago';
+  if(secs<86400) return Math.floor(secs/3600)+'h ago';
+  const days=Math.floor(secs/86400);
+  if(days<14) return days+' day'+(days!==1?'s':'')+' ago';
+  const weeks=Math.floor(days/7);
+  if(weeks<8) return weeks+' week'+(weeks!==1?'s':'')+' ago';
+  return Math.floor(days/30)+'mo ago';
 }
 
 const STALE_MS=5*60*1000; // 5 minutes
@@ -2284,14 +2389,26 @@ function renderServices(results){
   const srchClear=searchWrap.querySelector('.svc-search-clear');
   let _srchTimer=null;
   const _doSearch=()=>{
-    const q=srch.value.trim().toLowerCase();
+    const q=srch.value.trim();
+    const qLow=q.toLowerCase();
     searchWrap.classList.toggle('has-query',q.length>0);
     dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
       let any=false;
       sec.querySelectorAll('.svc-row').forEach(row=>{
-        const match=!q||(row.dataset.svc||'').toLowerCase().includes(q);
+        const rawName=row.dataset.svc||'';
+        const match=!qLow||rawName.toLowerCase().includes(qLow);
         row.style.display=match?'':'none';
         if(match) any=true;
+        // Highlight matched substring in service name
+        const nameEl=row.querySelector('.svc-name');
+        if(nameEl){
+          if(qLow&&match&&rawName.toLowerCase().includes(qLow)){
+            const idx=rawName.toLowerCase().indexOf(qLow);
+            nameEl.innerHTML=esc(rawName.slice(0,idx))+'<mark>'+esc(rawName.slice(idx,idx+q.length))+'</mark>'+esc(rawName.slice(idx+q.length));
+          } else {
+            nameEl.textContent=rawName;
+          }
+        }
       });
       sec.style.display=any?'':'none';
       if(q&&any) sec.classList.remove('collapsed');
@@ -2501,6 +2618,7 @@ function renderBoardView(results){
   const outageCount=techSvcs.filter(s=>s.ind==='major').length;
   const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
   const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
+  const statusColor=outageCount>0?'var(--bad)':issueCount>0?'var(--warn)':'var(--ok)';
   const tilesHTML=sorted.map(svc=>{
     const logos=logoSources(svc);
     const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
@@ -2515,6 +2633,7 @@ function renderBoardView(results){
       ${hasInc&&svc.body?`<div class="tv-tile-body">${esc(svc.body)}</div>`:''}
     </div>`;
   }).join('');
+  board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
     <div class="tv-board-hdr">
       <div class="tv-board-brand">
@@ -2526,6 +2645,10 @@ function renderBoardView(results){
     </div>
     <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-wx-bar" id="tv-wx-bar" style="display:none"></div>
+    <div class="tv-minimal-status">
+      <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
+      <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
+    </div>
     <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
@@ -2547,6 +2670,8 @@ function renderBoardView(results){
   const tick=()=>{
     const cl=document.getElementById('tv-clock');
     if(cl) cl.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const mc=document.getElementById('tv-minimal-clock');
+    if(mc) mc.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
     const up=document.getElementById('tv-updated');
     if(up&&_boardLastUpdate) up.textContent='Updated '+fmtFetchAge(_boardLastUpdate)+' ago';
   };
@@ -2590,6 +2715,10 @@ function mkIncCard(svc){
   const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${esc(l)}</span>`).join('')}</div>`:'';
   const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
+  const needsClamp=incBody.length>250;
+  const bodyHtml=needsClamp
+    ?`<div class="inc-body-wrap clamped"><div class="inc-body">${esc(incBody)}</div><div class="inc-body-fade"></div></div><button class="inc-show-more" type="button">Show more ▾</button>`
+    :`<div class="inc-body">${esc(incBody)}</div>`;
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
@@ -2606,12 +2735,19 @@ function mkIncCard(svc){
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
       ${statusLabels}
       <div class="inc-title">${esc(incTitle)}</div>
-      <div class="inc-body">${esc(incBody)}</div>
+      ${bodyHtml}
     </div>
     <div class="card-meta">
       <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
       <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
     </div>`;
+  d.querySelector('.inc-show-more')?.addEventListener('click',e=>{
+    e.stopPropagation();
+    const wrap=d.querySelector('.inc-body-wrap');
+    if(!wrap) return;
+    const clamped=wrap.classList.toggle('clamped');
+    e.target.textContent=clamped?'Show more ▾':'Show less ▴';
+  });
   return d;
 }
 
@@ -2633,12 +2769,17 @@ function mkSvcRow(svc){
   const dotPulse=svc.ind!=='none'&&svc.ind!=='unknown'?' svc-dot-pulse':'';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-  const preview=svc.ind!=='none'&&svc.title?svc.title:'';
+  const lastTs=_lastOutageTS[svc.name];
+  const preview=svc.ind!=='none'&&svc.title?svc.title:(svc.ind==='none'&&lastTs?'Last issue: '+fmtRelTime(lastTs):'');
+  const uptime=_getUptime(svc.name);
+  const uptimeCls=uptime===null?'':(uptime>=99?'up-ok':uptime>=95?'up-warn':'up-bad');
+  const uptimeEl=uptime!==null?`<span class="svc-uptime ${uptimeCls}">${uptime}%</span>`:'<span class="svc-uptime"></span>';
   d.innerHTML=`
     <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
     <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)"><span style="display:none">${esc(fallback)}</span>`:`<span>${esc(fallback)}</span>`}</div>
-    <span class="svc-name">${esc(svc.name)}</span>
+    <span class="svc-name" data-raw="${esc(svc.name)}">${esc(svc.name)}</span>
     <span class="svc-inc-preview">${esc(preview)}</span>
+    ${uptimeEl}
     <span class="svc-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</span>`;
   return d;
 }
@@ -2708,8 +2849,7 @@ function updateStats(data){
   if(un>0) statUnknown.classList.add('show');
   else statUnknown.classList.remove('show');
 
-  const fmeta=document.getElementById('f-meta');
-  if(fmeta) fmeta.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'})+'  ·  '+SVCS.length+' services monitored';
+  _renderFooterMeta();
 
   // Dynamic title + favicon
   const issues=wn+bd+mt+rt;
@@ -2728,6 +2868,13 @@ function updateStats(data){
 }
 
 
+function _renderFooterMeta(){
+  const fmeta=document.getElementById('f-meta');
+  if(!fmeta) return;
+  const ago=lastSuccessfulRefresh?'Updated '+fmtRelTime(lastSuccessfulRefresh):'Loading…';
+  fmeta.textContent=ago+'  ·  '+SVCS.length+' services monitored';
+}
+
 const svcCatMap=Object.fromEntries(SVCS.map(s=>[s.name, s.cat||'app']));
 window._lastResults=window._lastResults||{};
 
@@ -2740,6 +2887,9 @@ async function init(){
   }catch(e){
     refreshFailCount++;
     if(refreshFailCount>=2) setStale(true);
+    if(_boardModeActive&&_boardAutoReload&&refreshFailCount>=_boardAutoReload){
+      setTimeout(()=>window.location.reload(),2000);
+    }
     setRefreshing(false);
     return;
   }
@@ -2757,6 +2907,7 @@ async function init(){
     }
     window._pi[s.name]=s.ind;
     window._lastResults[s.name]=s;
+    _recordUptimeCheck(s.name, s.ind!=='none'&&s.ind!=='unknown');
   });
   updateStats(results);
   updateIncidentPin(results);
@@ -2776,6 +2927,7 @@ async function pollService(svc){
       else if(prev && (prev==='minor'||prev==='major') && result.ind==='none') queueAlert(result,'restored');
       window._pi[result.name]=result.ind;
       window._lastResults[result.name]=result;
+      _recordUptimeCheck(result.name, result.ind!=='none'&&result.ind!=='unknown');
       // Full re-render: status change may move service between issues panel and directory
       const allResults=Object.values(window._lastResults);
       updateStats(allResults);
@@ -2867,6 +3019,7 @@ async function _netProxyJson(key) {
 async function measureLatency(url, count, noCors) {
   count = count || 5;
   const times = [];
+  let lost = 0;
   const baseOpts = noCors ? { mode: 'no-cors' } : {};
   for (let i = 0; i < count; i++) {
     const sep = url.includes('?') ? '&' : '?';
@@ -2877,7 +3030,7 @@ async function measureLatency(url, count, noCors) {
       await fetch(url + sep + '_t=' + Date.now(), { ...baseOpts, signal: ctrl.signal });
       clearTimeout(timer);
       times.push(performance.now() - t);
-    } catch(e) {}
+    } catch(e) { lost++; }
     if (i < count - 1) await new Promise(r => setTimeout(r, 80));
   }
   if (!times.length) return null;
@@ -2885,6 +3038,7 @@ async function measureLatency(url, count, noCors) {
   return {
     min: Math.round(times[0]),
     avg: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+    loss: Math.round((lost / count) * 100),
   };
 }
 
@@ -2967,7 +3121,7 @@ function trunc(s,n){ s=String(s||''); if(s.length<=n) return s; const cut=s.last
 let netDiagRan = false;
 let netDiagRunning = false;
 
-function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarData) {
+function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaData, radarData) {
   const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
   const warp = cf.warp === 'on';
   const publicIp = esc(cf.ip || ip.query || '—');
@@ -2992,7 +3146,9 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   const cfCountry = esc(metaColo?.cca2 || meta.country || cf.loc || '—');
   const cfHttpProto = esc(cf.http || meta.httpProtocol || '—');
   const httpBadge = /3/.test(cfHttpProto) ? mkNetBadge(cfHttpProto, 'ok') : mkNetBadge(cfHttpProto || '—', 'warn');
-  const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg') : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
+  // Packet loss in latency rows
+  const _lossStr = lat => (lat && lat.loss > 0) ? ` · <span class="net-badge net-badge-${lat.loss > 20 ? 'bad' : 'warn'}" style="font-size:11px;padding:1px 6px">${lat.loss}% loss</span>` : '';
+  const cfLatRow = cfLat ? mkNetMetric('Latency to CF Edge', cfLat.min + ' ms min · ' + cfLat.avg + ' ms avg' + _lossStr(cfLat)) : mkNetMetric('Latency', '<span class="net-err">Unavailable</span>');
   const cfCard = mkNetMetric('Data Center', cfColo + ' · ' + cfCity)
     + mkNetMetric('Country', cfCountry)
     + mkNetMetric('HTTP Protocol', httpBadge)
@@ -3039,16 +3195,48 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
         ? mkNetBadge(esc(resolverProvider), 'ok')
         : mkNetBadge(esc(resolverProvider || 'ISP / Private DNS'), 'muted'))
     : '<span class="net-err">Could not determine</span>';
+  // DNS leak check: compare HTTP traffic org vs DNS resolver org
+  const httpOrg = meta.asOrganization || null;
+  let leakRow = '';
+  if (httpOrg && (shortOrg || resolverClassification.provider)) {
+    const httpOrgLow = httpOrg.toLowerCase();
+    const dnsOrgLow = (shortOrg || resolverClassification.provider).toLowerCase();
+    const sameNetwork = httpOrgLow.split(/\s+/).some(w => w.length > 4 && dnsOrgLow.includes(w))
+      || dnsOrgLow.split(/\s+/).some(w => w.length > 4 && httpOrgLow.includes(w))
+      || knownPublicDns; // public DNS providers intentionally differ from HTTP traffic ASN
+    const leakBadge = sameNetwork
+      ? mkNetBadge('Traffic &amp; DNS match', 'ok')
+      : mkNetBadge('Different ASNs — possible DNS leak if on VPN', 'warn');
+    leakRow = mkNetMetric('DNS Leak Check', leakBadge);
+  }
   const dnsCard = resolverDisplay
     + mkNetMetric('Public DNS Provider', pubDnsBadge)
+    + leakRow
     + `<div class="net-note">Shows the recursive DNS resolver your browser used to look up this page. Public DNS providers (Cloudflare, Google, Quad9, etc.) offer privacy and filtering features.</div>`;
 
   const gLatCard = gLat
-    ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg')
+    ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg' + _lossStr(gLat))
       + `<div class="net-note">Google uses Anycast BGP routing. Latency reflects your nearest Google PoP via dns.google.</div>`
     : `<div class="net-err" style="padding:10px 0">Unable to reach dns.google — may be blocked by network policy or CORS.</div>`;
 
-  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div><button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
+  // Traceroute-lite card
+  const maxLat = Math.max(1, ...(traceHops||[]).filter(h=>h.lat).map(h=>h.lat.avg));
+  const traceCard = (traceHops && traceHops.length)
+    ? traceHops.map(h => {
+        if (!h.lat) return mkNetMetric(esc(h.label), '<span class="net-err">Unreachable</span>');
+        const pct = Math.min(100, Math.round((h.lat.avg / maxLat) * 100));
+        const qual = h.lat.avg < 40 ? '' : h.lat.avg < 120 ? 'warn' : 'bad';
+        const lossNote = h.lat.loss > 0 ? ` · ${h.lat.loss}% loss` : '';
+        return `<div class="net-metric" style="flex-direction:column;align-items:stretch;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span class="net-metric-label">${esc(h.label)}</span><span class="net-metric-val">${h.lat.min} ms min · ${h.lat.avg} ms avg${lossNote}</span></div>
+          <div class="trace-bar"><div class="trace-bar-fill ${qual}" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('') + `<div class="net-note">Latency to major CDN and cloud endpoints. Lower is better; values reflect your network path to each provider.</div>`
+    : `<div class="net-err">Path quality unavailable.</div>`;
+
+  const navConnSaveData = navConn && navConn.saveData;
+  const saveDataWarn = navConnSaveData ? `<div class="net-err" style="color:var(--warn);margin-bottom:8px">⚠ Data Saver is enabled — this test uses ~40 MB.</div>` : '';
+  const speedCard = `<div class="net-note" style="margin:0 0 10px">Tests download speed via 4 parallel streams to Cloudflare's nearest edge. Uses ~40 MB of data.</div>${saveDataWarn}<button class="net-run-btn" id="net-speed-run-btn" type="button">▶ Run Speed Test</button>`;
 
   // ── Internet Health cards ──────────────────────────────────────────────────
   const DS_LABELS = {'ping-slash24':'Ping probes','bgp':'BGP routing','ucsd-nt':'Darknet'};
@@ -3112,6 +3300,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
     mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support',  protoCard),
     mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',   dnsCard),
     mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',       gLatCard),
+    mkNetCard('nc-trace',     _netIcons.signal,  'Path Quality',      traceCard),
     mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',        speedCard),
     `<div class="net-section-hdr">Internet Health · North America</div>`,
     mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', iodaCard),
@@ -3119,6 +3308,20 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, iodaData, radarD
   ].join('');
 
   document.getElementById('net-speed-run-btn')?.addEventListener('click', runSpeedTest);
+}
+
+// Traceroute-lite: parallel latency to several major network endpoints
+const _TRACE_HOPS=[
+  {label:'Cloudflare CDN', url:'https://cloudflare.com/cdn-cgi/trace', noCors:false},
+  {label:'Google Anycast',  url:'https://dns.google/generate_204',      noCors:true},
+  {label:'Amazon AWS',      url:'https://aws.amazon.com/favicon.ico',   noCors:true},
+  {label:'Microsoft Azure', url:'https://azure.microsoft.com/favicon.ico', noCors:true},
+];
+async function measureTraceroute(){
+  const results=await Promise.allSettled(
+    _TRACE_HOPS.map(h=>measureLatency(h.url,3,h.noCors).then(r=>({...h,lat:r})))
+  );
+  return results.map((r,i)=>r.status==='fulfilled'?r.value:{..._TRACE_HOPS[i],lat:null});
 }
 
 async function runNetworkDiag() {
@@ -3139,13 +3342,14 @@ async function runNetworkDiag() {
     mkNetCard('nc-protocol',  _netIcons.lock,    'Protocol Support', mkShimmer()),
     mkNetCard('nc-dns',       _netIcons.server,  'DNS Information',  mkShimmer()),
     mkNetCard('nc-google',    _netIcons.globe,   'Google Edge',      mkShimmer()),
+    mkNetCard('nc-trace',     _netIcons.signal,  'Path Quality',     mkShimmer()),
     mkNetCard('nc-speed',     _netIcons.gauge,   'Speed Test',       mkShimmer()),
     `<div class="net-section-hdr">Internet Health · North America</div>`,
     mkNetCard('nc-ioda',      _netIcons.signal,  'BGP &amp; Probe Anomalies', mkShimmer()),
     mkNetCard('nc-radar',     _netIcons.radar,   'Cloudflare Radar', mkShimmer()),
   ].join('');
 
-  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR, iodaR, radarR] = await Promise.allSettled([
+  const [cfTraceR, speedMetaR, ipInfoR, resolverIpR, cfLatR, gLatR, traceR, iodaR, radarR] = await Promise.allSettled([
     // Direct fetches — these endpoints support CORS and must bypass the proxy
     // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
     _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
@@ -3158,6 +3362,8 @@ async function runNetworkDiag() {
     // Latency pings are already direct (fetchWithTimeout, no proxy)
     measureLatency('https://cloudflare.com/cdn-cgi/trace', 5),
     measureLatency('https://dns.google/generate_204', 5, true),
+    // Traceroute-lite — parallel latency to major CDN/cloud endpoints
+    measureTraceroute(),
     // Internet health — server-side proxy routes (dynamic timestamps / auth)
     _netProxyJson('ioda-na-outages').catch(e => ({ _error: String(e) })),
     _netProxyJson('radar-us-anomalies').catch(e => ({ _error: String(e) })),
@@ -3170,6 +3376,7 @@ async function runNetworkDiag() {
     resolverIpR.value || null,
     cfLatR.value     || null,
     gLatR.value      || null,
+    traceR.value     || [],
     iodaR.value      || null,
     radarR.value     || null
   );
@@ -3220,6 +3427,17 @@ async function runSpeedTest() {
 window.addEventListener('DOMContentLoaded',()=>{
   const testBtn=document.getElementById('test-alert-btn');
   if(testBtn) testBtn.addEventListener('click', runAlertTest);
+
+  // Mute button
+  document.getElementById('f-mute-btn')?.addEventListener('click',()=>{
+    _alertsMuted=!_alertsMuted;
+    localStorage.setItem('alerts-muted',_alertsMuted?'1':'0');
+    _applyMuteState();
+  });
+  _applyMuteState();
+
+  // Keep footer "Updated X ago" text fresh every 30s
+  setInterval(_renderFooterMeta, 30000);
 
   window.addEventListener('pointerdown', primeAudio, {once:true, passive:true});
   window.addEventListener('keydown', primeAudio, {once:true});
