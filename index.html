@@ -520,6 +520,22 @@
     /* Issues grid responsive */
     .issues-grid { container-type:inline-size; }
 
+    /* ── Weather bar ─────────────────────────────────────────────────────────── */
+    .weather-bar { display:none; align-items:center; gap:8px 14px; flex-wrap:wrap; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; font-size:13px; color:var(--sub); }
+    .weather-bar.show { display:flex; }
+    .light-mode .weather-bar { background:rgba(0,0,0,0.03); }
+    .wx-icon { font-size:1.3em; line-height:1; flex-shrink:0; }
+    .wx-temp { font-weight:700; color:var(--text); }
+    .wx-cond { color:var(--sub); }
+    .wx-loc { color:var(--muted); font-size:0.88em; }
+    .wx-sep { color:var(--border); }
+    .wx-alert { display:inline-flex; align-items:center; gap:5px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:20px; padding:2px 10px; font-size:12px; font-weight:600; color:#fbbf24; white-space:nowrap; }
+    .wx-alert.warn-major { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); color:#f87171; }
+    .wx-updated { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
+    /* Board weather row */
+    .tv-wx-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; padding:5px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; margin-bottom:clamp(8px,1.2vh,12px); font-size:clamp(10px,0.82vw,13px); color:var(--sub); flex-shrink:0; }
+    .light-mode .tv-wx-bar { background:rgba(0,0,0,0.03); }
+
     /* ── Status summary banner ───────────────────────────────────────────────── */
     .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
     .status-summary.show { display:flex; }
@@ -546,7 +562,7 @@
     .tv-board-status.warn { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);  color:#fbbf24; }
     .tv-board-status.bad  { background:rgba(239,68,68,0.1);  border:1px solid rgba(239,68,68,0.3);   color:#f87171; }
     .tv-clock { font-size:clamp(14px,1.5vw,24px); font-weight:600; font-variant-numeric:tabular-nums; color:var(--sub); flex-shrink:0; }
-    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(140px,13vw,220px),1fr)); grid-auto-rows:1fr; gap:clamp(8px,0.9vw,14px); overflow:hidden; min-height:0; }
+    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(140px,13vw,220px),1fr)); grid-auto-rows:minmax(0,1fr); gap:clamp(8px,0.9vw,14px); overflow:hidden; min-height:0; }
     .tv-tile { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:clamp(10px,1vw,16px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; min-height:0; justify-content:center; }
     .tv-tile:hover { background:rgba(255,255,255,0.06); }
     .tv-tile.cb { background:rgba(239,68,68,0.08);  border-color:rgba(239,68,68,0.25); }
@@ -675,6 +691,7 @@
     </div>
   </div>
   <div class="view active" id="view-services">
+    <div id="weather-bar" class="weather-bar"></div>
     <div id="status-summary"></div>
     <div class="loading" id="loading-el">
       <div class="spinner"></div>
@@ -737,8 +754,6 @@ const SVCS=[
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   {name:'Mimecast',su:'https://status.mimecast.com/api/v2/summary.json',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
-  // Local / Weather
-  {name:'Local Weather',su:'https://api.weather.gov/',hu:'https://www.weather.gov/',p:'weather',cat:'local'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
   {name:'MBTA Fall River / New Bedford',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-NewBedford/timetable',p:'mbta',cat:'transit'},
@@ -1480,12 +1495,16 @@ async function fetchOne(s){
         SIGNIFICANT_DELAYS:'Significant Delays',DELAY:'Delays',DETOUR:'Detour',
         STOP_CLOSURE:'Stop Closure',SERVICE_CHANGE:'Service Change',TRACK_CHANGE:'Track Change',
         EXTRA_SERVICE:'Extra Service',SCHEDULE_CHANGE:'Schedule Change',
+        MODIFIED_SERVICE:'Modified Schedule',CANCELLATION:'Cancellation',
+        SPECIAL_EVENT:'Special Event Schedule',
       };
       const EFFECT_IND={
         SUSPENSION:'major',SHUTTLE:'major',NO_SERVICE:'major',
         SIGNIFICANT_DELAYS:'minor',DELAY:'minor',DETOUR:'minor',
         STOP_CLOSURE:'minor',SERVICE_CHANGE:'minor',TRACK_CHANGE:'minor',
       };
+      // Effects that indicate a schedule change (not a service disruption)
+      const SCHED_EFFECTS=new Set(['SCHEDULE_CHANGE','MODIFIED_SERVICE','EXTRA_SERVICE','SPECIAL_EVENT','CANCELLATION']);
       const CAUSE_LABEL={
         CONSTRUCTION:'Construction',MAINTENANCE:'Maintenance',SPECIAL_EVENT:'Special Event',
         ACCIDENT:'Accident',WEATHER:'Weather',TRAFFIC:'Traffic',TECHNICAL_PROBLEM:'Technical Problem',
@@ -1495,28 +1514,73 @@ async function fetchOne(s){
         TRACK_PROBLEM:'Track Problem',VEHICLE_EQUIPMENT_PROBLEM:'Equipment Problem',
       };
 
-      // Filter to active, lifecycle NEW/ONGOING alerts
-      const alerts=(data?.data||[]).filter(a=>{
-        const lc=(a.attributes?.lifecycle||'').toUpperCase();
-        if(lc!=='NEW'&&lc!=='ONGOING') return false;
-        // Check active_period — at least one period must overlap now
+      // Helper: check if an alert's active_period overlaps now (or upcoming within 4h)
+      const isActiveOrUpcoming=(a,upcomingWindowMs=0)=>{
         const periods=a.attributes?.active_period||[];
         if(!periods.length) return true;
         return periods.some(p=>{
           const start=p.start?Date.parse(p.start):0;
           const end=p.end?Date.parse(p.end):Infinity;
-          return start<=now&&now<=end;
+          return start<=(now+upcomingWindowMs)&&now<=end;
         });
-      });
+      };
 
-      const serviceAlerts=alerts.filter(a=>{
+      // Service disruption alerts: NEW/ONGOING, severity ≥3, known disruption effect
+      const serviceAlerts=(data?.data||[]).filter(a=>{
+        const lc=(a.attributes?.lifecycle||'').toUpperCase();
+        if(lc!=='NEW'&&lc!=='ONGOING') return false;
         const sev=a.attributes?.severity||0;
         const eff=a.attributes?.effect||'';
-        return sev>=3&&EFFECT_IND[eff]!=null;
+        return sev>=3&&EFFECT_IND[eff]!=null&&isActiveOrUpcoming(a);
       }).sort((a,b)=>(b.attributes?.severity||0)-(a.attributes?.severity||0));
 
-      if(!serviceAlerts.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      // Schedule change alerts: NEW/ONGOING/UPCOMING, any severity, schedule-type effect
+      const schedAlerts=(data?.data||[]).filter(a=>{
+        const lc=(a.attributes?.lifecycle||'').toUpperCase();
+        if(lc!=='NEW'&&lc!=='ONGOING'&&lc!=='UPCOMING') return false;
+        const eff=a.attributes?.effect||'';
+        return SCHED_EFFECTS.has(eff)&&isActiveOrUpcoming(a,4*3600*1000);
+      }).sort((a,b)=>(b.attributes?.severity||0)-(a.attributes?.severity||0));
 
+      if(!serviceAlerts.length&&!schedAlerts.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+
+      // Helper: readable route names from alert relationships
+      const routeNamesFor=(alert)=>{
+        const ids=(alert.relationships?.routes?.data||[]).map(r=>r.id);
+        return ids.map(id=>{
+          if(id.includes('Providence')) return 'Providence/Stoughton';
+          if(id.includes('NewBedford')) return 'New Bedford';
+          if(id.includes('FallRiver')) return 'Fall River';
+          return id.replace('CR-','').replace(/-/g,' ');
+        });
+      };
+
+      // Schedule-only path: no service disruptions, only schedule changes
+      if(!serviceAlerts.length){
+        const topS=schedAlerts[0];
+        const attrS=topS.attributes||{};
+        const effS=attrS.effect||'';
+        const lblS=EFFECT_LABEL[effS]||effS.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        const causeS=attrS.cause?CAUSE_LABEL[attrS.cause]||null:null;
+        const hdrS=attrS.short_header||attrS.header||'';
+        const titleS=hdrS?hdrS.substring(0,100):(lblS+(causeS?' ('+causeS+')':''));
+        const partsS=[];
+        if(attrS.timeframe) partsS.push('When: '+attrS.timeframe);
+        const rns=routeNamesFor(topS);
+        if(rns.length) partsS.push('Affected: '+rns.join(', '));
+        if(schedAlerts.length>1){
+          const extras=schedAlerts.slice(1).map(a=>{
+            const aEff=a.attributes?.effect||'';
+            const aHdr=a.attributes?.short_header||a.attributes?.header||'';
+            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+aHdr.substring(0,80):'');
+          });
+          partsS.push(extras.join('\n'));
+        }
+        const updatedS=new Date(attrS.updated_at||now).toLocaleString();
+        return mk(s.name,'maintenance',titleS,partsS.join('\n'),updatedS,s.hu);
+      }
+
+      // Service disruption path
       const top=serviceAlerts[0];
       const attr=top.attributes||{};
       const eff=attr.effect||'';
@@ -1535,20 +1599,10 @@ async function fetchOne(s){
       // Build body: timeframe + affected routes + additional alerts
       const parts=[];
       if(timeframe) parts.push('When: '+timeframe);
+      const routeIds=routeNamesFor(top);
+      if(routeIds.length) parts.push('Affected: '+routeIds.join(', '));
 
-      // Affected route names from relationships
-      const routeIds=(top.relationships?.routes?.data||[]).map(r=>r.id);
-      if(routeIds.length){
-        const routeNames=routeIds.map(id=>{
-          if(id.includes('Providence')) return 'Providence/Stoughton';
-          if(id.includes('NewBedford')) return 'New Bedford';
-          if(id.includes('FallRiver')) return 'Fall River';
-          return id.replace('CR-','').replace(/-/g,' ');
-        });
-        parts.push('Affected: '+routeNames.join(', '));
-      }
-
-      // Additional alerts summary
+      // Additional service alerts summary
       if(serviceAlerts.length>1){
         const extras=serviceAlerts.slice(1).map(a=>{
           const aEff=a.attributes?.effect||'';
@@ -1557,6 +1611,15 @@ async function fetchOne(s){
             (aDesc?' — '+aDesc.substring(0,80):'');
         });
         parts.push(extras.join('\n'));
+      }
+
+      // Append active schedule changes alongside service disruptions
+      if(schedAlerts.length){
+        const schedTop=schedAlerts[0];
+        const sEff=schedTop.attributes?.effect||'';
+        const sHdr=schedTop.attributes?.short_header||schedTop.attributes?.header||'';
+        const sLbl=EFFECT_LABEL[sEff]||'Modified Schedule';
+        parts.push('📅 '+sLbl+(sHdr?' — '+sHdr.substring(0,80):''));
       }
 
       const body=parts.join('\n');
@@ -1887,52 +1950,6 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
-  if(s.p==='weather'){
-    // National Weather Service — no API key required, CORS supported
-    try{
-      // Get lat/lon from session cache or ip-api (no permission needed)
-      let lat,lon,locName='';
-      const cached=sessionStorage.getItem('_wx_coords');
-      if(cached){ try{const c=JSON.parse(cached);lat=c.lat;lon=c.lon;locName=c.name||'';}catch{} }
-      if(!lat){
-        const ipd=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null).catch(()=>null);
-        if(!ipd?.lat) return mk(s.name,'unknown','Location unavailable','Cannot determine your location for weather lookup.',new Date().toLocaleString(),s.hu);
-        lat=ipd.lat; lon=ipd.lon;
-        locName=(ipd.city||'')+(ipd.regionName?', '+ipd.regionName:'');
-        sessionStorage.setItem('_wx_coords',JSON.stringify({lat,lon,name:locName}));
-      }
-      const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
-      if(!pt?.properties) return mk(s.name,'unknown','NWS Unavailable','Weather data not available for this location. NWS covers US locations only.',new Date().toLocaleString(),s.hu);
-      const city=pt.properties.relativeLocation?.properties?.city||locName;
-      const state=pt.properties.relativeLocation?.properties?.state||'';
-      const displayLoc=city+(state?' '+state:'');
-      const forecastUrl=pt.properties.forecast;
-      const [forecastR,alertsR]=await Promise.allSettled([
-        fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
-        fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
-      ]);
-      const period=forecastR.value?.properties?.periods?.[0];
-      const wxAlerts=(alertsR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
-      // Indicator: any active weather warnings
-      let ind='none';
-      if(wxAlerts.some(a=>/warning/i.test(a.properties?.event||''))) ind='minor';
-      else if(wxAlerts.some(a=>/watch/i.test(a.properties?.event||''))) ind='minor';
-      else if(wxAlerts.length) ind='maintenance';
-      const tempStr=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
-      const condStr=period?.shortForecast||'';
-      const icon=period?.isDaytime===false?'🌙':condStr.match(/sunny|clear/i)?'☀️':condStr.match(/cloud/i)?'⛅':condStr.match(/rain|shower/i)?'🌧':condStr.match(/snow/i)?'❄️':condStr.match(/thunder|storm/i)?'⛈':'🌡';
-      const title=`${icon} ${tempStr}${condStr?' · '+condStr:''}`;
-      const parts=[];
-      if(displayLoc) parts.push(displayLoc);
-      wxAlerts.slice(0,3).forEach(a=>{
-        const ev=a.properties?.event||'';
-        const hl=a.properties?.headline||'';
-        parts.push(`⚠ ${ev}${hl?' — '+hl.substring(0,120):''}`)
-      });
-      if(period?.detailedForecast) parts.push(period.detailedForecast.substring(0,240));
-      return mk(s.name,ind,title,parts.join('\n'),new Date().toLocaleString(),s.hu);
-    }catch{return errSvc(s);}
-  }
 
   if(s.p==='mimecast'){
     // Mimecast — filter to US B Grid components only
@@ -2103,6 +2120,88 @@ let _curFilter='all';
 let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
+let _wxInfo=null,_wxTimer=null,_wxFetching=false;
+
+async function _fetchWeather(){
+  if(_wxFetching) return;
+  _wxFetching=true;
+  try{
+    let lat,lon,locName='';
+    const cached=sessionStorage.getItem('_wx_coords');
+    if(cached){try{const c=JSON.parse(cached);lat=c.lat;lon=c.lon;locName=c.name||'';}catch{}}
+    if(!lat){
+      const ipd=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null).catch(()=>null);
+      if(ipd?.lat){
+        lat=ipd.lat;lon=ipd.lon;
+        locName=(ipd.city||'')+(ipd.regionName?', '+ipd.regionName:'');
+        sessionStorage.setItem('_wx_coords',JSON.stringify({lat,lon,name:locName}));
+      }
+    }
+    if(!lat){_wxInfo={err:'Location unavailable'};_wxFetching=false;_renderWeather();return;}
+    const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
+    if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
+    const city=pt.properties.relativeLocation?.properties?.city||locName;
+    const state=pt.properties.relativeLocation?.properties?.state||'';
+    const loc=city+(state?' '+state:'');
+    const forecastUrl=pt.properties.forecast;
+    const [fR,aR]=await Promise.allSettled([
+      fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+    ]);
+    const period=fR.value?.properties?.periods?.[0];
+    const alerts=(aR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
+    _wxInfo={loc,period,alerts,ts:Date.now()};
+  }catch{_wxInfo={err:'Weather unavailable'};}
+  _wxFetching=false;
+  _renderWeather();
+}
+
+function _renderWeather(){
+  const bar=document.getElementById('weather-bar');
+  if(!bar) return;
+  if(!_wxInfo||_wxInfo.err){bar.className='weather-bar';return;}
+  const{loc,period,alerts}=_wxInfo;
+  const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
+  const cond=period?.shortForecast||'';
+  const cStr=cond.substring(0,40);
+  const icon=period?.isDaytime===false?'🌙':cond.match(/sunny|clear/i)?'☀️':cond.match(/cloud/i)?'⛅':cond.match(/rain|shower/i)?'🌧':cond.match(/snow/i)?'❄️':cond.match(/thunder|storm/i)?'⛈':'🌡';
+  const sep='<span class="wx-sep">·</span>';
+  let html=`<span class="wx-icon">${icon}</span>`;
+  if(temp) html+=`<span class="wx-temp">${esc(temp)}</span>${sep}`;
+  if(cStr) html+=`<span class="wx-cond">${esc(cStr)}</span>`;
+  if(loc) html+=`${sep}<span class="wx-loc">${esc(loc)}</span>`;
+  alerts.slice(0,2).forEach(a=>{
+    const ev=a.properties?.event||'';
+    const isMajor=/warning/i.test(ev);
+    html+=`${sep}<span class="wx-alert${isMajor?' warn-major':''}">⚠ ${esc(ev)}</span>`;
+  });
+  if(_wxInfo.ts) html+=`<span class="wx-updated">${fmtFetchAge(_wxInfo.ts)} ago</span>`;
+  bar.innerHTML=html;
+  bar.className='weather-bar show';
+  // Also update board weather bar if active
+  _renderBoardWeatherBar();
+}
+
+function _renderBoardWeatherBar(){
+  const bwb=document.getElementById('tv-wx-bar');
+  if(!bwb) return;
+  if(!_wxInfo||_wxInfo.err){bwb.style.display='none';return;}
+  const{loc,period,alerts}=_wxInfo;
+  const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
+  const cond=period?.shortForecast||'';
+  const cStr=cond.substring(0,40);
+  const icon=period?.isDaytime===false?'🌙':cond.match(/sunny|clear/i)?'☀️':cond.match(/cloud/i)?'⛅':cond.match(/rain|shower/i)?'🌧':cond.match(/snow/i)?'❄️':cond.match(/thunder|storm/i)?'⛈':'🌡';
+  const sep='<span class="tv-net-sep">·</span>';
+  let html=`<span class="tv-net-lbl">Weather</span>`;
+  html+=`<span class="tv-net-item">${icon} ${temp?`<b>${esc(temp)}</b>${sep}`:''}${esc(cStr)}</span>`;
+  if(loc) html+=`${sep}<span class="tv-net-item" style="color:var(--muted)">${esc(loc)}</span>`;
+  alerts.slice(0,2).forEach(a=>{
+    const ev=a.properties?.event||'';
+    html+=`${sep}<span class="tv-net-item" style="color:#fbbf24;font-weight:600">⚠ ${esc(ev)}</span>`;
+  });
+  bwb.innerHTML=html;
+  bwb.style.display='';
+}
 
 function applyFilter(grid,filter){
   _curFilter=filter;
@@ -2208,10 +2307,8 @@ function renderServices(results){
   const appIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`;
   const infraIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6" stroke-width="3"/><line x1="6" y1="18" x2="6.01" y2="18" stroke-width="3"/></svg>`;
   const transitIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="13" rx="2"/><path d="M8 16v3m8-3v3M3 16h18"/><circle cx="8.5" cy="10" r="1.5"/><circle cx="15.5" cy="10" r="1.5"/><line x1="4" y1="7" x2="20" y2="7"/></svg>`;
-  const localIcon=`<svg class="svc-cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18"/><path d="M12 3c-2 3-3 5.5-3 9s1 6 3 9"/></svg>`;
   addSection('Applications & Platforms', results.filter(s=>s.cat==='app'), appIcon);
   addSection('Infrastructure', results.filter(s=>s.cat==='infra'), infraIcon);
-  addSection('Local', results.filter(s=>s.cat==='local'), localIcon);
   addSection('Transit', results.filter(s=>s.cat==='transit'), transitIcon);
   grid.appendChild(dir);
 
@@ -2264,9 +2361,11 @@ function _optimizeBoardLayout(){
   const availW=board.clientWidth-padH;
   const hdrEl=board.querySelector('.tv-board-hdr');
   const netEl=board.querySelector('.tv-net-bar');
+  const wxEl=board.querySelector('.tv-wx-bar');
   const footEl=board.querySelector('.tv-board-footer');
   const gap=Math.max(10,Math.round(availW*0.007));
-  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+(netEl?netEl.offsetHeight+gap:0)+(footEl?footEl.offsetHeight+gap:0);
+  const wxH=wxEl&&wxEl.style.display!=='none'?wxEl.offsetHeight+gap:0;
+  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+(netEl?netEl.offsetHeight+gap:0)+wxH+(footEl?footEl.offsetHeight+gap:0);
   const availH=board.clientHeight-padV-used;
   // Cap columns so tiles stay readable — based on natural aspect ratio of screen
   const maxCols=Math.min(n,Math.max(3,Math.ceil(Math.sqrt(n*(availW/Math.max(availH,1))))));
@@ -2279,8 +2378,10 @@ function _optimizeBoardLayout(){
     const score=tW*tH;
     if(score>bestScore){bestScore=score;bestCols=c;}
   }
+  const rows=Math.ceil(n/bestCols);
   tilesEl.style.gridTemplateColumns=`repeat(${bestCols},1fr)`;
-  tilesEl.style.gridAutoRows=`1fr`;
+  tilesEl.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
+  tilesEl.style.gridAutoRows=``;
   tilesEl.style.gap=gap+'px';
   const tileW=Math.floor((availW-gap*(bestCols-1))/bestCols);
   const tileH=Math.floor((availH-gap*(Math.ceil(n/bestCols)-1))/Math.ceil(n/bestCols));
@@ -2365,6 +2466,7 @@ function _startBoardNet(){
 function renderBoardView(results){
   _boardLastUpdate=Date.now();
   if(!_boardNetTimer) _startBoardNet();
+  if(!_wxInfo) _fetchWeather();
   let board=document.getElementById('tv-board');
   if(!board){
     board=document.createElement('div');
@@ -2403,12 +2505,14 @@ function renderBoardView(results){
       <div class="tv-clock" id="tv-clock"></div>
     </div>
     <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
+    <div class="tv-wx-bar" id="tv-wx-bar" style="display:none"></div>
     <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
       <span class="tv-updated" id="tv-updated"></span>
     </div>`;
   _renderBoardNetBar();
+  _renderBoardWeatherBar();
   _optimizeBoardLayout();
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
@@ -3156,9 +3260,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   init().then(()=>startPerServicePolling());
   scheduleRefresh();
 
+  // Weather: fetch on load, then refresh every 15 minutes
+  _fetchWeather();
+  _wxTimer=setInterval(_fetchWeather, 15*60*1000);
+
   window.addEventListener('beforeunload',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
     clearInterval(refreshInterval);
+    clearInterval(_wxTimer);
   });
 });
 </script>
