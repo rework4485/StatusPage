@@ -92,6 +92,7 @@
       filter:blur(60px);
       opacity:0.22;
       animation:ambientFloat 18s ease-in-out infinite;
+      will-change:transform;
     }
     body::before {
       width:44vw;
@@ -454,22 +455,6 @@
     .hdr:not(:hover) .test-btn { opacity:0; pointer-events:none; }
     .test-btn { transition:opacity 0.3s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
 
-    /* Category section headers inside the card grid */
-    .section-hdr {
-      grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 10px;
-      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--sub); padding: 0 2px; pointer-events: none; user-select: none;
-    }
-    .section-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .section-hdr-badge {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: none;
-      padding: 2px 9px; border-radius: 6px; white-space: nowrap;
-    }
-    .section-hdr-badge.ok { color: var(--ok); background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.18); }
-    .section-hdr-badge.degraded { color: var(--warn); background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
-    .section-hdr-badge.outage { color: var(--bad); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
-    .section-hdr-badge.maint { color: var(--maint); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
 
     /* ── Nav tabs ────────────────────────────────────────────────────────────── */
     .nav-tabs { display:flex; align-items:center; gap:6px; flex-shrink:0; }
@@ -771,8 +756,23 @@ const SVCS=[
 ];
 
 window._pi = window._pi || {};
-const PRI={major:1,minor:2,maintenance:3,rerouting:3,unknown:4,none:5};
-const LABELS={none:'Operational',minor:'Degraded',major:'Outage',maintenance:'Maintenance',rerouting:'Traffic Rerouted',unknown:'Unknown'};
+// ── Status configuration (single source of truth for all status-derived values) ──
+const STATUS_CFG={
+  none:        {pri:5, label:'Operational',      icon:'✓', card:'',   ic:'ok',      block:'ok-block',      color:'var(--ok)'},
+  minor:       {pri:2, label:'Degraded',          icon:'⚠', card:'cw', ic:'warn',    block:'warn-block',    color:'var(--warn)'},
+  major:       {pri:1, label:'Outage',            icon:'✕', card:'cb', ic:'bad',     block:'bad-block',     color:'var(--bad)'},
+  maintenance: {pri:3, label:'Maintenance',       icon:'⚙', card:'cm', ic:'maint',   block:'maint-block',   color:'var(--maint)'},
+  rerouting:   {pri:3, label:'Traffic Rerouted',  icon:'⇄', card:'cr', ic:'reroute', block:'reroute-block', color:'var(--reroute)'},
+  unknown:     {pri:4, label:'Unknown',           icon:'?', card:'cu', ic:'unknown', block:'unknown-block', color:'var(--unknown)'},
+};
+const _sce=Object.entries(STATUS_CFG);
+const PRI         =Object.fromEntries(_sce.map(([k,v])=>[k,v.pri]));
+const LABELS      =Object.fromEntries(_sce.map(([k,v])=>[k,v.label]));
+const ICONS       =Object.fromEntries(_sce.map(([k,v])=>[k,v.icon]));
+const CC          =Object.fromEntries(_sce.map(([k,v])=>[k,v.card]));
+const IC          =Object.fromEntries(_sce.map(([k,v])=>[k,v.ic]));
+const BLOCK_CLS   =Object.fromEntries(_sce.map(([k,v])=>[k,v.block]));
+const LABEL_COLOR =Object.fromEntries(_sce.map(([k,v])=>[k,v.color]));
 
 function normalizeIndicator(ind){
   const val=String(ind||'none').toLowerCase().trim();
@@ -2069,7 +2069,6 @@ async function fetchOne(s){
   } catch { return errSvc(s); }
 }
 
-const ICONS={none:'✓',minor:'⚠',major:'✕',maintenance:'⚙',rerouting:'⇄',unknown:'?'};
 const LOGO_DOMAINS={
   'i-Ready':'curriculumassociates.com',
   'HMH':'hmhco.com',
@@ -2100,10 +2099,6 @@ const LOGO_DOMAINS={
   'Apple Services':'apple.com',
   'Apple Developer':'developer.apple.com',
 };
-const CC={none:'',minor:'cw',major:'cb',maintenance:'cm',rerouting:'cr',unknown:'cu'};
-const IC={none:'ok',minor:'warn',major:'bad',maintenance:'maint',rerouting:'reroute',unknown:'unknown'};
-const BLOCK_CLS={none:'ok-block',minor:'warn-block',major:'bad-block',maintenance:'maint-block',rerouting:'reroute-block',unknown:'unknown-block'};
-const LABEL_COLOR={none:'var(--ok)',minor:'var(--warn)',major:'var(--bad)',maintenance:'var(--maint)',rerouting:'var(--reroute)',unknown:'var(--unknown)'};
 
 function logoSources(svc){
   const sources=[];
@@ -2636,20 +2631,14 @@ function mkSvcRow(svc){
   const preview=svc.ind!=='none'&&svc.title?svc.title:'';
   d.innerHTML=`
     <span class="svc-dot${dotPulse}" style="background:${dotColor}"></span>
-    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogoRow(this)">`:`<span>${esc(fallback)}</span>`}</div>
+    <div class="svc-icon-wrap">${logos.length?`<img src="${esc(logos[0])}" data-sources="${esc(logos.join('|'))}" data-idx="0" alt="${esc(svc.name)}" loading="lazy" decoding="async" onerror="nextLogo(this)">`:`<span>${esc(fallback)}</span>`}</div>
     <span class="svc-name">${esc(svc.name)}</span>
     <span class="svc-inc-preview">${esc(preview)}</span>
     <span class="svc-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</span>`;
   return d;
 }
 
-function nextLogoRow(img){
-  const sources=img.dataset.sources?img.dataset.sources.split('|'):[];
-  const idx=parseInt(img.dataset.idx||'0',10)+1;
-  if(idx>=sources.length){ img.style.display='none'; const fb=img.parentElement?.querySelector('span'); if(fb) fb.style.display='inline'; return; }
-  img.dataset.idx=String(idx);
-  img.src=sources[idx];
-}
+
 
 let currentView='services';
 
