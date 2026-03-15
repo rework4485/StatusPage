@@ -566,6 +566,14 @@
     .tv-tile-inc { font-size:clamp(9px,0.75vw,11px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .tv-tile-title { font-size:clamp(9px,0.8vw,12px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .tv-tile-body { font-size:clamp(8px,0.72vw,11px); color:var(--sub); line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; margin-bottom:clamp(10px,1.4vh,16px); font-size:clamp(10px,0.82vw,13px); color:var(--sub); flex-shrink:0; }
+    .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
+    .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+    .tv-net-lbl { font-weight:700; font-size:0.82em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
+    .tv-net-sep { color:var(--border); user-select:none; }
+    .tv-net-ok { color:var(--ok); font-weight:600; }
+    .tv-net-warn { color:var(--warn); font-weight:600; }
+    .tv-net-ts { font-size:0.82em; color:var(--muted); margin-left:auto; white-space:nowrap; }
     .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1.2vh,16px); flex-shrink:0; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 13px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
@@ -1938,6 +1946,7 @@ function nextLogo(img){
 let _curFilter='all';
 let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
+let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 
 function applyFilter(grid,filter){
   _curFilter=filter;
@@ -2080,8 +2089,63 @@ function renderServices(results){
   if(_boardModeActive) renderBoardView(results);
 }
 
+async function _fetchBoardNet(){
+  if(_boardNetFetching) return;
+  _boardNetFetching=true;
+  const bar=document.getElementById('tv-net-bar');
+  if(bar) bar.dataset.loading='1';
+  try{
+    const [cfR,metaR,latR]=await Promise.allSettled([
+      _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
+      _netDirectJson('https://speed.cloudflare.com/meta'),
+      measureLatency('https://cloudflare.com/cdn-cgi/trace',3),
+    ]);
+    _boardNetInfo={cf:cfR.value||{},meta:metaR.value||{},lat:latR.value||null,ts:Date.now()};
+  }catch{
+    _boardNetInfo={cf:{},meta:{},lat:null,ts:Date.now()};
+  }
+  _boardNetFetching=false;
+  _renderBoardNetBar();
+}
+
+function _renderBoardNetBar(){
+  const bar=document.getElementById('tv-net-bar');
+  if(!bar) return;
+  if(!_boardNetInfo){ bar.innerHTML='<span class="tv-net-lbl">Network</span> Loading…'; return; }
+  const {cf,meta,lat,ts}=_boardNetInfo;
+  const ip=cf.ip||'—';
+  const isp=meta.asOrganization||'—';
+  const metaColo=(meta.colo&&typeof meta.colo==='object')?meta.colo:null;
+  const colo=metaColo?.iata||(typeof meta.colo==='string'?meta.colo:null)||cf.colo||'—';
+  const city=metaColo?.city||'';
+  const edgeStr=city?colo+' · '+city:colo;
+  const latStr=lat?lat.min+' ms min':null;
+  const http=cf.http||meta.httpProtocol||null;
+  const isIPv6=(cf.ip||'').includes(':');
+  const warp=cf.warp==='on';
+  const sep=`<span class="tv-net-sep">·</span>`;
+  const parts=[
+    `<span class="tv-net-item"><span class="tv-net-lbl">IP</span>${esc(ip)}</span>`,
+    `<span class="tv-net-item"><span class="tv-net-lbl">ISP</span>${esc(isp)}</span>`,
+    `<span class="tv-net-item"><span class="tv-net-lbl">Edge</span>${esc(edgeStr)}</span>`,
+    latStr?`<span class="tv-net-item"><span class="tv-net-lbl">RTT</span>${esc(latStr)}</span>`:'',
+    http?`<span class="tv-net-item"><span class="tv-net-lbl">Proto</span><span class="${/3/.test(http)?'tv-net-ok':'tv-net-warn'}">${esc(http)}</span></span>`:'',
+    `<span class="tv-net-item"><span class="${isIPv6?'tv-net-ok':''}">${isIPv6?'IPv6':'IPv4'}</span></span>`,
+    warp?`<span class="tv-net-item tv-net-ok">WARP</span>`:'',
+    ts?`<span class="tv-net-ts">net updated ${fmtFetchAge(ts)}</span>`:'',
+  ].filter(Boolean);
+  bar.innerHTML=parts.join(sep);
+}
+
+function _startBoardNet(){
+  _fetchBoardNet();
+  clearInterval(_boardNetTimer);
+  _boardNetTimer=setInterval(_fetchBoardNet,120000);
+}
+
 function renderBoardView(results){
   _boardLastUpdate=Date.now();
+  if(!_boardNetTimer) _startBoardNet();
   let board=document.getElementById('tv-board');
   if(!board){
     board=document.createElement('div');
@@ -2118,11 +2182,13 @@ function renderBoardView(results){
       <div class="tv-board-status ${statusCls}">${statusMsg}</div>
       <div class="tv-clock" id="tv-clock"></div>
     </div>
+    <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
       <span class="tv-updated" id="tv-updated"></span>
     </div>`;
+  _renderBoardNetBar();
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
   document.getElementById('tv-tiles').addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -2141,6 +2207,8 @@ function renderBoardView(results){
 
 function exitBoardMode(){
   clearInterval(_boardClockTimer);
+  clearInterval(_boardNetTimer);
+  _boardNetTimer=null;
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
   const url=new URL(window.location);
@@ -2809,6 +2877,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const url=new URL(window.location); url.searchParams.set('board','');
     window.history.replaceState({},'',url);
     if(_lastResults.length) renderBoardView(_lastResults);
+    _startBoardNet();
   });
 
   // Theme toggle (system → light → dark → system)
