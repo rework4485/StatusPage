@@ -275,8 +275,8 @@
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
     .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(13px, 1.15vw, 24px); font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.95vw, 20px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:180px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
+    .inc-title { font-size:clamp(13px, 1vw, 18px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(12px, 0.85vw, 15px); color:var(--sub); line-height:1.55; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:200px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
@@ -293,7 +293,7 @@
     .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
     .issues-hdr.has-outage::before { background:var(--bad); }
     .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
-    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; align-items:stretch; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; align-items:stretch; }
 
     /* ── Service directory (bottom panel) ───────────────────────────────────── */
     .svc-directory { display:flex; flex-direction:column; gap:14px; }
@@ -1563,7 +1563,7 @@ async function fetchOne(s){
         const lblS=EFFECT_LABEL[effS]||effS.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
         const causeS=attrS.cause?CAUSE_LABEL[attrS.cause]||null:null;
         const hdrS=attrS.short_header||attrS.header||'';
-        const titleS=hdrS?hdrS.substring(0,100):(lblS+(causeS?' ('+causeS+')':''));
+        const titleS=hdrS?trunc(hdrS,90):(lblS+(causeS?' ('+causeS+')':''));
         const partsS=[];
         if(attrS.timeframe) partsS.push('When: '+attrS.timeframe);
         const rns=routeNamesFor(topS);
@@ -1572,7 +1572,7 @@ async function fetchOne(s){
           const extras=schedAlerts.slice(1).map(a=>{
             const aEff=a.attributes?.effect||'';
             const aHdr=a.attributes?.short_header||a.attributes?.header||'';
-            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+aHdr.substring(0,80):'');
+            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+trunc(aHdr,70):'');
           });
           partsS.push(extras.join('\n'));
         }
@@ -1592,7 +1592,7 @@ async function fetchOne(s){
       // Build title: use short_header (specific) if available, otherwise effectLabel
       const shortHdr=attr.short_header||attr.header||'';
       const titleParts=[];
-      if(shortHdr) titleParts.push(shortHdr.substring(0,100));
+      if(shortHdr) titleParts.push(trunc(shortHdr,90));
       else { titleParts.push(effectLabel); if(cause&&cause!=='Unknown') titleParts.push('('+cause+')'); }
       const title=titleParts.join(' ');
 
@@ -1602,15 +1602,22 @@ async function fetchOne(s){
       const routeIds=routeNamesFor(top);
       if(routeIds.length) parts.push('Affected: '+routeIds.join(', '));
 
-      // Additional service alerts summary
+      // Additional service alerts — group same-effect into a count, show different effects individually
       if(serviceAlerts.length>1){
-        const extras=serviceAlerts.slice(1).map(a=>{
+        const sameEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')===eff);
+        const diffEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')!==eff);
+        if(sameEff.length===1){
+          const h=trunc(sameEff[0].attributes?.short_header||sameEff[0].attributes?.header||'',70);
+          if(h) parts.push('• '+h);
+        } else if(sameEff.length>1){
+          parts.push('• '+sameEff.length+' additional '+effectLabel.toLowerCase()+'s');
+        }
+        diffEff.slice(0,2).forEach(a=>{
           const aEff=a.attributes?.effect||'';
-          const aDesc=a.attributes?.short_header||a.attributes?.header||'';
-          return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+
-            (aDesc?' — '+aDesc.substring(0,80):'');
+          const aLbl=EFFECT_LABEL[aEff]||aEff.replace(/_/g,' ');
+          const aH=trunc(a.attributes?.short_header||a.attributes?.header||'',70);
+          parts.push('• '+aLbl+(aH?' — '+aH:''));
         });
-        parts.push(extras.join('\n'));
       }
 
       // Append active schedule changes alongside service disruptions
@@ -1619,7 +1626,7 @@ async function fetchOne(s){
         const sEff=schedTop.attributes?.effect||'';
         const sHdr=schedTop.attributes?.short_header||schedTop.attributes?.header||'';
         const sLbl=EFFECT_LABEL[sEff]||'Modified Schedule';
-        parts.push('📅 '+sLbl+(sHdr?' — '+sHdr.substring(0,80):''));
+        parts.push('📅 '+sLbl+(sHdr?' — '+trunc(sHdr,70):''));
       }
 
       const body=parts.join('\n');
@@ -2857,13 +2864,15 @@ async function measureLatency(url, count, noCors) {
 }
 
 const _DOH_PROVIDERS = [
-  { name: 'Cloudflare (1.1.1.1)',  cidrs: ['1.1.1.', '1.0.0.'] },
-  { name: 'Google DNS (8.8.8.8)',  cidrs: ['8.8.8.', '8.8.4.'] },
-  { name: 'Quad9 (9.9.9.9)',       cidrs: ['9.9.9.', '149.112.112.'] },
-  { name: 'NextDNS',               cidrs: ['45.90.28.', '45.90.30.'] },
-  { name: 'AdGuard DNS',           cidrs: ['94.140.14.', '94.140.15.'] },
-  { name: 'OpenDNS',               cidrs: ['208.67.222.', '208.67.220.'] },
-  { name: 'Cloudflare WARP',       cidrs: ['162.159.', '172.64.', '104.16.', '104.17.', '104.18.', '104.19.', '104.20.', '104.21.'] },
+  // 1.1.1.x / 1.0.0.x — Cloudflare public DNS well-known IPs
+  { name: 'Cloudflare DNS (1.1.1.1)', cidrs: ['1.1.1.', '1.0.0.'] },
+  // 162.159.x / 172.64.x / 104.16–21.x — Cloudflare anycast CDN network (also serves DNS)
+  { name: 'Cloudflare DNS',           cidrs: ['162.159.', '172.64.', '104.16.', '104.17.', '104.18.', '104.19.', '104.20.', '104.21.'] },
+  { name: 'Google DNS (8.8.8.8)',     cidrs: ['8.8.8.', '8.8.4.'] },
+  { name: 'Quad9 (9.9.9.9)',          cidrs: ['9.9.9.', '149.112.112.'] },
+  { name: 'NextDNS',                  cidrs: ['45.90.28.', '45.90.30.'] },
+  { name: 'AdGuard DNS',              cidrs: ['94.140.14.', '94.140.15.'] },
+  { name: 'OpenDNS',                  cidrs: ['208.67.222.', '208.67.220.'] },
 ];
 
 function classifyResolver(ip) {
@@ -2927,6 +2936,8 @@ function mkShimmer() {
   return '<div class="net-shimmer net-shimmer-wide"></div><div class="net-shimmer net-shimmer-mid"></div><div class="net-shimmer net-shimmer-short"></div>';
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Truncate at a word boundary with ellipsis
+function trunc(s,n){ s=String(s||''); if(s.length<=n) return s; const cut=s.lastIndexOf(' ',n); return (cut>n/2?s.slice(0,cut):s.slice(0,n))+'…'; }
 
 let netDiagRan = false;
 let netDiagRunning = false;
