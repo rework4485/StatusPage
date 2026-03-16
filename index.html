@@ -537,6 +537,13 @@
     .wx-updated { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
     /* Board weather card */
     .tv-wx-card { display:flex; align-items:center; gap:clamp(12px,1.5vw,22px); padding:clamp(10px,1.3vh,18px) clamp(16px,1.8vw,28px); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; flex-shrink:0; overflow:hidden; min-width:0; }
+    .tv-wx-now { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); flex-shrink:0; }
+    .tv-wx-divider { width:1px; align-self:stretch; background:rgba(255,255,255,0.1); flex-shrink:0; margin:0 clamp(4px,0.5vw,8px); }
+    .tv-wx-forecast { display:flex; align-items:center; gap:clamp(10px,1.2vw,20px); flex-shrink:0; }
+    .tv-wx-hour { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:clamp(38px,4vw,60px); }
+    .tv-wx-hr-time { font-size:clamp(10px,0.85vw,14px); font-weight:700; color:var(--muted); letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; }
+    .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,32px); line-height:1; }
+    .tv-wx-hr-temp { font-size:clamp(13px,1.2vw,19px); font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
     .tv-wx-icon-big { font-size:clamp(44px,5vw,76px); line-height:1; flex-shrink:0; }
     .tv-wx-details-col { display:flex; flex-direction:column; gap:2px; min-width:0; }
     .tv-wx-temp-big { font-size:clamp(36px,4.2vw,64px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
@@ -565,16 +572,40 @@
 
     /* ── TV / Status board mode ──────────────────────────────────────────────── */
     .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,44px); overflow:hidden; }
-    .tv-board-hdr { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
-    .tv-board-brand { display:flex; align-items:center; gap:12px; font-size:clamp(15px,1.4vw,22px); font-weight:700; letter-spacing:-0.01em; color:var(--muted); }
-    .tv-board-status { font-size:clamp(18px,2.2vw,36px); font-weight:800; padding:10px 28px; border-radius:100px; letter-spacing:-0.01em; }
+    .tv-board-hdr { display:flex; align-items:center; gap:clamp(14px,1.6vw,24px); margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
+    .tv-board-brand { display:flex; align-items:center; gap:clamp(10px,1vw,16px); flex-shrink:0; }
+    .tv-brand-icon { width:clamp(34px,3.2vw,52px); height:clamp(34px,3.2vw,52px); border-radius:11px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .tv-brand-icon svg { width:55%; height:55%; }
+    .tv-brand-text { display:flex; flex-direction:column; gap:2px; }
+    .tv-brand-name { font-size:clamp(15px,1.4vw,24px); font-weight:700; letter-spacing:-0.02em; color:var(--text); }
+    .tv-brand-sub { font-size:clamp(10px,0.75vw,14px); font-weight:600; color:var(--muted); letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-hdr-center { display:flex; flex-direction:column; align-items:center; gap:clamp(6px,0.8vh,10px); flex:1; }
+    .tv-board-status { font-size:clamp(16px,1.8vw,30px); font-weight:800; padding:8px 24px; border-radius:100px; letter-spacing:-0.01em; white-space:nowrap; }
     .tv-board-status.ok   { background:rgba(34,197,94,0.12);  border:2px solid rgba(34,197,94,0.3);  color:#4ade80; }
     .tv-board-status.warn { background:rgba(245,158,11,0.12); border:2px solid rgba(245,158,11,0.35); color:#fbbf24; }
     .tv-board-status.bad  { background:rgba(239,68,68,0.12);  border:2px solid rgba(239,68,68,0.35);  color:#f87171; }
-    .tv-clock { font-size:clamp(26px,3.4vw,56px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
-    /* Info row: weather card + network bar side by side */
-    .tv-info-row { display:flex; align-items:stretch; gap:clamp(10px,1.2vw,18px); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; min-height:0; }
-    .tv-net-bar { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); min-width:0; }
+    .tv-hdr-stats { display:flex; align-items:center; gap:clamp(10px,1.4vw,22px); flex-wrap:wrap; justify-content:center; }
+    .tv-hdr-stat { display:inline-flex; align-items:center; gap:5px; font-size:clamp(12px,0.95vw,16px); color:var(--sub); white-space:nowrap; }
+    .tv-hdr-stat strong { font-size:clamp(13px,1.05vw,18px); font-weight:700; color:var(--text); }
+    .tv-hdr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+    .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
+    /* Weather card in header — wider with larger text + 3-hour forecast */
+    .tv-wx-hdr { flex-shrink:0; min-width:clamp(260px,28vw,480px); padding:clamp(10px,1.1vh,16px) clamp(16px,1.6vw,26px) !important; border-radius:12px !important; gap:clamp(12px,1.3vw,20px) !important; }
+    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(34px,3.4vw,52px) !important; }
+    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(26px,2.6vw,40px) !important; letter-spacing:-0.02em !important; }
+    .tv-wx-hdr .tv-wx-cond { font-size:clamp(14px,1.2vw,20px) !important; }
+    .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.9vw,15px) !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.78vw,13px) !important; padding:3px 9px !important; }
+    .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
+    .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
+    .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
+    /* Issue page dots */
+    .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
+    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
+    .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.75); }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
     .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.75em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:3px; }
@@ -722,7 +753,7 @@
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
     .tv-board-minimal .tv-tiles,
-    .tv-board-minimal .tv-info-row,
+    .tv-board-minimal .tv-net-bar,
     .tv-board-minimal .tv-issues-section,
     .tv-board-minimal .tv-section-hdr { display:none !important; }
     .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
@@ -1157,7 +1188,6 @@ function _showBoardAlert(svc, kind) {
   const el = document.createElement('div');
   el.className = `tv-alert-toast ${indCls}`;
   el.innerHTML = `${icon} <span class="tv-alert-svc">${esc(svc.name)}</span><span class="tv-alert-msg">— ${msg}</span>`;
-  board.style.position='relative';
   board.appendChild(el);
   setTimeout(()=>el.classList.add('tv-alert-hide'), 6000);
   setTimeout(()=>el.remove(), 7000);
@@ -2302,6 +2332,8 @@ let _curFilter='all';
 let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
+let _issuePageTimer=null,_issuePage=0;
+const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=20;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
 
 async function _fetchWeather(){
@@ -2313,14 +2345,15 @@ async function _fetchWeather(){
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
     const loc=locName;
-    const forecastUrl=pt.properties.forecast;
+    const forecastHourlyUrl=pt.properties.forecastHourly;
     const [fR,aR]=await Promise.allSettled([
-      fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
       fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
     ]);
-    const period=fR.value?.properties?.periods?.[0];
+    const periods=(fR.value?.properties?.periods||[]).slice(0,4);
+    const period=periods[0]||null;
     const alerts=(aR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
-    _wxInfo={loc,period,alerts,ts:Date.now()};
+    _wxInfo={loc,period,periods,alerts,ts:Date.now()};
   }catch{_wxInfo={err:'Weather unavailable'};}
   _wxFetching=false;
   _renderWeather();
@@ -2352,28 +2385,54 @@ function _renderWeather(){
   _renderBoardWeatherBar();
 }
 
+function _wxIcon(cond,isDaytime){
+  if(isDaytime===false) return '🌙';
+  if(/sunny|clear/i.test(cond)) return '☀️';
+  if(/partly.*cloud|mostly.*clear/i.test(cond)) return '⛅';
+  if(/cloud/i.test(cond)) return '☁️';
+  if(/thunder|storm/i.test(cond)) return '⛈';
+  if(/rain|shower|drizzle/i.test(cond)) return '🌧';
+  if(/snow|blizzard/i.test(cond)) return '❄️';
+  if(/fog|mist/i.test(cond)) return '🌫';
+  if(/wind/i.test(cond)) return '💨';
+  return '🌡';
+}
+
 function _renderBoardWeatherBar(){
   const bwb=document.getElementById('tv-wx-bar');
   if(!bwb) return;
   if(!_wxInfo||_wxInfo.err){bwb.style.display='none';return;}
-  const{loc,period,alerts}=_wxInfo;
+  const{loc,period,periods,alerts}=_wxInfo;
   const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
   const cond=period?.shortForecast||'';
-  const cStr=cond.substring(0,50);
-  const icon=period?.isDaytime===false?'🌙':cond.match(/sunny|clear/i)?'☀️':cond.match(/cloud/i)?'⛅':cond.match(/rain|shower/i)?'🌧':cond.match(/snow/i)?'❄️':cond.match(/thunder|storm/i)?'⛈':'🌡';
+  const icon=_wxIcon(cond,period?.isDaytime);
   const alertsHTML=alerts.slice(0,2).map(a=>{
     const ev=a.properties?.event||'';
     const isMajor=/warning/i.test(ev);
     return `<span class="tv-wx-alert-tag${isMajor?' wx-major':''}">&#9888; ${esc(ev)}</span>`;
   }).join('');
+  // Next 3 hourly slots (periods[1..3])
+  const forecastSlotsHTML=(periods||[]).slice(1,4).map(p=>{
+    const t=p.temperature?`${p.temperature}°`:'';
+    const hr=p.startTime?new Date(p.startTime).toLocaleTimeString('en-US',{hour:'numeric',hour12:true}):'';
+    const ic=_wxIcon(p.shortForecast||'',p.isDaytime);
+    return `<div class="tv-wx-hour">
+      <div class="tv-wx-hr-time">${esc(hr)}</div>
+      <div class="tv-wx-hr-icon">${ic}</div>
+      <div class="tv-wx-hr-temp">${esc(t)}</div>
+    </div>`;
+  }).join('');
   bwb.innerHTML=`
-    <div class="tv-wx-icon-big">${icon}</div>
-    <div class="tv-wx-details-col">
-      ${temp?`<div class="tv-wx-temp-big">${esc(temp)}</div>`:''}
-      ${cStr?`<div class="tv-wx-cond">${esc(cStr)}</div>`:''}
-      ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
+    <div class="tv-wx-now">
+      <div class="tv-wx-icon-big">${icon}</div>
+      <div class="tv-wx-details-col">
+        ${temp?`<div class="tv-wx-temp-big">${esc(temp)}</div>`:''}
+        ${cond?`<div class="tv-wx-cond">${esc(cond.substring(0,40))}</div>`:''}
+        ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
+      </div>
+      ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
     </div>
-    ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
+    ${forecastSlotsHTML?`<div class="tv-wx-divider"></div><div class="tv-wx-forecast">${forecastSlotsHTML}</div>`:''}
   `;
   bwb.style.display='';
 }
@@ -2662,6 +2721,51 @@ function _startBoardNet(){
   _boardNetTimer=setInterval(_fetchBoardNet,120000);
 }
 
+function _buildIssueTilesHTML(svcs){
+  return svcs.map(svc=>{
+    const logos=logoSources(svc);
+    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+    const logoEl=logos.length
+      ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
+      :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
+    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+      <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
+      <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
+      ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
+      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function _showIssuePage(issueSvcs, pageIdx){
+  const tilesEl=document.getElementById('tv-issue-tiles');
+  if(!tilesEl) return;
+  const page=issueSvcs.slice(pageIdx*ISSUE_PAGE_SIZE,(pageIdx+1)*ISSUE_PAGE_SIZE);
+  tilesEl.style.transition='opacity 0.35s';
+  tilesEl.style.opacity='0';
+  setTimeout(()=>{
+    tilesEl.innerHTML=_buildIssueTilesHTML(page);
+    _optimizeBoardLayout();
+    tilesEl.style.opacity='1';
+  },350);
+  const dotsEl=document.getElementById('tv-page-dots');
+  if(dotsEl) dotsEl.querySelectorAll('.tv-page-dot').forEach((d,i)=>d.classList.toggle('active',i===pageIdx));
+  const pgNumEl=document.getElementById('tv-page-num');
+  if(pgNumEl) pgNumEl.textContent=pageIdx+1;
+}
+
+function _initIssuePagination(issueSvcs){
+  clearInterval(_issuePageTimer);
+  _issuePageTimer=null;
+  _issuePage=0;
+  const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  if(totalPages<=1) return;
+  _issuePageTimer=setInterval(()=>{
+    _issuePage=(_issuePage+1)%totalPages;
+    _showIssuePage(issueSvcs,_issuePage);
+  },ISSUE_PAGE_SECS*1000);
+}
+
 function renderBoardView(results){
   _boardLastUpdate=Date.now();
   if(!_boardNetTimer) _startBoardNet();
@@ -2678,26 +2782,22 @@ function renderBoardView(results){
   const techSvcs=results.filter(s=>{const sv=SVCS.find(x=>x.name===s.name);return !sv||sv.cat!=='transit';});
   const issueCount=techSvcs.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
   const outageCount=techSvcs.filter(s=>s.ind==='major').length;
+  const warnCount=techSvcs.filter(s=>s.ind==='minor'||s.ind==='reroute').length;
+  const maintCount=techSvcs.filter(s=>s.ind==='maint').length;
+  const okCount=techSvcs.filter(s=>s.ind==='none').length;
   const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
   const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
   const statusColor=outageCount>0?'var(--bad)':issueCount>0?'var(--warn)':'var(--ok)';
   // Split into services with active issues vs healthy services
   const issueSvcs=sorted.filter(s=>s.ind!=='none'&&s.ind!=='unknown');
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
-  // Build large prominent issue tiles
-  const issueTilesHTML=issueSvcs.map(svc=>{
-    const logos=logoSources(svc);
-    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-    const logoEl=logos.length
-      ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
-      :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
-    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
-      <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
-      <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
-      ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
-      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
-    </div>`;
-  }).join('');
+  // Build first page of issue tiles (pagination shows 3 at a time)
+  const firstPageSvcs=issueSvcs.slice(0,ISSUE_PAGE_SIZE);
+  const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
+  const totalIssuePages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  const issueDotsHTML=totalIssuePages>1
+    ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
+    :'';
   // Build compact subdued normal-service tiles
   const normalTilesHTML=normalSvcs.map(svc=>{
     const logos=logoSources(svc);
@@ -2714,24 +2814,37 @@ function renderBoardView(results){
   board.innerHTML=`
     <div class="tv-board-hdr">
       <div class="tv-board-brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
-        Service Status
+        <div class="tv-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="tv-brand-text">
+          <div class="tv-brand-name">Service Status</div>
+          <div class="tv-brand-sub">Live Monitoring</div>
+        </div>
       </div>
-      <div class="tv-board-status ${statusCls}">${statusMsg}</div>
-      <div class="tv-clock" id="tv-clock"></div>
+      <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
+      <div class="tv-hdr-center">
+        <div class="tv-board-status ${statusCls}">${statusMsg}</div>
+        <div class="tv-hdr-stats">
+          ${outageCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--bad)"></span><strong>${outageCount}</strong>&nbsp;Down</span>`:''}
+          ${maintCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--maint)"></span><strong>${maintCount}</strong>&nbsp;Maintenance</span>`:''}
+        </div>
+      </div>
+      <div class="tv-hdr-time">
+        <div class="tv-date" id="tv-date"></div>
+        <div class="tv-clock" id="tv-clock"></div>
+      </div>
     </div>
-    <div class="tv-info-row">
-      <div class="tv-wx-card" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
-    </div>
+    <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-minimal-status">
       <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
       <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
     </div>
     ${issueSvcs.length?`
     <div class="tv-issues-section">
-      <div class="tv-section-hdr issue-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected</div>
+      <div class="tv-section-hdr issue-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
+      ${issueDotsHTML}
     </div>`:''}
     ${normalSvcs.length?`<div class="tv-section-hdr" style="margin-top:${issueSvcs.length?'2px':'0'};"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> All Services &mdash; ${normalSvcs.length} operational</div>`:''}
     <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
@@ -2742,6 +2855,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
+  _initIssuePagination(issueSvcs);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
@@ -2768,10 +2882,13 @@ function renderBoardView(results){
   }
   clearInterval(_boardClockTimer);
   const tick=()=>{
+    const now=new Date();
     const cl=document.getElementById('tv-clock');
-    if(cl) cl.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    if(cl) cl.textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const dt=document.getElementById('tv-date');
+    if(dt) dt.textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
     const mc=document.getElementById('tv-minimal-clock');
-    if(mc) mc.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    if(mc) mc.textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
     const up=document.getElementById('tv-updated');
     if(up&&_boardLastUpdate) up.textContent='Updated '+fmtFetchAge(_boardLastUpdate)+' ago';
   };
@@ -2783,6 +2900,8 @@ function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
+  clearInterval(_issuePageTimer);
+  _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
