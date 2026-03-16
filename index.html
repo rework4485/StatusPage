@@ -604,6 +604,10 @@
     .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
     .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
     .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
+    .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:clamp(180px,18vw,320px); max-width:clamp(220px,22vw,360px); }
+    .tv-now-playing-label { font-size:clamp(9px,0.8vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .tv-now-playing-track { font-size:clamp(12px,1.05vw,17px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-now-playing-meta { font-size:clamp(11px,0.9vw,14px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -1068,6 +1072,7 @@ const PREFERRED_TTS_VOICES=[
 ];
 
 const BOARD_RADIO_STREAM_URL='https://stream.x1023.fm/HD1';
+const BOARD_NOW_PLAYING_URL='https://stream.x1023.fm/stats?sid=2&json=1';
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
 let _boardRadioEnabled=localStorage.getItem('board-radio-enabled')!=='0';
@@ -1429,7 +1434,8 @@ const ROUTE_KEYS = {
   "https://speed.cloudflare.com/meta": "speed-meta",
   "https://ip-api.com/json": "ip-api",
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
-  "https://dns.google/generate_204": "google-204"
+  "https://dns.google/generate_204": "google-204",
+  "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies"]);
 /* @routes-end */
@@ -2431,6 +2437,7 @@ let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
 const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
+let _nowPlayingInfo=null,_nowPlayingTimer=null,_nowPlayingFetching=false;
 
 async function _fetchWeather(){
   if(_wxFetching) return;
@@ -2494,6 +2501,35 @@ function _wxIcon(cond,isDaytime){
   return '🌡';
 }
 
+function _parseNowPlayingSong(songtitle){
+  const raw=String(songtitle||'').trim();
+  if(!raw) return {track:'Station ID',artist:"Cape Cod's X"};
+  const parts=raw.split(' - ').map(v=>v.trim()).filter(Boolean);
+  if(parts.length>=2){
+    return {artist:parts[0],track:parts[1],extra:parts.slice(2).join(' - ')};
+  }
+  return {track:raw,artist:''};
+}
+
+async function _fetchNowPlaying(){
+  if(_nowPlayingFetching) return;
+  _nowPlayingFetching=true;
+  try{
+    const data=await getJson(BOARD_NOW_PLAYING_URL);
+    const parsed=_parseNowPlayingSong(data?.songtitle||'');
+    _nowPlayingInfo={
+      ...parsed,
+      listeners:Number.isFinite(Number(data?.currentlisteners))?Number(data.currentlisteners):null,
+      ts:Date.now(),
+      err:null
+    };
+  }catch{
+    if(!_nowPlayingInfo) _nowPlayingInfo={track:'',artist:'',listeners:null,ts:0,err:'unavailable'};
+  }
+  _nowPlayingFetching=false;
+  _renderBoardWeatherBar();
+}
+
 function _renderBoardWeatherBar(){
   const bwb=document.getElementById('tv-wx-bar');
   if(!bwb) return;
@@ -2518,6 +2554,11 @@ function _renderBoardWeatherBar(){
       <div class="tv-wx-hr-temp">${esc(t)}</div>
     </div>`;
   }).join('');
+  const nowPlayingTrack=_nowPlayingInfo?.track||'Loading…';
+  const nowPlayingArtist=_nowPlayingInfo?.artist||'';
+  const nowPlayingMeta=[];
+  if(nowPlayingArtist) nowPlayingMeta.push(nowPlayingArtist);
+  if(Number.isFinite(_nowPlayingInfo?.listeners)) nowPlayingMeta.push(`${_nowPlayingInfo.listeners} listener${_nowPlayingInfo.listeners===1?'':'s'}`);
   bwb.innerHTML=`
     <div class="tv-wx-now">
       <div class="tv-wx-icon-big">${icon}</div>
@@ -2527,6 +2568,12 @@ function _renderBoardWeatherBar(){
         ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
       </div>
       ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
+    </div>
+    <div class="tv-wx-divider"></div>
+    <div class="tv-now-playing">
+      <div class="tv-now-playing-label">Now Playing</div>
+      <div class="tv-now-playing-track" title="${esc(nowPlayingTrack)}">${esc(nowPlayingTrack)}</div>
+      <div class="tv-now-playing-meta" title="${esc(nowPlayingMeta.join(' · '))}">${esc(nowPlayingMeta.join(' · ')||"Cape Cod's X")}</div>
     </div>
     ${forecastSlotsHTML?`<div class="tv-wx-divider"></div><div class="tv-wx-forecast">${forecastSlotsHTML}</div>`:''}
   `;
@@ -2887,6 +2934,7 @@ function renderBoardView(results){
   _boardLastUpdate=Date.now();
   if(!_boardNetTimer) _startBoardNet();
   if(!_wxInfo) _fetchWeather();
+  if(!_nowPlayingInfo) _fetchNowPlaying();
   let board=document.getElementById('tv-board');
   if(!board){
     board=document.createElement('div');
@@ -3905,11 +3953,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Weather: fetch on load, then refresh every 15 minutes
   _fetchWeather();
   _wxTimer=setInterval(_fetchWeather, 15*60*1000);
+  _fetchNowPlaying();
+  _nowPlayingTimer=setInterval(_fetchNowPlaying, 30000);
 
   window.addEventListener('beforeunload',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
     clearInterval(refreshInterval);
     clearInterval(_wxTimer);
+    clearInterval(_nowPlayingTimer);
     clearTimeout(_uptimeFlushTimer);
     _flushUptimeLog();
   });
