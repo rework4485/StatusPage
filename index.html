@@ -2350,7 +2350,7 @@ async function _fetchWeather(){
       fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
       fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
     ]);
-    const periods=(fR.value?.properties?.periods||[]).slice(0,4);
+    const periods=(fR.value?.properties?.periods||[]).slice(0,5);
     const period=periods[0]||null;
     const alerts=(aR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
     _wxInfo={loc,period,periods,alerts,ts:Date.now()};
@@ -2797,6 +2797,7 @@ function renderBoardView(results){
     board.id='tv-board';
     board.className='tv-board';
     document.body.appendChild(board);
+    _startBoardCursorHide();
   }
   const srt=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
   const sorted=srt(results);
@@ -2844,9 +2845,6 @@ function renderBoardView(results){
         </div>
       </div>
       <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-hdr-center">
-        <div class="tv-board-status ${statusCls}">${statusMsg}</div>
-      </div>
       <div class="tv-hdr-time">
         <div class="tv-date" id="tv-date"></div>
         <div class="tv-clock" id="tv-clock"></div>
@@ -2913,6 +2911,23 @@ function renderBoardView(results){
   _boardClockTimer=setInterval(tick,1000);
 }
 
+let _boardCursorTimer=null;
+function _boardShowCursor(){
+  document.body.style.cursor='';
+  clearTimeout(_boardCursorTimer);
+  _boardCursorTimer=setTimeout(()=>{ if(_boardModeActive) document.body.style.cursor='none'; },3000);
+}
+function _startBoardCursorHide(){
+  document.addEventListener('mousemove',_boardShowCursor);
+  _boardShowCursor();
+}
+function _stopBoardCursorHide(){
+  document.removeEventListener('mousemove',_boardShowCursor);
+  clearTimeout(_boardCursorTimer);
+  _boardCursorTimer=null;
+  document.body.style.cursor='';
+}
+
 function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
@@ -2920,6 +2935,7 @@ function exitBoardMode(){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
+  _stopBoardCursorHide();
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
   const url=new URL(window.location);
@@ -3709,6 +3725,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     window.history.replaceState({},'',url);
     if(_lastResults.length) renderBoardView(_lastResults);
     _startBoardNet();
+    _startBoardCursorHide();
   });
 
   // Theme toggle (system → light → dark → system)
