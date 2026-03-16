@@ -39,7 +39,8 @@
     "ip-api": "https://ip-api.com/json",
     "doh-cloudflare": "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json",
     "google-204": "https://dns.google/generate_204",
-    "x1023-now-playing": "https://stream.x1023.fm/stats?sid=2&json=1"
+    "x1023-now-playing": "https://stream.x1023.fm/stats?sid=2&json=1",
+    "openai-summary": "https://status.openai.com/api/v2/summary.json"
   },
   "special": [
     "ioda-na-outages",
