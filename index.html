@@ -2333,7 +2333,7 @@ let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
-const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=20;
+const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
 
 async function _fetchWeather(){
@@ -2754,16 +2754,37 @@ function _showIssuePage(issueSvcs, pageIdx){
   if(pgNumEl) pgNumEl.textContent=pageIdx+1;
 }
 
+function _scheduleNextIssuePage(issueSvcs, totalPages){
+  clearTimeout(_issuePageTimer);
+  _issuePageTimer=null;
+  // Wait a short time for requestAnimationFrame in _optimizeBoardLayout to finish
+  // computing scroll distances, then determine dwell based on actual scroll duration
+  setTimeout(()=>{
+    const issueEl=document.getElementById('tv-issue-tiles');
+    let maxScrollDur=0;
+    if(issueEl){
+      issueEl.querySelectorAll('.tv-issue-body-inner').forEach(inner=>{
+        const d=parseFloat(inner.style.getPropertyValue('--tv-scroll-dur'))||0;
+        if(d>maxScrollDur) maxScrollDur=d;
+      });
+    }
+    // Dwell = full scroll animation + 8s buffer to read bottom, minimum ISSUE_PAGE_SECS
+    const dwell=Math.max(ISSUE_PAGE_SECS, maxScrollDur+8);
+    _issuePageTimer=setTimeout(()=>{
+      _issuePage=(_issuePage+1)%totalPages;
+      _showIssuePage(issueSvcs,_issuePage);
+      _scheduleNextIssuePage(issueSvcs,totalPages);
+    },dwell*1000);
+  },600);
+}
+
 function _initIssuePagination(issueSvcs){
-  clearInterval(_issuePageTimer);
+  clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   _issuePage=0;
   const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
   if(totalPages<=1) return;
-  _issuePageTimer=setInterval(()=>{
-    _issuePage=(_issuePage+1)%totalPages;
-    _showIssuePage(issueSvcs,_issuePage);
-  },ISSUE_PAGE_SECS*1000);
+  _scheduleNextIssuePage(issueSvcs,totalPages);
 }
 
 function renderBoardView(results){
@@ -2900,7 +2921,7 @@ function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
-  clearInterval(_issuePageTimer);
+  clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
