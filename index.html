@@ -207,7 +207,7 @@
     #services-grid {
       display:flex;
       flex-direction:column;
-      gap:20px;
+      gap:12px;
       padding-bottom:28px;
     }
     .loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 0; }
@@ -218,7 +218,7 @@
     .card {
       background:linear-gradient(170deg, rgba(255,255,255,0.02), transparent 44%), var(--card);
       border:1px solid var(--border); border-radius:16px;
-      padding:16px 18px; display:flex; flex-direction:column; position:relative; overflow:hidden;
+      padding:12px 14px 10px; display:flex; flex-direction:column; position:relative; overflow:hidden;
       transition:border-color 0.3s, box-shadow 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1); cursor:pointer; animation:cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
       will-change:transform;
     }
@@ -247,7 +247,7 @@
     .card.cw { border-color:rgba(245,158,11,0.13); }
     .card.cu { border-color:rgba(107,114,128,0.16); background:linear-gradient(160deg, #111113, rgba(107,114,128,0.04)); }
     .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
-    .card-title-row { display:flex; align-items:center; gap:10px; min-width:0; }
+    .card-title-row { display:flex; align-items:center; gap:10px; min-width:0; flex:1; overflow:hidden; }
     .c-icon {
       width:42px; height:42px; border-radius:10px; flex-shrink:0;
       display:flex; align-items:center; justify-content:center; font-size:20px;
@@ -261,6 +261,7 @@
     .c-logo { width:26px; height:26px; border-radius:5px; object-fit:contain; background:rgba(255,255,255,0.92); padding:2px; }
     .c-fallback { font-size:18px; font-weight:700; line-height:1; }
     .c-name { font-size:clamp(14px, 1.1vw, 20px); font-weight:700; letter-spacing:-0.02em; line-height:1.2; word-break:break-word; }
+    .c-name-block { min-width:0; overflow:hidden; }
     .c-url { font-size:13px; color:var(--muted); margin-top:3px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s; }
     .c-url:hover { color:var(--sub); }
     .c-badge {
@@ -274,23 +275,23 @@
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:10px; }
-    .inc-block { border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
     .inc-block.maint-block { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15); }
     .inc-block.reroute-block { background:rgba(20,184,166,0.06); border:1px solid rgba(20,184,166,0.15); }
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
-    .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+    .inc-label { font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(14px, 1.1vw, 20px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(13px, 0.95vw, 17px); color:var(--sub); line-height:1.55; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:200px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
+    .inc-title { font-size:clamp(13px, 1vw, 18px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(12px, 0.9vw, 15px); color:var(--sub); line-height:1.5; display:block; overflow-wrap:anywhere; white-space:pre-wrap; max-height:160px; overflow-y:auto; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:6px; border-top:1px solid var(--border); margin-top:8px; gap:8px; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
     .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
     .meta-tag { font-size:11px; font-weight:600; color:var(--muted); padding:3px 9px; border-radius:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
@@ -301,10 +302,10 @@
     .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
     .issues-hdr.has-outage::before { background:var(--bad); }
     .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
-    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; align-items:stretch; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:start; }
 
     /* ── Service directory (bottom panel) ───────────────────────────────────── */
-    .svc-directory { display:flex; flex-direction:column; gap:14px; }
+    .svc-directory { display:flex; flex-direction:column; gap:10px; }
     .svc-cat-sec { display:flex; flex-direction:column; gap:6px; }
     .svc-cat-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--sub); padding:2px 0; }
     .svc-cat-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
@@ -313,7 +314,7 @@
     .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
     .svc-cat-badge.bad { color:var(--bad); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); }
     .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:46px; }
+    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:40px; }
     .svc-row:last-child { border-bottom:none; }
     .svc-row:hover { background:rgba(255,255,255,0.035); }
     .svc-row:active { background:rgba(255,255,255,0.065); }
@@ -554,8 +555,8 @@
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
 
     /* ── Status summary banner ───────────────────────────────────────────────── */
-    .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
-    .status-summary.show { display:flex; }
+    .status-summary { display:none !important; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
+    .status-summary.show { display:none !important; }
     .status-summary.ok { background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); color:#4ade80; }
     .status-summary.warn { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
     .status-summary.bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); color:#f87171; }
@@ -594,16 +595,25 @@
     .tv-hdr-weather .tv-wx-hour { min-width:clamp(34px,3.5vw,54px); }
     /* Now playing + audio in header */
     .tv-hdr-media { display:flex; flex-direction:column; align-items:flex-start; gap:clamp(5px,0.6vh,9px); min-width:0; justify-content:center; }
-    .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
+    .tv-now-playing { display:flex; flex-direction:row; align-items:center; gap:clamp(8px,0.9vw,14px); min-width:0; width:100%; }
+    .tv-np-text { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+    .tv-np-cover { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; object-fit:cover; flex-shrink:0; }
     .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
     .tv-now-playing-track { font-size:clamp(18px,1.9vw,32px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-now-playing-meta { font-size:clamp(14px,1.4vw,22px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-np-duck-label { display:none; font-size:clamp(10px,0.82vw,13px); font-weight:600; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; }
+    .tv-np-ducked .tv-now-playing-track,
+    .tv-np-ducked .tv-now-playing-meta { opacity:0.35; transition:opacity 0.4s; }
+    .tv-np-ducked .tv-np-duck-label { display:block; }
     .tv-ctx-audio { display:flex; align-items:center; gap:12px; flex-shrink:0; }
     .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.22); background:transparent; color:var(--text); border-radius:0; padding:3px 18px 3px 0; font-size:clamp(11px,0.88vw,14px); font-weight:600; font-family:var(--font); }
     .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.8); }
     .tv-radio-toggle { display:inline-flex; align-items:center; gap:6px; border:none; border-bottom:1px solid rgba(255,255,255,0.22); border-radius:0; padding:3px 0; background:transparent; color:var(--sub); font-size:clamp(11px,0.88vw,14px); font-weight:600; cursor:pointer; }
     .tv-radio-toggle input { accent-color:#22c55e; width:13px; height:13px; cursor:pointer; }
     .tv-radio-toggle span { color:var(--text); }
+    .tv-radio-vol-slider { -webkit-appearance:none; appearance:none; width:clamp(44px,4.5vw,72px); height:3px; border-radius:2px; background:rgba(255,255,255,0.2); outline:none; cursor:pointer; flex-shrink:0; align-self:center; }
+    .tv-radio-vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; border-radius:50%; background:var(--text); cursor:pointer; }
+    .tv-radio-vol-slider::-moz-range-thumb { width:11px; height:11px; border-radius:50%; background:var(--text); border:none; cursor:pointer; }
     /* Clock */
     .tv-clock-block { display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; }
     .tv-clock { font-size:clamp(28px,3.2vw,54px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); letter-spacing:-0.02em; line-height:1.1; }
@@ -622,7 +632,7 @@
     .tv-issue-tile-top { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); }
     .tv-issue-logo { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:#fff; object-fit:contain; flex-shrink:0; }
     .tv-issue-logo-fb { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:700; flex-shrink:0; }
-    .tv-issue-name { font-size:clamp(18px,2.1vw,34px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-issue-name { font-size:clamp(15px,1.8vw,30px); font-weight:700; letter-spacing:-0.02em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.2; }
     .tv-issue-badge { font-size:clamp(13px,1.3vw,20px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
     .tv-issue-badge.warn   { color:var(--warn); }
     .tv-issue-badge.bad    { color:var(--bad); }
@@ -633,6 +643,18 @@
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
+    /* Issue tile structured content — route pills, DC badges */
+    .tv-issue-routes { display:flex; flex-wrap:wrap; gap:clamp(4px,0.5vw,8px); margin-bottom:clamp(4px,0.5vh,8px); }
+    .tv-issue-route { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:100px; padding:2px clamp(7px,0.8vw,13px); font-size:clamp(11px,1.1vw,17px); font-weight:600; white-space:nowrap; color:var(--text); }
+    .tv-issue-effect { background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4); border-radius:100px; padding:2px clamp(7px,0.8vw,13px); font-size:clamp(11px,1.1vw,17px); font-weight:600; white-space:nowrap; color:var(--warn); }
+    .tv-issue-timeframe { font-size:clamp(12px,1.2vw,19px); color:rgba(255,255,255,0.6); line-height:1.4; }
+    .tv-issue-dc-list { display:flex; flex-wrap:wrap; gap:clamp(4px,0.5vw,8px); }
+    .tv-issue-dc-item { border-radius:8px; padding:clamp(3px,0.3vh,5px) clamp(8px,0.9vw,14px); font-size:clamp(11px,1.1vw,17px); font-weight:700; letter-spacing:0.04em; }
+    .tv-issue-dc-item.reroute { background:rgba(20,184,166,0.18); border:1px solid rgba(20,184,166,0.45); color:var(--reroute); }
+    .tv-issue-dc-item.maint   { background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.45); color:#60a5fa; }
+    .tv-issue-cf-body { font-size:clamp(13px,1.2vw,18px); color:rgba(255,255,255,0.7); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .tv-issue-section-hdr { font-size:clamp(9px,0.75vw,12px); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.32); margin-top:clamp(6px,0.7vh,10px); padding-bottom:clamp(3px,0.3vh,4px); border-bottom:1px solid rgba(255,255,255,0.08); }
+    .tv-issue-maint-item { font-size:clamp(12px,1.1vw,17px); color:rgba(255,255,255,0.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:clamp(2px,0.2vh,4px) 0; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -700,8 +722,8 @@
     #n-ok { color:var(--ok) !important; }
 
     /* ── Per-service refresh time & stale indicator ───────────────────────────── */
-    .card-fetched { font-size:11px; color:var(--muted); margin-left:2px; }
-    .card-fetched.stale { color:#f59e0b; font-weight:600; }
+    .card-fetched,.card-age-ts { font-size:11px; color:var(--muted); }
+    .card-fetched.stale,.card-age-ts.stale { color:#f59e0b; font-weight:600; }
 
     /* ── Mobile responsive ───────────────────────────────────────────────────── */
     @media (max-width: 640px) {
@@ -760,16 +782,38 @@
     .svc-uptime.up-ok   { color:var(--ok);   background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.15); }
     .svc-uptime.up-warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15); }
     .svc-uptime.up-bad  { color:var(--bad);  background:rgba(239,68,68,0.08);  border:1px solid rgba(239,68,68,0.15); }
+    @media (min-width:1100px) {
+      .svc-table { display:grid; grid-template-columns:1fr 1fr; }
+      .svc-row { border-bottom:1px solid var(--border); }
+    }
     @media (min-width:1300px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto auto; } .svc-uptime { display:inline-flex; } }
 
-    /* ── Incident body show-more ────────────────────────────────────────────── */
-    .inc-body-wrap { position:relative; }
-    .inc-body-wrap .inc-body { max-height:none; overflow-y:visible; }
-    .inc-body-wrap.clamped .inc-body { max-height:120px; overflow:hidden; }
-    .inc-body-fade { position:absolute; bottom:0; left:0; right:0; height:36px; pointer-events:none; background:linear-gradient(transparent, var(--card)); }
-    .inc-body-wrap:not(.clamped) .inc-body-fade { opacity:0; }
-    .inc-show-more { font-size:11px; font-weight:600; color:var(--muted); background:none; border:none; padding:3px 0 0; cursor:pointer; font-family:var(--font); transition:color 0.15s; text-align:left; display:block; }
-    .inc-show-more:hover { color:var(--sub); }
+    /* ── Incident body (always scrollable) ──────────────────────────────────── */
+
+    /* ── Structured detail sections (Cloudflare DCs, MBTA alerts) ───────────── */
+    .inc-detail-section { margin-top:10px; display:flex; flex-direction:column; gap:4px; }
+    .inc-detail-hdr { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+    .inc-detail-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
+    .inc-detail-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 7px; background:rgba(255,255,255,0.025); border-radius:7px; border:1px solid var(--border); }
+    .inc-detail-item-label { font-size:12px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .inc-detail-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
+    .inc-detail-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.2); }
+    .inc-detail-badge.maint   { background:rgba(59,130,246,0.1); color:var(--maint);   border:1px solid rgba(59,130,246,0.2); }
+    .inc-detail-badge.warn    { background:rgba(245,158,11,0.1); color:var(--warn);    border:1px solid rgba(245,158,11,0.2); }
+    .inc-detail-badge.bad     { background:rgba(239,68,68,0.1);  color:var(--bad);     border:1px solid rgba(239,68,68,0.2); }
+    .inc-detail-badge.ok      { background:rgba(34,197,94,0.1);  color:var(--ok);      border:1px solid rgba(34,197,94,0.2); }
+    /* MBTA alert sub-cards */
+    .inc-sub-cards { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+    .inc-sub-card { background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:9px; padding:6px 8px; display:flex; flex-direction:column; gap:4px; }
+    .inc-sub-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .inc-sub-card-title { font-size:12.5px; font-weight:600; color:var(--text); line-height:1.3; min-width:0; overflow-wrap:anywhere; flex:1; }
+    .inc-sub-card-badge { display:inline-flex; align-items:center; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
+    .inc-sub-card-badge.minor { background:rgba(245,158,11,0.1); color:var(--warn); border:1px solid rgba(245,158,11,0.2); }
+    .inc-sub-card-badge.major { background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.2); }
+    .inc-sub-card-badge.maintenance { background:rgba(59,130,246,0.1); color:var(--maint); border:1px solid rgba(59,130,246,0.2); }
+    .inc-sub-card-meta { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
+    .inc-sub-card-route { font-size:11px; color:var(--sub); background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:999px; padding:1px 7px; white-space:nowrap; }
+    .inc-sub-card-time { font-size:11px; color:var(--muted); }
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
     .tv-board-minimal .tv-ticker-wrap,
@@ -889,7 +933,7 @@ const SVCS=[
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
-  {name:'Mimecast',su:'https://status.mimecast.com/api/v2/summary.json',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
+  {name:'Mimecast',su:'https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
@@ -1081,7 +1125,8 @@ const PREFERRED_TTS_VOICES=[
 
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12}
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
+  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://streamdb3web.securenetsystems.net/cirrusencore/WOCN',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1231,7 +1276,8 @@ async function _startBoardRadio(){
       radio.dataset.stationId=station.id;
       radio.load();
     }
-    radio.volume=station.baseVolume ?? BOARD_RADIO_BASE_VOLUME;
+    const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
+    radio.volume=isNaN(savedVol)?(station.baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
     await radio.play();
   }catch{}
 }
@@ -1241,11 +1287,92 @@ function _stopBoardRadio(){
   _boardRadioAudio.pause();
 }
 
+// ── WBZ "The Loop" top-of-hour news break ──
+let _boardLoopAudio=null;
+let _boardLoopTimer=null;
+const _WBZ_LOOP_RSS='https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss';
+
+function _scheduleWBZLoop(){
+  clearTimeout(_boardLoopTimer);
+  const now=new Date();
+  const msToNextHour=(59-now.getMinutes())*60000+(60-now.getSeconds())*1000-now.getMilliseconds();
+  _boardLoopTimer=setTimeout(_playWBZLoop, msToNextHour);
+}
+
+async function _playWBZLoop(){
+  _scheduleWBZLoop(); // Always reschedule for next hour
+  if(!_boardModeActive||!_boardRadioEnabled) return;
+  if(!_boardRadioAudio||_boardRadioAudio.paused) return; // Only play if radio is actually running
+  try{
+    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=wbz-loop-rss':_WBZ_LOOP_RSS;
+    const resp=await fetchWithTimeout(proxyUrl,10000);
+    if(!resp.ok) return;
+    const text=await resp.text();
+    const doc=new DOMParser().parseFromString(text,'application/xml');
+    const enclosure=doc.querySelector('item enclosure');
+    const audioUrl=enclosure?.getAttribute('url');
+    if(!audioUrl) return;
+    if(!_boardLoopAudio) _boardLoopAudio=new Audio();
+    const loopEl=_boardLoopAudio;
+    // Fade radio out over 2s, then play news (fully silent during break)
+    clearTimeout(_radioDuckTimer);
+    _radioDuckUntil=0;
+    document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
+    await _fadeOutBoardRadio(2000);
+    loopEl.src=audioUrl;
+    const station=_getBoardStation();
+    loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
+    loopEl.onended=_fadeInBoardRadioAfterLoop;
+    await loopEl.play();
+  }catch{ /* network or playback error — skip this hour */ }
+}
+
+function _fadeOutBoardRadio(durationMs=2000){
+  return new Promise(resolve=>{
+    if(!_boardRadioAudio){ resolve(); return; }
+    const steps=20, stepMs=durationMs/steps;
+    const startVol=_boardRadioAudio.volume;
+    let step=0;
+    const timer=setInterval(()=>{
+      step++;
+      _setBoardRadioVolume(Math.max(0,startVol*(1-step/steps)));
+      if(step>=steps){ clearInterval(timer); _setBoardRadioVolume(0); resolve(); }
+    },stepMs);
+  });
+}
+
+function _fadeInBoardRadioAfterLoop(){
+  document.getElementById('tv-now-playing')?.classList.remove('tv-np-ducked');
+  if(!_boardRadioAudio||!_boardRadioEnabled) return;
+  const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
+  const target=isNaN(savedVol)?(_getBoardStation().baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
+  // Fade in over 4 seconds in 40 steps
+  const steps=40, durationMs=4000;
+  const stepMs=durationMs/steps;
+  let step=0;
+  const timer=setInterval(()=>{
+    step++;
+    _setBoardRadioVolume(Math.min(target,(target/steps)*step));
+    if(step>=steps) clearInterval(timer);
+  },stepMs);
+}
+
+function _startWBZLoopSchedule(){
+  _scheduleWBZLoop();
+}
+
+function _stopWBZLoopSchedule(){
+  clearTimeout(_boardLoopTimer);
+  _boardLoopTimer=null;
+  if(_boardLoopAudio){ _boardLoopAudio.pause(); _boardLoopAudio.src=''; }
+}
+
 function _duckBoardRadio(ms=4500){
   if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
   _radioDuckUntil=Math.max(_radioDuckUntil,Date.now()+ms);
   const station=_getBoardStation();
   _setBoardRadioVolume(station.duckVolume ?? BOARD_RADIO_DUCK_VOLUME);
+  document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
   clearTimeout(_radioDuckTimer);
   const checkRestore=()=>{
     const wait=_radioDuckUntil-Date.now();
@@ -1255,7 +1382,9 @@ function _duckBoardRadio(ms=4500){
     }
     _radioDuckUntil=0;
     const restoreStation=_getBoardStation();
-    _setBoardRadioVolume(restoreStation.baseVolume ?? BOARD_RADIO_BASE_VOLUME);
+    const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
+    _setBoardRadioVolume(isNaN(savedVol)?(restoreStation.baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol);
+    document.getElementById('tv-now-playing')?.classList.remove('tv-np-ducked');
   };
   _radioDuckTimer=setTimeout(checkRestore,ms+80);
 }
@@ -1263,6 +1392,13 @@ function _duckBoardRadio(ms=4500){
 function _applyBoardRadioToggle(){
   const toggle=document.getElementById('tv-radio-toggle');
   if(toggle) toggle.checked=_boardRadioEnabled;
+}
+
+function _applyBoardRadioVolSlider(){
+  const slider=document.getElementById('tv-radio-vol');
+  if(!slider) return;
+  const saved=parseFloat(localStorage.getItem('board-radio-vol'));
+  slider.value=isNaN(saved)?(_getBoardStation().baseVolume??BOARD_RADIO_BASE_VOLUME):saved;
 }
 
 function _setBoardRadioEnabled(enabled,{persist=true}={}){
@@ -1479,7 +1615,7 @@ const ROUTE_KEYS = {
   "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
   "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
   "https://uptime.quad9.net/api/v2/summary.json": "quad9-summary",
-  "https://status.mimecast.com/api/v2/summary.json": "mimecast-summary",
+  "https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4": "mimecast-summary",
   "https://status.wasabi.com/api/v2/summary.json": "wasabi-summary",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE": "mbta-southcoast",
@@ -1489,7 +1625,9 @@ const ROUTE_KEYS = {
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
-  "https://status.openai.com/api/v2/summary.json": "openai-summary"
+  "https://status.openai.com/api/v2/summary.json": "openai-summary",
+  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss",
+  "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
 /* @routes-end */
@@ -1582,8 +1720,8 @@ function mostRecentEvent(events){
   return [...events].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a))[0] || events[0];
 }
 
-function mk(name,ind,title,body,updated,url,labelOverride,labels=[]){
-  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[],fetchedAt:Date.now()};
+function mk(name,ind,title,body,updated,url,labelOverride,labels=[],details=null){
+  return {name,ind,label:labelOverride||LABELS[ind]||'Unknown',title,body,updated,url,labels:Array.isArray(labels)?labels:[],fetchedAt:Date.now(),details};
 }
 
 function errSvc(s){
@@ -1908,29 +2046,35 @@ async function fetchOne(s){
         });
       };
 
+      // Helper: build a structured alert item from an MBTA alert object
+      const mkAlertItem=(a,isSchedChange=false)=>{
+        const aAttr=a.attributes||{};
+        const aEff=aAttr.effect||'';
+        const aInd=isSchedChange?'maintenance':(EFFECT_IND[aEff]||'minor');
+        const aLbl=EFFECT_LABEL[aEff]||aEff.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        const aCause=aAttr.cause?CAUSE_LABEL[aAttr.cause]||null:null;
+        const aHdr=aAttr.short_header||aAttr.header||'';
+        const aTitle=aHdr||(aLbl+(aCause?' ('+aCause+')':''));
+        return {
+          title:aTitle,
+          effectLabel:aLbl,
+          ind:aInd,
+          routes:routeNamesFor(a),
+          timeframe:aAttr.timeframe||null,
+          cause:aCause,
+        };
+      };
+
       // Schedule-only path: no service disruptions, only schedule changes
       if(!serviceAlerts.length){
-        const topS=schedAlerts[0];
-        const attrS=topS.attributes||{};
+        const attrS=schedAlerts[0].attributes||{};
         const effS=attrS.effect||'';
         const lblS=EFFECT_LABEL[effS]||effS.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-        const causeS=attrS.cause?CAUSE_LABEL[attrS.cause]||null:null;
-        const hdrS=attrS.short_header||attrS.header||'';
-        const titleS=hdrS||(lblS+(causeS?' ('+causeS+')':''));
-        const partsS=[];
-        if(attrS.timeframe) partsS.push('When: '+attrS.timeframe);
-        const rns=routeNamesFor(topS);
-        if(rns.length) partsS.push('Affected: '+rns.join(', '));
-        if(schedAlerts.length>1){
-          const extras=schedAlerts.slice(1).map(a=>{
-            const aEff=a.attributes?.effect||'';
-            const aHdr=a.attributes?.short_header||a.attributes?.header||'';
-            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+aHdr:'');
-          });
-          partsS.push(extras.join('\n'));
-        }
+        // Count-based summary title — full text shows in sub-cards
+        const titleS=schedAlerts.length===1?lblS:`${schedAlerts.length} Schedule Changes`;
         const updatedS=new Date(attrS.updated_at||now).toLocaleString();
-        return mk(s.name,'maintenance',titleS,partsS.join('\n'),updatedS,s.hu);
+        const schedDetails=schedAlerts.map(a=>mkAlertItem(a,true));
+        return mk(s.name,'maintenance',titleS,'',updatedS,s.hu,lblS,[],{type:'mbta',alerts:[],schedChanges:schedDetails});
       }
 
       // Service disruption path
@@ -1940,51 +2084,23 @@ async function fetchOne(s){
       const ind=EFFECT_IND[eff]||'minor';
       const effectLabel=EFFECT_LABEL[eff]||eff.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const cause=attr.cause?CAUSE_LABEL[attr.cause]||null:null;
-      const timeframe=attr.timeframe||null;
 
-      // Build title: use short_header (specific) if available, otherwise effectLabel
-      const shortHdr=attr.short_header||attr.header||'';
-      const titleParts=[];
-      if(shortHdr) titleParts.push(shortHdr);
-      else { titleParts.push(effectLabel); if(cause&&cause!=='Unknown') titleParts.push('('+cause+')'); }
-      const title=titleParts.join(' ');
+      // Build structured alert items for details (full text lives in sub-cards only)
+      const detailAlerts=serviceAlerts.map(a=>mkAlertItem(a,false));
+      const detailSchedChanges=schedAlerts.map(a=>mkAlertItem(a,true));
+      const mbtaDetails={type:'mbta',alerts:detailAlerts,schedChanges:detailSchedChanges};
 
-      // Build body: timeframe + affected routes + additional alerts
-      const parts=[];
-      if(timeframe) parts.push('When: '+timeframe);
-      const routeIds=routeNamesFor(top);
-      if(routeIds.length) parts.push('Affected: '+routeIds.join(', '));
+      // Use a count-based summary for the card title so the full alert text
+      // appears only in the structured sub-cards, never duplicated in the heading
+      const n=serviceAlerts.length;
+      const causeStr=(cause&&cause!=='Unknown')?' — '+cause:'';
+      const title=n===1
+        ?(effectLabel+causeStr)
+        :(`${n} Service Alerts`);
 
-      // Additional service alerts — group same-effect into a count, show different effects individually
-      if(serviceAlerts.length>1){
-        const sameEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')===eff);
-        const diffEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')!==eff);
-        if(sameEff.length===1){
-          const h=sameEff[0].attributes?.short_header||sameEff[0].attributes?.header||'';
-          if(h) parts.push('• '+h);
-        } else if(sameEff.length>1){
-          parts.push('• '+sameEff.length+' additional '+effectLabel.toLowerCase()+'s');
-        }
-        diffEff.slice(0,2).forEach(a=>{
-          const aEff=a.attributes?.effect||'';
-          const aLbl=EFFECT_LABEL[aEff]||aEff.replace(/_/g,' ');
-          const aH=a.attributes?.short_header||a.attributes?.header||'';
-          parts.push('• '+aLbl+(aH?' — '+aH:''));
-        });
-      }
-
-      // Append active schedule changes alongside service disruptions
-      if(schedAlerts.length){
-        const schedTop=schedAlerts[0];
-        const sEff=schedTop.attributes?.effect||'';
-        const sHdr=schedTop.attributes?.short_header||schedTop.attributes?.header||'';
-        const sLbl=EFFECT_LABEL[sEff]||'Modified Schedule';
-        parts.push('📅 '+sLbl+(sHdr?' — '+sHdr:''));
-      }
-
-      const body=parts.join('\n');
+      // Body is intentionally brief — structured details render the full alert list
       const updated=new Date(attr.updated_at||now).toLocaleString();
-      return mk(s.name,ind,title,body,updated,s.hu);
+      return mk(s.name,ind,title,'',updated,s.hu,effectLabel,[],mbtaDetails);
     }catch{return errSvc(s);}
   }
 
@@ -2074,6 +2190,16 @@ async function fetchOne(s){
         }
       }
 
+      // Format DC names compactly: "CLT · Charlotte, NC" instead of full verbose name
+      const fmtDc=n=>{
+        const codeM=/\(([A-Z]{3,4})\)/.exec(n);
+        const code=codeM?codeM[1]:'';
+        const city=n.replace(/,?\s*[\w\s]+-\s*\([A-Z]{3,4}\)/,'').replace(/,\s*(United States|Canada|Mexico)$/i,'').trim();
+        return code?`${code} · ${city}`:(city||n);
+      };
+
+      // Build structured maintenance details (kept separate from body text)
+      let detailsMaintenance=[];
       if(activeMaintenance.length){
         extraStatuses.push('Maintenance');
         const maintSummaries=[...activeMaintenance].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a)).map(evt=>{
@@ -2083,30 +2209,28 @@ async function fetchOne(s){
         if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
         if(!body) body=maintSummaries[0].desc;
-        const maintLines=maintSummaries.map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('\n');
-        body=`${body ? `${body}\n\n` : ''}Active maintenance events:\n${maintLines}`;
+        detailsMaintenance=maintSummaries;
       }
 
+      // Build structured DC details (per-DC status, not raw text in body)
+      let detailsDcs=[];
       if(affectedNorthAmerica.length){
         if(ind==='minor' && affectedNorthAmerica.every(c=>cloudflareComponentIndicator(c)==='minor') && hasRerouteSignal(title, body)){
           hasRerouteNotice=true;
           ind='none';
         }
-        // Format DC names compactly: "CLT · Charlotte, NC" instead of full verbose name
-        const fmtDc=n=>{
-          const codeM=/\(([A-Z]{3,4})\)/.exec(n);
-          const code=codeM?codeM[1]:'';
-          const city=n.replace(/,?\s*[\w\s]+-\s*\([A-Z]{3,4}\)/,'').replace(/,\s*(United States|Canada|Mexico)$/i,'').trim();
-          return code?`${code} · ${city}`:(city||n);
-        };
         const n=affectedNorthAmerica.length;
         const numWord=['','one','two','three','four','five','six','seven','eight','nine','ten'];
         const nLabel=n<=10?numWord[n]:String(n);
-        const dcList=affectedNorthAmerica.map(c=>`• ${fmtDc(c.name)}`).join('\n');
         if(!title){
           title=`Traffic re-routed at ${nLabel} Data Center${n===1?'':'s'} in North America`;
         }
-        body=`${body?`${body}\n\n`:''}Affected Data Centers:\n${dcList}`;
+        // Build per-DC structured data with individual status
+        detailsDcs=affectedNorthAmerica.map(c=>({
+          name:fmtDc(c.name),
+          ind:cloudflareComponentIndicator(c),
+          status:c.status
+        }));
       } else if(watched.length && ind!=='none' && !title){
         const topIssue=watched
           .filter(c=>cloudflareComponentIndicator(c)!=='none')
@@ -2136,7 +2260,10 @@ async function fetchOne(s){
         extraStatuses.push('Re-routed');
       }
       const statusLabels=[...new Set(extraStatuses.filter(Boolean))];
-      return mk(s.name,ind,title,body,updated,s.hu,labelOverride,statusLabels);
+      const cfDetails=(detailsMaintenance.length||detailsDcs.length)
+        ?{type:'cloudflare',maintenance:detailsMaintenance,dataCenters:detailsDcs}
+        :null;
+      return mk(s.name,ind,title,body,updated,s.hu,labelOverride,statusLabels,cfDetails);
     } catch { return errSvc(s); }
   }
 
@@ -2329,47 +2456,39 @@ async function fetchOne(s){
 
 
   if(s.p==='mimecast'){
-    // Mimecast — filter to US B Grid components only
+    // Mimecast uses Status.io platform (status codes: 100=OK, 200/300=degraded, 400/500=outage, 600=security)
     try{
-      const sum=await getJson(s.su);
-      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
-      const comps=sum?.components||[];
-      // Find the "US B" grid group and its children
-      const usBGroup=comps.find(c=>c.group&&/us.?b\b|united states.?b\b/i.test(c.name||''));
-      const usBId=usBGroup?.id;
-      const usBChildren=usBId?comps.filter(c=>c.group_id===usBId):comps.filter(c=>/us.?b/i.test(c.name||''));
-      const watched=usBChildren.length?usBChildren:comps; // fallback to all if no US B found
-      const watchedIds=new Set(watched.map(c=>c.id));
-      const active=(sum?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
-        const affected=(x.components||[]).map(c=>c.id);
-        return !affected.length||affected.some(id=>watchedIds.has(id));
-      });
-      const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>{
-        if(!['in_progress','verifying'].includes((x.status||'').toLowerCase())) return false;
-        const affected=(x.components||[]).map(c=>c.id);
-        return !affected.length||affected.some(id=>watchedIds.has(id));
-      });
-      let ind=normalizeIndicator(sum?.status?.indicator||'none');
-      // Override with component-level status
-      const worstComp=watched.reduce((worst,c)=>{
-        const ci=normalizeIndicator(c.status);
-        return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;
-      },'none');
-      if(worstComp!=='none') ind=worstComp;
-      let title='',body='';
-      if(active.length){
-        const a=mostRecentEvent(active)||active[0];
-        title=a.name||'';
-        let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
-        body=desc;
-        if(ind==='none'){ const imp=normalizeIndicator(a.impact||'none'); if(imp!=='none') ind=imp; }
-      } else if(activeMaint.length){
-        ind='maintenance'; title=activeMaint[0].name||'';
-        let desc=latestUpdateBody(activeMaint[0]); if(!desc) desc=stripHtml(activeMaint[0].description||'');
-        body=desc;
+      const data=await getJson(s.su);
+      const res=data?.result||{};
+      const updated=res.status_overall?.updated ? new Date(res.status_overall.updated).toLocaleString() : new Date().toLocaleString();
+      function statusIoInd(code){
+        const c=Number(code);
+        if(c===100) return 'none';
+        if(c===200||c===300) return 'minor';
+        if(c===400||c===500||c===600) return 'major';
+        return 'unknown';
       }
-      if(usBChildren.length&&!usBGroup) body=(body?body+'\n':'')+'(Monitoring US B Grid)';
+      // Prefer US region status if available
+      const regions=(res.status||[]);
+      const usRegion=regions.find(r=>/\bus\b|united states/i.test(r.name||''));
+      const overallCode=usRegion?.status_code ?? res.status_overall?.status_code ?? 100;
+      let ind=statusIoInd(overallCode);
+      const incidents=(res.incidents||[]).filter(x=>!['resolved','postmortem'].includes((x.status||'').toLowerCase()));
+      const activeMaint=(res.maintenance?.active||[]);
+      let title='',body='';
+      if(incidents.length){
+        const inc=incidents[0];
+        title=inc.name||inc.incidents_name||'';
+        const msgs=inc.messages||inc.incident_updates||[];
+        body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        if(ind==='none') ind='minor';
+      } else if(activeMaint.length){
+        const m=activeMaint[0];
+        title=m.name||m.maintenance_name||'';
+        const msgs=m.messages||m.maintenance_updates||[];
+        body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        ind='maintenance';
+      }
       return mk(s.name,ind,title,body,updated,s.hu);
     }catch{return errSvc(s);}
   }
@@ -2586,10 +2705,31 @@ async function _fetchNowPlaying(){
   if(_nowPlayingFetching) return;
   _nowPlayingFetching=true;
   const station=_getBoardStation();
+  if(!station.nowPlayingUrl){
+    _nowPlayingInfo={track:station.name,artist:'',ts:Date.now(),err:null,station:station.name,quality:station.quality};
+    _nowPlayingFetching=false;
+    _renderBoardNowPlaying();
+    return;
+  }
   try{
-    const data=station.nowPlayingUrl.startsWith('special://')
-      ? await getJson('/proxy?svc='+station.nowPlayingUrl.replace('special://',''))
-      : await getJson(station.nowPlayingUrl);
+    const proxyUrl=station.nowPlayingUrl.startsWith('special://')
+      ?'/proxy?svc='+station.nowPlayingUrl.replace('special://','')
+      :station.nowPlayingUrl;
+    // WOCN: XML history feed — <playHistory><song><title>/<artist>/<cover>
+    if(station.parse==='wocn-xml'){
+      const resp=await fetchWithTimeout(proxyUrl,8000);
+      const text=await resp.text();
+      const doc=new DOMParser().parseFromString(text,'application/xml');
+      const first=doc.querySelector('song');
+      const track=first?.querySelector('title')?.textContent||station.name;
+      const artist=first?.querySelector('artist')?.textContent||'';
+      const cover=first?.querySelector('cover')?.textContent||null;
+      _nowPlayingInfo={track,artist,cover,ts:Date.now(),err:null,station:station.name,quality:station.quality};
+      _nowPlayingFetching=false;
+      _renderBoardNowPlaying();
+      return;
+    }
+    const data=await getJson(proxyUrl);
     const fallbackRaw=[
       data?.songtitle,
       data?.title,
@@ -2654,9 +2794,13 @@ function _renderBoardNowPlaying(){
   if(!np) return;
   const track=_nowPlayingInfo?.track||'Loading…';
   const artist=_nowPlayingInfo?.artist||_nowPlayingInfo?.station||_getBoardStation().name;
-  np.innerHTML=`<div class="tv-now-playing-label">Now Playing</div>
+  const cover=_nowPlayingInfo?.cover||null;
+  const wasDucked=np.classList.contains('tv-np-ducked');
+  const coverEl=cover?`<img class="tv-np-cover" src="${esc(cover)}" alt="" loading="lazy" decoding="async">`:'';
+  np.innerHTML=`${coverEl}<div class="tv-np-text"><div class="tv-now-playing-label">Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
     <div class="tv-now-playing-track" title="${esc(track)}">${esc(track)}</div>
-    <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div>`;
+    <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div></div>`;
+  if(wasDucked) np.classList.add('tv-np-ducked');
 }
 
 function applyFilter(grid,filter){
@@ -2756,7 +2900,10 @@ function renderServices(results){
   const addSection=(label,items,icon)=>{
     if(!items.length) return;
     const storageKey='svc-collapse-'+label.replace(/\W+/g,'-');
-    const isCollapsed=localStorage.getItem(storageKey)==='1';
+    const allOk=items.every(s=>s.ind==='none'||s.ind==='unknown');
+    const isCollapsed=localStorage.getItem(storageKey)!==null
+      ?localStorage.getItem(storageKey)==='1'
+      :allOk;
     const sec=document.createElement('div');
     sec.className='svc-cat-sec'+(isCollapsed?' collapsed':'');
     const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
@@ -2943,6 +3090,33 @@ function _startBoardNet(){
   _boardNetTimer=setInterval(_fetchBoardNet,120000);
 }
 
+// Expand MBTA/Cloudflare services into one tile per alert/event for better board use of space
+function _explodeIssueTiles(issueSvcs){
+  const result=[];
+  for(const svc of issueSvcs){
+    if(svc.details?.type==='mbta'){
+      const alerts=svc.details.alerts||[];
+      const schedChanges=svc.details.schedChanges||[];
+      if(!alerts.length&&!schedChanges.length){ result.push(svc); continue; }
+      for(const a of alerts){
+        const routeNames=(a.routes||[]).join(' / ');
+        const tileTitle=routeNames||(a.effectLabel+(a.cause?' — '+a.cause:''))||'Service Alert';
+        result.push({...svc, title:tileTitle, body:a.title||'',
+          details:null, _tileRoutes:a.routes||[], _tileEffectLabel:a.effectLabel||''});
+      }
+      for(const sc of schedChanges){
+        const t=sc.effectLabel+(sc.cause?' — '+sc.cause:'');
+        result.push({...svc, title:t||'Schedule Change', body:sc.title||'',
+          ind:'maintenance', label:'Schedule Change',
+          details:null, _tileRoutes:sc.routes||[], _tileEffectLabel:sc.effectLabel||''});
+      }
+    } else {
+      result.push(svc);
+    }
+  }
+  return result;
+}
+
 function _buildIssueTilesHTML(svcs){
   return svcs.map(svc=>{
     const logos=logoSources(svc);
@@ -2950,11 +3124,66 @@ function _buildIssueTilesHTML(svcs){
     const logoEl=logos.length
       ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
       :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
+    // Build body inner HTML — structured tiles get route pills / DC badges
+    let bodyInnerHtml='';
+    if('_tileRoutes' in svc){
+      const routeHtml=(svc._tileRoutes||[]).map(r=>`<span class="tv-issue-route">${esc(r)}</span>`).join('');
+      const effectHtml=svc._tileEffectLabel?`<span class="tv-issue-effect">${esc(svc._tileEffectLabel)}</span>`:'';
+      const detailHtml=svc.body?`<div class="tv-issue-timeframe">${esc(svc.body)}</div>`:'';
+      const routeRow=(routeHtml||effectHtml)?`<div class="tv-issue-routes">${routeHtml}${effectHtml}</div>`:'';
+      bodyInnerHtml=routeRow+detailHtml;
+    } else if(svc.details?.type==='cloudflare'){
+      // Combined Cloudflare tile — incident body + maintenance items + DC pills
+      const cfParts=[];
+      if(svc.body) cfParts.push(`<div class="tv-issue-cf-body">${esc(svc.body)}</div>`);
+      const cfMaint=svc.details.maintenance||[];
+      if(cfMaint.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Maintenance</div>`);
+        cfMaint.forEach(m=>cfParts.push(`<div class="tv-issue-maint-item">${esc(m.name)}</div>`));
+      }
+      const cfDcs=svc.details.dataCenters||[];
+      const cfRerouteDcs=cfDcs.filter(d=>d.ind==='rerouting');
+      const cfMaintDcs=cfDcs.filter(d=>d.ind!=='rerouting'&&d.ind!=='none');
+      if(cfRerouteDcs.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Re-Routed Data Centers</div>`);
+        const dcHtml=cfRerouteDcs.map(dc=>`<span class="tv-issue-dc-item reroute">${esc(dc.name)}</span>`).join('');
+        cfParts.push(`<div class="tv-issue-dc-list">${dcHtml}</div>`);
+      }
+      if(cfMaintDcs.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Data Center Maintenance</div>`);
+        const dcHtml=cfMaintDcs.map(dc=>`<span class="tv-issue-dc-item maint">${esc(dc.name)}</span>`).join('');
+        cfParts.push(`<div class="tv-issue-dc-list">${dcHtml}</div>`);
+      }
+      bodyInnerHtml=cfParts.join('');
+    } else {
+      // Plain text fallback (non-exploded structured details or regular services)
+      let tileBody=svc.body||'';
+      if(!tileBody&&svc.details?.type==='mbta'){
+        const lines=[];
+        (svc.details.alerts||[]).forEach(a=>{
+          const r=(a.routes||[]).join(', ');
+          lines.push((r?r+': ':'')+a.title+(a.timeframe?' ('+a.timeframe+')':''));
+        });
+        (svc.details.schedChanges||[]).forEach(a=>{
+          const r=(a.routes||[]).join(', ');
+          lines.push('📅 '+(r?r+': ':'')+a.title);
+        });
+        tileBody=lines.join('\n');
+      } else if(!tileBody&&svc.details?.type==='cloudflare'){
+        const lines=[];
+        (svc.details.maintenance||[]).forEach(m=>lines.push('🔧 '+m.name));
+        (svc.details.dataCenters||[]).forEach(dc=>lines.push('• '+dc.name+' — '+(dc.ind==='rerouting'?'Re-routing':'Maintenance')));
+        tileBody=lines.join('\n');
+      }
+      if(tileBody) bodyInnerHtml=esc(tileBody);
+    }
+    const bodyEl=bodyInnerHtml
+      ?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${bodyInnerHtml}</span></div>`:'';
     return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
       <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
       ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
-      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
+      ${bodyEl}
     </div>`;
   }).join('');
 }
@@ -3036,10 +3265,12 @@ function renderBoardView(results){
   // Split into services with active issues vs healthy services
   const issueSvcs=sorted.filter(s=>s.ind!=='none'&&s.ind!=='unknown');
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
+  // Explode MBTA/CF into one tile per alert/event for better use of board space
+  const explodedIssues=_explodeIssueTiles(issueSvcs);
   // Build first page of issue tiles (pagination shows 3 at a time)
-  const firstPageSvcs=issueSvcs.slice(0,ISSUE_PAGE_SIZE);
+  const firstPageSvcs=explodedIssues.slice(0,ISSUE_PAGE_SIZE);
   const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
-  const totalIssuePages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  const totalIssuePages=Math.ceil(explodedIssues.length/ISSUE_PAGE_SIZE);
   const issueDotsHTML=totalIssuePages>1
     ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
     :'';
@@ -3067,6 +3298,7 @@ function renderBoardView(results){
             <input id="tv-radio-toggle" type="checkbox" ${_boardRadioEnabled?'checked':''}>
             <span>Radio</span>
           </label>
+          <input type="range" id="tv-radio-vol" class="tv-radio-vol-slider" min="0" max="1" step="0.05" title="Volume">
         </div>
       </div>
       <div class="tv-clock-block">
@@ -3080,7 +3312,7 @@ function renderBoardView(results){
     </div>
     ${issueSvcs.length?`
     <div class="tv-issues-section">
-      <div class="tv-section-hdr issue-hdr"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
+      <div class="tv-section-hdr issue-hdr"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages} (${explodedIssues.length} tiles)`:''}</div>
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
       ${issueDotsHTML}
     </div>`:''}
@@ -3099,7 +3331,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
-  _initIssuePagination(issueSvcs);
+  _initIssuePagination(explodedIssues);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
@@ -3121,8 +3353,15 @@ function renderBoardView(results){
   });
   _applyBoardRadioToggle();
   _applyBoardStationSelect();
+  _applyBoardRadioVolSlider();
+  document.getElementById('tv-radio-vol')?.addEventListener('input',(e)=>{
+    const v=parseFloat(e.target.value);
+    if(_boardRadioAudio&&!(_radioDuckUntil>Date.now())) _setBoardRadioVolume(v);
+    localStorage.setItem('board-radio-vol',String(v));
+  });
   _renderBoardNowPlaying();
   _startBoardRadio();
+  _startWBZLoopSchedule();
   const tilesEl=document.getElementById('tv-tiles');
   tilesEl.addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -3190,6 +3429,7 @@ function exitBoardMode(){
   _stopBoardRadio();
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
+  _stopWBZLoopSchedule();
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   _applyBoardPageState();
@@ -3214,19 +3454,100 @@ function mkIncCard(svc){
   }
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
-  const incTitle=svc.title||svc.label;
-  const incBody=svc.body||'See the status page for full details.';
+  // For MBTA structured cards, summarize alert count instead of repeating the first alert in the title
+  const mbtaAlertCnt=(svc.details?.type==='mbta')?(svc.details.alerts?.length||0):0;
+  const mbtaSchedCnt=(svc.details?.type==='mbta')?(svc.details.schedChanges?.length||0):0;
+  const mbtaTotalCnt=mbtaAlertCnt+mbtaSchedCnt;
+  const incTitle=mbtaTotalCnt>0
+    ?(mbtaTotalCnt===1?(mbtaAlertCnt?'Service Alert':'Schedule Change'):`${mbtaTotalCnt} Active Alerts`)
+    :(svc.title||svc.label);
+  // Don't show the generic fallback when structured details will render the content
+  const incBody=svc.body||(svc.details?'':'See the status page for full details.');
   const urlHost=svc.url?svc.url.replace(/^https?:\/\//,'').replace(/\/$/,''):'';
   const logos=logoSources(svc);
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
   const labels=[svc.label,...(svc.labels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
   const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${esc(l)}</span>`).join('')}</div>`:'';
-  const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
+  // Derive incident phase tag from svc.label (some parsers set labelOverride to the incident phase)
+  // rather than hardcoding "Investigating" for all active statuses
+  const _INCIDENT_PHASES=new Set(['Investigating','Identified','Monitoring','Resolved']);
+  const _phaseLabel=_INCIDENT_PHASES.has(svc.label)?svc.label:((svc.labels||[]).find(l=>_INCIDENT_PHASES.has(l)));
+  const incTag=svc.ind==='maintenance'?'Scheduled'
+    :svc.ind==='rerouting'?'Rerouted'
+    :svc.details?.type==='mbta'?svc.label
+    :_phaseLabel||'Active';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
-  const needsClamp=incBody.length>250;
-  const bodyHtml=needsClamp
-    ?`<div class="inc-body-wrap clamped"><div class="inc-body">${esc(incBody)}</div><div class="inc-body-fade"></div></div><button class="inc-show-more" type="button">Show more ▾</button>`
-    :`<div class="inc-body">${esc(incBody)}</div>`;
+  const bodyHtml=incBody?`<div class="inc-body">${esc(incBody)}</div>`:'';
+
+  // Build structured details HTML for Cloudflare and MBTA custom cards
+  const _indBadgeCls={rerouting:'reroute',maintenance:'maint',minor:'warn',major:'bad',none:'ok'};
+  const _indLabel={rerouting:'Re-routing',maintenance:'Maintenance',minor:'Degraded',major:'Outage',none:'Operational'};
+  let detailsHtml='';
+  const det=svc.details;
+  if(det?.type==='cloudflare'){
+    // Maintenance events section
+    if(det.maintenance?.length){
+      const maintItems=det.maintenance.map(m=>`
+        <div class="inc-detail-item">
+          <span class="inc-detail-item-label">${esc(m.name)}</span>
+          <span class="inc-detail-badge maint">Maintenance</span>
+        </div>`).join('');
+      detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Active Maintenance</div>${maintItems}</div>`;
+    }
+    // Data Centers section with per-DC status
+    if(det.dataCenters?.length){
+      // Group DCs by status
+      const rerouteDcs=det.dataCenters.filter(dc=>dc.ind==='rerouting');
+      const maintDcs=det.dataCenters.filter(dc=>dc.ind==='maintenance');
+      const otherDcs=det.dataCenters.filter(dc=>dc.ind!=='rerouting'&&dc.ind!=='maintenance');
+      const mkDcItem=(dc)=>`
+        <div class="inc-detail-item">
+          <span class="inc-detail-item-label">${esc(dc.name)}</span>
+          <span class="inc-detail-badge ${_indBadgeCls[dc.ind]||'warn'}">${esc(_indLabel[dc.ind]||dc.ind)}</span>
+        </div>`;
+      if(rerouteDcs.length){
+        const dcItems=rerouteDcs.map(mkDcItem).join('');
+        detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Re-Routed Data Centers</div>${dcItems}</div>`;
+      }
+      if([...maintDcs,...otherDcs].length){
+        const dcItems=[...maintDcs,...otherDcs].map(mkDcItem).join('');
+        detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Data Center Maintenance</div>${dcItems}</div>`;
+      }
+    }
+  } else if(det?.type==='mbta'){
+    // Service alert sub-cards
+    if(det.alerts?.length){
+      const alertCards=det.alerts.map(a=>{
+        const routePills=(a.routes||[]).map(r=>`<span class="inc-sub-card-route">${esc(r)}</span>`).join('');
+        const timeHtml=a.timeframe?`<span class="inc-sub-card-time">${esc(a.timeframe)}</span>`:'';
+        const badgeCls=a.ind==='major'?'major':a.ind==='maintenance'?'maintenance':'minor';
+        return `<div class="inc-sub-card">
+          <div class="inc-sub-card-header">
+            <span class="inc-sub-card-title">${esc(a.title)}</span>
+            <span class="inc-sub-card-badge ${badgeCls}">${esc(a.effectLabel)}</span>
+          </div>
+          ${(routePills||timeHtml)?`<div class="inc-sub-card-meta">${routePills}${timeHtml}</div>`:''}
+        </div>`;
+      }).join('');
+      detailsHtml+=`<div class="inc-sub-cards">${alertCards}</div>`;
+    }
+    // Schedule changes section
+    if(det.schedChanges?.length){
+      const schedCards=det.schedChanges.map(a=>{
+        const routePills=(a.routes||[]).map(r=>`<span class="inc-sub-card-route">${esc(r)}</span>`).join('');
+        const timeHtml=a.timeframe?`<span class="inc-sub-card-time">${esc(a.timeframe)}</span>`:'';
+        return `<div class="inc-sub-card">
+          <div class="inc-sub-card-header">
+            <span class="inc-sub-card-title">${esc(a.title)}</span>
+            <span class="inc-sub-card-badge maintenance">${esc(a.effectLabel)}</span>
+          </div>
+          ${(routePills||timeHtml)?`<div class="inc-sub-card-meta">${routePills}${timeHtml}</div>`:''}
+        </div>`;
+      }).join('');
+      detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Schedule Changes</div><div class="inc-sub-cards">${schedCards}</div></div>`;
+    }
+  }
+
   d.innerHTML=`
     <div class="card-top">
       <div class="card-title-row">
@@ -3244,21 +3565,14 @@ function mkIncCard(svc){
       ${statusLabels}
       <div class="inc-title">${esc(incTitle)}</div>
       ${bodyHtml}
+      ${detailsHtml}
     </div>
     <div class="card-meta">
-      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
-      <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
+      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="card-age-ts${(svc.fetchedAt&&(Date.now()-svc.fetchedAt)>STALE_MS)?' stale':''}" data-fetched-at="${svc.fetchedAt||0}" title="${svc.updated}">${svc.fetchedAt?fmtFetchAge(svc.fetchedAt):'—'}</span></div>
     </div>`;
   d.querySelector('.c-url')?.addEventListener('click',e=>e.stopPropagation());
   const cLogoImg=d.querySelector('.c-logo');
   if(cLogoImg) cLogoImg.addEventListener('error',function(){ nextLogo(this); },{once:false});
-  d.querySelector('.inc-show-more')?.addEventListener('click',e=>{
-    e.stopPropagation();
-    const wrap=d.querySelector('.inc-body-wrap');
-    if(!wrap) return;
-    const clamped=wrap.classList.toggle('clamped');
-    e.target.textContent=clamped?'Show more ▾':'Show less ▴';
-  });
   return d;
 }
 
@@ -3679,7 +3993,8 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
   const protoCard = mkNetMetric('TLS Version', tlsBadge)
     + mkNetMetric('HTTP Version', h3Badge)
     + mkNetMetric('IP Protocol', ipv6Badge)
-    + mkNetMetric('Cloudflare WARP', warpBadge);
+    + mkNetMetric('Cloudflare WARP', warpBadge)
+    + `<div class="net-note">HTTP/3 (QUIC) is negotiated opportunistically — it may show HTTP/2 if UDP is restricted on your network or if the initial connection hasn't upgraded yet. Values can vary between page loads.</div>`;
 
   // resolverIp is {ip, geo} from edns.ip-api.com, or null on failure
   const resolverAddr = resolverIp?.ip || null;
@@ -3699,8 +4014,10 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
     : /nextdns/i.test(geoOrg)                  ? 'NextDNS'
     : /adguard/i.test(geoOrg)                  ? 'AdGuard'
     : /opendns|cisco umbrella/i.test(geoOrg)   ? 'OpenDNS'
+    // WoodyNet and PCH (Packet Clearing House) are known Quad9 anycast routing partners
+    : /woody.?net|packet clearing house|pch\.net/i.test(geoOrg) ? 'Quad9'
     : geoOrg.replace(/,?\s*(Inc|LLC|Ltd|Corp|GmbH)\.?\s*$/i, '').trim();
-  const knownPublicDns = /cloudflare|google|quad9|nextdns|adguard|opendns|cisco umbrella/i.test(geoOrg || '');
+  const knownPublicDns = /cloudflare|google|quad9|nextdns|adguard|opendns|cisco umbrella|woody.?net|packet clearing house|pch\.net/i.test(geoOrg || '');
   const resolverProvider = resolverClassification.isDoh
     ? resolverClassification.provider
     : (shortOrg || resolverClassification.provider);
@@ -3829,8 +4146,9 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
 const _TRACE_HOPS=[
   {label:'Cloudflare CDN', url:'https://cloudflare.com/cdn-cgi/trace', noCors:false},
   {label:'Google Anycast',  url:'https://dns.google/generate_204',      noCors:true},
-  {label:'Amazon AWS',      url:'https://aws.amazon.com/favicon.ico',   noCors:true},
-  {label:'Microsoft Azure', url:'https://azure.microsoft.com/favicon.ico', noCors:true},
+  {label:'Amazon AWS',      url:'https://checkip.amazonaws.com/',        noCors:true},
+  // azure.microsoft.com redirects to CDN; management.azure.com is the actual Azure ARM endpoint
+  {label:'Microsoft Azure', url:'https://management.azure.com/', noCors:true},
 ];
 async function measureTraceroute(){
   const results=await Promise.allSettled(
@@ -4046,6 +4364,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   _wxTimer=setInterval(_fetchWeather, 15*60*1000);
   _fetchNowPlaying();
   _nowPlayingTimer=setInterval(_fetchNowPlaying, 30000);
+  // Running "time ago" timer — updates all card age timestamps every 30s
+  setInterval(()=>{
+    document.querySelectorAll('.card-age-ts[data-fetched-at]').forEach(el=>{
+      const ts=parseInt(el.dataset.fetchedAt,10);
+      if(!ts) return;
+      el.textContent=fmtFetchAge(ts);
+      el.classList.toggle('stale',(Date.now()-ts)>STALE_MS);
+    });
+  },30000);
 
   window.addEventListener('beforeunload',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
