@@ -643,6 +643,9 @@
     .tv-issue-dc-item { border-radius:8px; padding:clamp(3px,0.3vh,5px) clamp(8px,0.9vw,14px); font-size:clamp(11px,1.1vw,17px); font-weight:700; letter-spacing:0.04em; }
     .tv-issue-dc-item.reroute { background:rgba(20,184,166,0.18); border:1px solid rgba(20,184,166,0.45); color:var(--reroute); }
     .tv-issue-dc-item.maint   { background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.45); color:#60a5fa; }
+    .tv-issue-cf-body { font-size:clamp(13px,1.2vw,18px); color:rgba(255,255,255,0.7); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .tv-issue-section-hdr { font-size:clamp(9px,0.75vw,12px); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.32); margin-top:clamp(6px,0.7vh,10px); padding-bottom:clamp(3px,0.3vh,4px); border-bottom:1px solid rgba(255,255,255,0.08); }
+    .tv-issue-maint-item { font-size:clamp(12px,1.1vw,17px); color:rgba(255,255,255,0.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:clamp(2px,0.2vh,4px) 0; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -3027,33 +3030,6 @@ function _explodeIssueTiles(issueSvcs){
           ind:'maintenance', label:'Schedule Change',
           details:null, _tileRoutes:sc.routes||[], _tileEffectLabel:sc.effectLabel||''});
       }
-    } else if(svc.details?.type==='cloudflare'){
-      const maint=svc.details.maintenance||[];
-      const dcs=svc.details.dataCenters||[];
-      const rerouteDcs=dcs.filter(d=>d.ind==='rerouting');
-      const maintDcs=dcs.filter(d=>d.ind!=='rerouting'&&d.ind!=='none');
-      let pushed=false;
-      // Main incident tile first (e.g. "Cloudflare Analytics Availability Issues")
-      if(svc.title&&svc.body){
-        result.push({...svc, details:null});
-        pushed=true;
-      }
-      for(const m of maint){
-        result.push({...svc, ind:'maintenance', label:'Maintenance',
-          title:m.name||'Maintenance', body:m.desc||'', details:null, _tileDcList:[]});
-        pushed=true;
-      }
-      if(rerouteDcs.length){
-        result.push({...svc, ind:'rerouting', label:'Traffic Rerouted',
-          title:'Traffic Re-routing', body:'', details:null, _tileDcList:rerouteDcs});
-        pushed=true;
-      }
-      if(maintDcs.length){
-        result.push({...svc, ind:'maintenance', label:'Maintenance',
-          title:'Data Center Maintenance', body:'', details:null, _tileDcList:maintDcs});
-        pushed=true;
-      }
-      if(!pushed) result.push(svc);
     } else {
       result.push(svc);
     }
@@ -3076,9 +3052,22 @@ function _buildIssueTilesHTML(svcs){
       const detailHtml=svc.body?`<div class="tv-issue-timeframe">${esc(svc.body)}</div>`:'';
       const routeRow=(routeHtml||effectHtml)?`<div class="tv-issue-routes">${routeHtml}${effectHtml}</div>`:'';
       bodyInnerHtml=routeRow+detailHtml;
-    } else if(svc._tileDcList?.length){
-      const dcHtml=svc._tileDcList.map(dc=>`<span class="tv-issue-dc-item ${dc.ind==='rerouting'?'reroute':'maint'}">${esc(dc.name)}</span>`).join('');
-      bodyInnerHtml=`<div class="tv-issue-dc-list">${dcHtml}</div>`;
+    } else if(svc.details?.type==='cloudflare'){
+      // Combined Cloudflare tile — incident body + maintenance items + DC pills
+      const cfParts=[];
+      if(svc.body) cfParts.push(`<div class="tv-issue-cf-body">${esc(svc.body)}</div>`);
+      const cfMaint=svc.details.maintenance||[];
+      if(cfMaint.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Maintenance</div>`);
+        cfMaint.forEach(m=>cfParts.push(`<div class="tv-issue-maint-item">${esc(m.name)}</div>`));
+      }
+      const cfDcs=svc.details.dataCenters||[];
+      if(cfDcs.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Affected Data Centers</div>`);
+        const dcHtml=cfDcs.map(dc=>`<span class="tv-issue-dc-item ${dc.ind==='rerouting'?'reroute':'maint'}">${esc(dc.name)}</span>`).join('');
+        cfParts.push(`<div class="tv-issue-dc-list">${dcHtml}</div>`);
+      }
+      bodyInnerHtml=cfParts.join('');
     } else {
       // Plain text fallback (non-exploded structured details or regular services)
       let tileBody=svc.body||'';
@@ -3101,7 +3090,7 @@ function _buildIssueTilesHTML(svcs){
       }
       if(tileBody) bodyInnerHtml=esc(tileBody);
     }
-    const bodyEl=(svc.title&&bodyInnerHtml)
+    const bodyEl=bodyInnerHtml
       ?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${bodyInnerHtml}</span></div>`:'';
     return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
