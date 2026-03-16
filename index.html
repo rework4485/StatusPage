@@ -550,7 +550,7 @@
     .tv-wx-cond { font-size:clamp(18px,2vw,30px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .tv-wx-loc { font-size:clamp(14px,1.3vw,20px); color:var(--muted); white-space:nowrap; }
     .tv-wx-alerts { display:flex; flex-direction:column; gap:4px; margin-left:auto; flex-shrink:0; padding-left:10px; }
-    .tv-wx-alert-tag { font-size:clamp(11px,1vw,16px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:4px 10px; white-space:nowrap; }
+    .tv-wx-alert-tag { font-size:clamp(13px,1.2vw,20px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:6px 12px; white-space:nowrap; }
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
 
     /* ── Status summary banner ───────────────────────────────────────────────── */
@@ -597,7 +597,7 @@
     .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(26px,2.6vw,40px) !important; letter-spacing:-0.02em !important; }
     .tv-wx-hdr .tv-wx-cond { font-size:clamp(14px,1.2vw,20px) !important; }
     .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.9vw,15px) !important; }
-    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.78vw,13px) !important; padding:3px 9px !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(13px,1.1vw,18px) !important; padding:5px 11px !important; }
     .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
     .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
     .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
@@ -2411,8 +2411,8 @@ function _renderBoardWeatherBar(){
     const isMajor=/warning/i.test(ev);
     return `<span class="tv-wx-alert-tag${isMajor?' wx-major':''}">&#9888; ${esc(ev)}</span>`;
   }).join('');
-  // Next 3 hourly slots (periods[1..3])
-  const forecastSlotsHTML=(periods||[]).slice(1,4).map(p=>{
+  // Next 4 hourly slots (periods[1..4])
+  const forecastSlotsHTML=(periods||[]).slice(1,5).map(p=>{
     const t=p.temperature?`${p.temperature}°`:'';
     const hr=p.startTime?new Date(p.startTime).toLocaleTimeString('en-US',{hour:'numeric',hour12:true}):'';
     const ic=_wxIcon(p.shortForecast||'',p.isDaytime);
@@ -2846,10 +2846,6 @@ function renderBoardView(results){
       <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
       <div class="tv-hdr-center">
         <div class="tv-board-status ${statusCls}">${statusMsg}</div>
-        <div class="tv-hdr-stats">
-          ${outageCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--bad)"></span><strong>${outageCount}</strong>&nbsp;Down</span>`:''}
-          ${maintCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--maint)"></span><strong>${maintCount}</strong>&nbsp;Maintenance</span>`:''}
-        </div>
       </div>
       <div class="tv-hdr-time">
         <div class="tv-date" id="tv-date"></div>
