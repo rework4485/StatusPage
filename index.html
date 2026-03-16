@@ -1177,7 +1177,7 @@ function showView(view){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// When deployed (Vercel), /proxy is a server-side function available as a CORS fallback.
+// When deployed (Cloudflare Pages), /proxy is a Pages Function available as a CORS fallback.
 // Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
 let _boardModeActive=new URLSearchParams(window.location.search).has('board');
