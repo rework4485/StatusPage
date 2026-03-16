@@ -608,8 +608,9 @@
     .tv-now-playing-label { font-size:clamp(9px,0.8vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
     .tv-now-playing-track { font-size:clamp(14px,1.2vw,20px); font-weight:700; color:var(--text); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .tv-now-playing-meta { font-size:clamp(12px,1vw,16px); color:var(--sub); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-audio-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
-    .tv-station-select { border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.04); color:var(--text); border-radius:999px; padding:6px 30px 6px 12px; font-size:12px; font-weight:600; font-family:var(--font); }
+    .tv-audio-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.28); background:transparent; color:var(--text); border-radius:0; padding:4px 20px 4px 0; font-size:12px; font-weight:600; font-family:var(--font); }
+    .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.85); }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -678,7 +679,7 @@
     @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
     .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1vh,14px); flex-shrink:0; gap:12px; }
     .tv-board-controls { display:flex; align-items:center; gap:12px; }
-    .tv-radio-toggle { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,0.18); border-radius:999px; padding:6px 12px; background:rgba(255,255,255,0.04); color:var(--sub); font-size:12px; font-weight:600; }
+    .tv-radio-toggle { display:inline-flex; align-items:center; gap:8px; border:none; border-bottom:1px solid rgba(255,255,255,0.28); border-radius:0; padding:4px 0; background:transparent; color:var(--sub); font-size:12px; font-weight:600; }
     .tv-radio-toggle input { accent-color:#22c55e; width:14px; height:14px; cursor:pointer; }
     .tv-radio-toggle span { color:var(--text); }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
