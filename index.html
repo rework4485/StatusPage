@@ -571,104 +571,95 @@
     .filter-chip.active.fc-maint{ background:rgba(59,130,246,0.1);  color:#93c5fd; border-color:rgba(59,130,246,0.25); }
 
     /* ── TV / Status board mode ──────────────────────────────────────────────── */
-    .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,44px); overflow:hidden; }
+    .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(16px,1.8vh,28px) clamp(22px,2.2vw,40px) clamp(12px,1.4vh,22px); overflow:hidden; animation:board-in 0.4s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes board-in { from{opacity:0;transform:scale(0.997)} to{opacity:1;transform:scale(1)} }
     .board-page .shell,
     .board-page .status-banner-wrap { display:none !important; }
     .board-page .tv-board { position:relative; inset:auto; min-height:100vh; }
-    .tv-board-hdr { display:grid; grid-template-columns:minmax(340px,1.15fr) minmax(360px,1fr) auto; align-items:center; gap:clamp(12px,1.2vw,20px); margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
-    .tv-brand-icon { width:clamp(34px,3.2vw,52px); height:clamp(34px,3.2vw,52px); border-radius:11px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .tv-brand-icon svg { width:55%; height:55%; }
-    .tv-brand-text { display:flex; flex-direction:column; gap:2px; }
-    .tv-brand-name { font-size:clamp(15px,1.4vw,24px); font-weight:700; letter-spacing:-0.02em; color:var(--text); }
-    .tv-brand-sub { font-size:clamp(10px,0.75vw,14px); font-weight:600; color:var(--muted); letter-spacing:0.07em; text-transform:uppercase; }
-    .tv-hdr-center { display:flex; flex-direction:column; align-items:center; gap:clamp(6px,0.8vh,10px); flex:1; }
-    .tv-board-status { font-size:clamp(16px,1.8vw,30px); font-weight:800; padding:8px 24px; border-radius:100px; letter-spacing:-0.01em; white-space:nowrap; }
-    .tv-board-status.ok   { background:rgba(34,197,94,0.12);  border:2px solid rgba(34,197,94,0.3);  color:#4ade80; }
-    .tv-board-status.warn { background:rgba(245,158,11,0.12); border:2px solid rgba(245,158,11,0.35); color:#fbbf24; }
-    .tv-board-status.bad  { background:rgba(239,68,68,0.12);  border:2px solid rgba(239,68,68,0.35);  color:#f87171; }
-    .tv-hdr-stats { display:flex; align-items:center; gap:clamp(10px,1.4vw,22px); flex-wrap:wrap; justify-content:center; }
-    .tv-hdr-stat { display:inline-flex; align-items:center; gap:5px; font-size:clamp(12px,0.95vw,16px); color:var(--sub); white-space:nowrap; }
-    .tv-hdr-stat strong { font-size:clamp(13px,1.05vw,18px); font-weight:700; color:var(--text); }
-    .tv-hdr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; margin-left:auto; }
-    .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
-    .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
-    /* Weather card in header — wider with larger text + 3-hour forecast */
-    .tv-wx-hdr { flex-shrink:0; min-width:clamp(260px,28vw,480px); padding:clamp(10px,1.1vh,16px) clamp(16px,1.6vw,26px) !important; border-radius:12px !important; gap:clamp(12px,1.3vw,20px) !important; }
-    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(34px,3.4vw,52px) !important; }
-    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(26px,2.6vw,40px) !important; letter-spacing:-0.02em !important; }
-    .tv-wx-hdr .tv-wx-cond { font-size:clamp(14px,1.2vw,20px) !important; }
-    .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.9vw,15px) !important; }
-    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(13px,1.1vw,18px) !important; padding:5px 11px !important; }
-    .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
-    .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
-    .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
-    .tv-header-audio { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:0; }
-    .tv-now-playing { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; width:min(42vw,680px); }
-    .tv-now-playing-label { font-size:clamp(9px,0.8vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
-    .tv-now-playing-track { font-size:clamp(14px,1.2vw,20px); font-weight:700; color:var(--text); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-now-playing-meta { font-size:clamp(12px,1vw,16px); color:var(--sub); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-audio-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
-    .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.28); background:transparent; color:var(--text); border-radius:0; padding:4px 20px 4px 0; font-size:12px; font-weight:600; font-family:var(--font); }
-    .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.85); }
-    /* Issue page dots */
-    .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
-    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
-    .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.75); }
-    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:2px 2px 6px; background:transparent; border:none; border-radius:0; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
-    .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
-    .tv-net-lbl { font-weight:700; font-size:0.75em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:3px; }
-    .tv-net-sep { color:var(--border); user-select:none; }
-    .tv-net-ok { color:var(--ok); font-weight:600; }
-    .tv-net-warn { color:var(--warn); font-weight:600; }
-    .tv-net-ts { font-size:0.78em; color:var(--muted); margin-left:auto; white-space:nowrap; }
-    /* Issues section — large prominent tiles */
-    .tv-issues-section { flex:1 1 auto; margin-bottom:clamp(10px,1.2vh,18px); min-height:0; display:flex; flex-direction:column; }
-    .tv-section-hdr { font-size:clamp(10px,0.88vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:clamp(6px,0.75vh,10px); display:flex; align-items:center; gap:8px; }
-    .tv-section-hdr.issue-hdr { color:rgba(248,113,113,0.9); }
+    /* Header */
+    .tv-hdr { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto; align-items:center; gap:clamp(16px,1.8vw,30px); padding-bottom:clamp(10px,1.2vh,18px); border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; margin-bottom:clamp(10px,1.1vh,18px); }
+    /* Weather in header */
+    .tv-hdr-weather { display:flex; align-items:center; gap:clamp(12px,1.4vw,22px); min-width:0; overflow:hidden; }
+    .tv-hdr-weather .tv-wx-now { gap:clamp(10px,1.1vw,18px); }
+    .tv-hdr-weather .tv-wx-icon-big { font-size:clamp(36px,3.8vw,60px); }
+    .tv-hdr-weather .tv-wx-temp-big { font-size:clamp(26px,2.8vw,44px); letter-spacing:-0.02em; }
+    .tv-hdr-weather .tv-wx-cond { font-size:clamp(13px,1.2vw,20px); }
+    .tv-hdr-weather .tv-wx-loc { font-size:clamp(11px,0.9vw,15px); }
+    .tv-hdr-weather .tv-wx-alert-tag { font-size:clamp(12px,1.1vw,18px); padding:5px 12px; }
+    .tv-hdr-weather .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,34px); }
+    .tv-hdr-weather .tv-wx-hr-temp { font-size:clamp(12px,1.2vw,18px); }
+    .tv-hdr-weather .tv-wx-hr-time { font-size:clamp(9px,0.8vw,13px); }
+    .tv-hdr-weather .tv-wx-divider { margin:0 clamp(4px,0.4vw,8px); }
+    .tv-hdr-weather .tv-wx-forecast { gap:clamp(10px,1vw,16px); }
+    .tv-hdr-weather .tv-wx-hour { min-width:clamp(34px,3.5vw,54px); }
+    /* Now playing + audio in header */
+    .tv-hdr-media { display:flex; flex-direction:column; align-items:flex-start; gap:clamp(5px,0.6vh,9px); min-width:0; justify-content:center; }
+    .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
+    .tv-now-playing-label { font-size:clamp(9px,0.7vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .tv-now-playing-track { font-size:clamp(15px,1.5vw,26px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-now-playing-meta { font-size:clamp(12px,1.1vw,18px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-ctx-audio { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.22); background:transparent; color:var(--text); border-radius:0; padding:3px 18px 3px 0; font-size:clamp(11px,0.88vw,14px); font-weight:600; font-family:var(--font); }
+    .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.8); }
+    .tv-radio-toggle { display:inline-flex; align-items:center; gap:6px; border:none; border-bottom:1px solid rgba(255,255,255,0.22); border-radius:0; padding:3px 0; background:transparent; color:var(--sub); font-size:clamp(11px,0.88vw,14px); font-weight:600; cursor:pointer; }
+    .tv-radio-toggle input { accent-color:#22c55e; width:13px; height:13px; cursor:pointer; }
+    .tv-radio-toggle span { color:var(--text); }
+    /* Clock */
+    .tv-clock-block { display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; }
+    .tv-clock { font-size:clamp(28px,3.2vw,54px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); letter-spacing:-0.02em; line-height:1.1; }
+    .tv-date { font-size:clamp(11px,0.95vw,16px); color:var(--muted); font-weight:500; letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    /* Section label */
+    .tv-section-hdr { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:clamp(6px,0.7vh,10px); display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .tv-section-hdr.issue-hdr { color:rgba(248,113,113,0.85); }
+    /* Issue tiles */
+    .tv-issues-section { flex:1 1 auto; margin-bottom:clamp(8px,1vh,16px); min-height:0; display:flex; flex-direction:column; }
     .tv-issue-tiles { display:grid; gap:clamp(10px,1.1vw,18px); flex:1 1 auto; min-height:0; }
-    .tv-issue-tile { background:rgba(255,255,255,0.035); border:2px solid rgba(255,255,255,0.1); border-radius:16px; padding:clamp(14px,1.8vw,28px); display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:border-color 0.2s,background 0.2s,box-shadow 0.2s; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.3); min-height:clamp(120px,16vh,220px); }
-    .tv-issue-tile:hover { filter:brightness(1.08); box-shadow:0 4px 24px rgba(0,0,0,0.4); }
-    .tv-issue-tile.cb { background:rgba(239,68,68,0.13); border-color:rgba(239,68,68,0.6); box-shadow:0 2px 16px rgba(239,68,68,0.15); }
-    .tv-issue-tile.cw { background:rgba(245,158,11,0.1);  border-color:rgba(245,158,11,0.55); box-shadow:0 2px 16px rgba(245,158,11,0.12); }
-    .tv-issue-tile.cm { background:rgba(59,130,246,0.1);  border-color:rgba(59,130,246,0.5); box-shadow:0 2px 16px rgba(59,130,246,0.12); }
+    .tv-issue-tile { background:rgba(255,255,255,0.03); border:2px solid rgba(255,255,255,0.1); border-radius:18px; padding:clamp(16px,2vw,30px); display:flex; flex-direction:column; gap:clamp(8px,0.9vh,13px); cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; min-height:clamp(130px,17vh,240px); box-shadow:0 2px 12px rgba(0,0,0,0.25); }
+    .tv-issue-tile:hover { filter:brightness(1.07); }
+    .tv-issue-tile.cb { background:rgba(239,68,68,0.1);  border-color:rgba(239,68,68,0.5);  box-shadow:0 4px 24px rgba(239,68,68,0.1); }
+    .tv-issue-tile.cw { background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.45); box-shadow:0 4px 24px rgba(245,158,11,0.08); }
+    .tv-issue-tile.cm { background:rgba(59,130,246,0.08); border-color:rgba(59,130,246,0.4);  box-shadow:0 4px 24px rgba(59,130,246,0.08); }
     .tv-issue-tile-top { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); }
-    .tv-issue-logo { width:clamp(30px,3vw,50px); height:clamp(30px,3vw,50px); border-radius:10px; background:#fff; object-fit:contain; flex-shrink:0; }
-    .tv-issue-logo-fb { width:clamp(30px,3vw,50px); height:clamp(30px,3vw,50px); border-radius:10px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:clamp(15px,1.5vw,24px); font-weight:700; flex-shrink:0; }
-    .tv-issue-name { font-size:clamp(18px,2vw,32px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-0.01em; }
-    .tv-issue-badge { font-size:clamp(12px,1.1vw,18px); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+    .tv-issue-logo { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-issue-logo-fb { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:700; flex-shrink:0; }
+    .tv-issue-name { font-size:clamp(18px,2.1vw,34px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-issue-badge { font-size:clamp(11px,1vw,16px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
     .tv-issue-badge.warn   { color:var(--warn); }
     .tv-issue-badge.bad    { color:var(--bad); }
     .tv-issue-badge.maint  { color:var(--maint); }
     .tv-issue-badge.reroute{ color:var(--reroute); }
-    .tv-issue-title { font-size:clamp(14px,1.45vw,24px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
-    .tv-issue-body { font-size:clamp(13px,1.2vw,19px); color:rgba(255,255,255,0.78); line-height:1.55; overflow:hidden; max-height:14em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
+    .tv-issue-title { font-size:clamp(14px,1.4vw,23px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
+    .tv-issue-body { font-size:clamp(12px,1.1vw,18px); color:rgba(255,255,255,0.72); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
-    /* Normal (healthy) service tiles — horizontal scrolling ticker */
-    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(98px,12.5vh,142px); position:relative; }
-    .tv-tiles-track { display:flex; align-items:center; gap:clamp(10px,1vw,16px); height:100%; width:max-content; animation:tv-ticker 70s linear infinite; }
+    /* Issue page dots */
+    .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
+    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
+    .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.7); }
+    /* Operational ticker */
+    .tv-ticker-wrap { flex-shrink:0; margin-bottom:clamp(8px,0.9vh,14px); }
+    .tv-ticker-hdr { font-size:clamp(9px,0.78vw,13px); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+    .tv-ticker-ok-dot { width:6px; height:6px; border-radius:50%; background:var(--ok); flex-shrink:0; }
+    .tv-tiles { overflow:hidden; height:clamp(88px,11vh,130px); position:relative; }
+    .tv-tiles-track { display:flex; align-items:center; gap:clamp(8px,0.9vw,14px); height:100%; width:max-content; animation:tv-ticker 70s linear infinite; }
     .tv-tiles-track:hover { animation-play-state:paused; }
     @keyframes tv-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:clamp(11px,1.2vw,19px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(135px,13.5vw,205px); }
-    .tv-tile:hover { background:rgba(255,255,255,0.08); opacity:1; }
+    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:11px; padding:clamp(10px,1.1vw,17px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:all 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(130px,13vw,200px); }
+    .tv-tile:hover { background:rgba(255,255,255,0.07); opacity:1; }
     .tv-tile-top { display:flex; align-items:center; gap:7px; min-width:0; }
-    .tv-tile-logo { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
-    .tv-tile-logo-fb { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(8px,0.82vw,12px); font-weight:700; flex-shrink:0; }
+    .tv-tile-logo { width:clamp(16px,1.5vw,24px); height:clamp(16px,1.5vw,24px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-tile-logo-fb { width:clamp(16px,1.5vw,24px); height:clamp(16px,1.5vw,24px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(8px,0.78vw,12px); font-weight:700; flex-shrink:0; }
     .tv-tile-name { font-size:clamp(11px,1vw,16px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-badge { font-size:clamp(9px,0.82vw,13px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-tile-badge { font-size:clamp(9px,0.78vw,13px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
     .tv-tile-badge.ok    { color:var(--ok); }
     .tv-tile-badge.warn  { color:var(--warn); }
     .tv-tile-badge.bad   { color:var(--bad); }
     .tv-tile-badge.maint { color:var(--maint); }
     .tv-tile-badge.reroute{ color:var(--reroute); }
     .tv-tile-badge.unknown{ color:var(--unknown); }
-    .tv-tile-inc { font-size:clamp(7px,0.67vw,10px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-title { font-size:clamp(7px,0.67vw,10px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-body { font-size:clamp(6px,0.62vw,9px); color:var(--sub); line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
-    /* Alert toast shown on board when a voice announcement fires */
-    .tv-alert-toast { position:absolute; top:clamp(14px,2.2vh,28px); right:clamp(14px,2.2vw,32px); display:flex; align-items:center; gap:12px; padding:14px 24px; background:rgba(10,10,12,0.96); border:1px solid rgba(255,255,255,0.18); border-radius:14px; font-size:clamp(14px,1.3vw,20px); font-weight:600; z-index:300; backdrop-filter:blur(12px); box-shadow:0 8px 40px rgba(0,0,0,0.6); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
+    /* Alert toast */
+    .tv-alert-toast { position:absolute; top:clamp(14px,2vh,24px); right:clamp(14px,2vw,28px); display:flex; align-items:center; gap:12px; padding:14px 22px; background:rgba(10,10,12,0.96); border:1px solid rgba(255,255,255,0.18); border-radius:14px; font-size:clamp(14px,1.25vw,20px); font-weight:600; z-index:300; backdrop-filter:blur(12px); box-shadow:0 8px 40px rgba(0,0,0,0.6); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
     .tv-alert-toast.tv-alert-hide { opacity:0; transform:translateY(-10px); }
     .tv-alert-toast.ind-major { border-color:rgba(239,68,68,0.5); }
     .tv-alert-toast.ind-minor { border-color:rgba(245,158,11,0.5); }
@@ -676,14 +667,19 @@
     .tv-alert-svc { color:var(--text); }
     .tv-alert-msg { color:var(--sub); font-weight:500; }
     @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
-    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1vh,14px); flex-shrink:0; gap:12px; }
-    .tv-board-controls { display:flex; align-items:center; gap:12px; }
-    .tv-radio-toggle { display:inline-flex; align-items:center; gap:8px; border:none; border-bottom:1px solid rgba(255,255,255,0.28); border-radius:0; padding:4px 0; background:transparent; color:var(--sub); font-size:12px; font-weight:600; }
-    .tv-radio-toggle input { accent-color:#22c55e; width:14px; height:14px; cursor:pointer; }
-    .tv-radio-toggle span { color:var(--text); }
-    .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
+    /* Footer */
+    .tv-board-footer { display:flex; align-items:center; gap:12px; flex-shrink:0; padding-top:clamp(8px,0.9vh,14px); border-top:1px solid rgba(255,255,255,0.07); }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; font-size:clamp(11px,0.95vw,15px); color:var(--sub); flex:1; min-width:0; }
+    .tv-net-item { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+    .tv-net-lbl { font-weight:700; font-size:0.8em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:2px; }
+    .tv-net-sep { color:var(--border); user-select:none; }
+    .tv-net-ok { color:var(--ok); font-weight:600; }
+    .tv-net-warn { color:var(--warn); font-weight:600; }
+    .tv-net-ts { font-size:0.78em; color:var(--muted); white-space:nowrap; }
+    .tv-footer-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .tv-updated { font-size:clamp(10px,0.82vw,13px); color:var(--muted); white-space:nowrap; }
+    .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.1); color:var(--text); }
-    .tv-updated { font-size:12px; color:var(--muted); }
     .f-board-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 11px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .f-board-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
     .f-theme-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
@@ -765,10 +761,8 @@
     .inc-show-more:hover { color:var(--sub); }
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
-    .tv-board-minimal .tv-tiles,
-    .tv-board-minimal .tv-net-bar,
-    .tv-board-minimal .tv-issues-section,
-    .tv-board-minimal .tv-section-hdr { display:none !important; }
+    .tv-board-minimal .tv-ticker-wrap,
+    .tv-board-minimal .tv-issues-section { display:none !important; }
     .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
     .tv-board-minimal .tv-minimal-status { display:flex; }
     .tv-minimal-msg { font-size:clamp(48px,8vw,120px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; text-align:center; }
@@ -3017,11 +3011,11 @@ function renderBoardView(results){
   }).join('');
   board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
-    <div class="tv-board-hdr">
-      <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-header-audio">
+    <div class="tv-hdr">
+      <div class="tv-hdr-weather" id="tv-wx-bar" style="display:none"></div>
+      <div class="tv-hdr-media">
         <div class="tv-now-playing" id="tv-now-playing"></div>
-        <div class="tv-audio-controls">
+        <div class="tv-ctx-audio">
           <select class="tv-station-select" id="tv-station-select" title="Choose radio station">${BOARD_STATIONS.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('')}</select>
           <label class="tv-radio-toggle" for="tv-radio-toggle" title="Play board radio">
             <input id="tv-radio-toggle" type="checkbox" ${_boardRadioEnabled?'checked':''}>
@@ -3029,27 +3023,31 @@ function renderBoardView(results){
           </label>
         </div>
       </div>
-      <div class="tv-hdr-time">
-        <div class="tv-date" id="tv-date"></div>
+      <div class="tv-clock-block">
         <div class="tv-clock" id="tv-clock"></div>
+        <div class="tv-date" id="tv-date"></div>
       </div>
     </div>
-    <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-minimal-status">
       <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
       <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
     </div>
     ${issueSvcs.length?`
     <div class="tv-issues-section">
-      <div class="tv-section-hdr issue-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
+      <div class="tv-section-hdr issue-hdr"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
       ${issueDotsHTML}
     </div>`:''}
-    ${normalSvcs.length?`<div class="tv-section-hdr" style="margin-top:${issueSvcs.length?'2px':'0'};"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> All Services &mdash; ${normalSvcs.length} operational</div>`:''}
-    <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
+    <div class="tv-ticker-wrap">
+      ${normalSvcs.length?`<div class="tv-ticker-hdr"><span class="tv-ticker-ok-dot"></span>${normalSvcs.length} Operational</div>`:''}
+      <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
+    </div>
     <div class="tv-board-footer">
-      <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
-      <span class="tv-updated" id="tv-updated"></span>
+      <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
+      <div class="tv-footer-right">
+        <span class="tv-updated" id="tv-updated"></span>
+        <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
+      </div>
     </div>`;
   _renderBoardNetBar();
   _renderBoardWeatherBar();
