@@ -634,6 +634,15 @@
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
+    /* Issue tile structured content — route pills, DC badges */
+    .tv-issue-routes { display:flex; flex-wrap:wrap; gap:clamp(4px,0.5vw,8px); margin-bottom:clamp(4px,0.5vh,8px); }
+    .tv-issue-route { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:100px; padding:2px clamp(7px,0.8vw,13px); font-size:clamp(11px,1.1vw,17px); font-weight:600; white-space:nowrap; color:var(--text); }
+    .tv-issue-effect { background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4); border-radius:100px; padding:2px clamp(7px,0.8vw,13px); font-size:clamp(11px,1.1vw,17px); font-weight:600; white-space:nowrap; color:var(--warn); }
+    .tv-issue-timeframe { font-size:clamp(12px,1.2vw,19px); color:rgba(255,255,255,0.6); line-height:1.4; }
+    .tv-issue-dc-list { display:flex; flex-wrap:wrap; gap:clamp(4px,0.5vw,8px); }
+    .tv-issue-dc-item { border-radius:8px; padding:clamp(3px,0.3vh,5px) clamp(8px,0.9vw,14px); font-size:clamp(11px,1.1vw,17px); font-weight:700; letter-spacing:0.04em; }
+    .tv-issue-dc-item.reroute { background:rgba(20,184,166,0.18); border:1px solid rgba(20,184,166,0.45); color:var(--reroute); }
+    .tv-issue-dc-item.maint   { background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.45); color:#60a5fa; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -908,7 +917,7 @@ const SVCS=[
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
-  {name:'Mimecast',su:'https://status.mimecast.com/api/v2/summary.json',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
+  {name:'Mimecast',su:'https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
   // Transit
   {name:'MBTA Providence/Stoughton',su:'https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE',hu:'https://www.mbta.com/schedules/CR-Providence/line',p:'mbta',cat:'transit'},
@@ -1260,6 +1269,54 @@ function _stopBoardRadio(){
   _boardRadioAudio.pause();
 }
 
+// ── WBZ "The Loop" top-of-hour news break ──
+let _boardLoopAudio=null;
+let _boardLoopTimer=null;
+const _WBZ_LOOP_RSS='https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss';
+
+function _scheduleWBZLoop(){
+  clearTimeout(_boardLoopTimer);
+  const now=new Date();
+  const msToNextHour=(59-now.getMinutes())*60000+(60-now.getSeconds())*1000-now.getMilliseconds();
+  _boardLoopTimer=setTimeout(_playWBZLoop, msToNextHour);
+}
+
+async function _playWBZLoop(){
+  _scheduleWBZLoop(); // Always reschedule for next hour
+  if(!_boardModeActive||!_boardRadioEnabled) return;
+  if(!_boardRadioAudio||_boardRadioAudio.paused) return; // Only play if radio is actually running
+  try{
+    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=wbz-loop-rss':_WBZ_LOOP_RSS;
+    const resp=await fetchWithTimeout(proxyUrl,10000);
+    if(!resp.ok) return;
+    const text=await resp.text();
+    const doc=new DOMParser().parseFromString(text,'application/xml');
+    const enclosure=doc.querySelector('item enclosure');
+    const audioUrl=enclosure?.getAttribute('url');
+    if(!audioUrl) return;
+    if(!_boardLoopAudio) _boardLoopAudio=new Audio();
+    const loopEl=_boardLoopAudio;
+    // Estimate ~5 min for The Loop; duck board radio for that duration
+    const LOOP_DUCK_MS=5*60*1000+5000;
+    _duckBoardRadio(LOOP_DUCK_MS);
+    loopEl.src=audioUrl;
+    const station=_getBoardStation();
+    loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
+    loopEl.onended=()=>{ /* duck timer naturally restores board radio volume */ };
+    await loopEl.play();
+  }catch{ /* network or playback error — skip this hour */ }
+}
+
+function _startWBZLoopSchedule(){
+  _scheduleWBZLoop();
+}
+
+function _stopWBZLoopSchedule(){
+  clearTimeout(_boardLoopTimer);
+  _boardLoopTimer=null;
+  if(_boardLoopAudio){ _boardLoopAudio.pause(); _boardLoopAudio.src=''; }
+}
+
 function _duckBoardRadio(ms=4500){
   if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
   _radioDuckUntil=Math.max(_radioDuckUntil,Date.now()+ms);
@@ -1498,7 +1555,7 @@ const ROUTE_KEYS = {
   "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
   "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
   "https://uptime.quad9.net/api/v2/summary.json": "quad9-summary",
-  "https://status.mimecast.com/api/v2/summary.json": "mimecast-summary",
+  "https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4": "mimecast-summary",
   "https://status.wasabi.com/api/v2/summary.json": "wasabi-summary",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE": "mbta-southcoast",
@@ -1508,7 +1565,8 @@ const ROUTE_KEYS = {
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
-  "https://status.openai.com/api/v2/summary.json": "openai-summary"
+  "https://status.openai.com/api/v2/summary.json": "openai-summary",
+  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
 /* @routes-end */
@@ -2336,47 +2394,39 @@ async function fetchOne(s){
 
 
   if(s.p==='mimecast'){
-    // Mimecast — filter to US B Grid components only
+    // Mimecast uses Status.io platform (status codes: 100=OK, 200/300=degraded, 400/500=outage, 600=security)
     try{
-      const sum=await getJson(s.su);
-      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
-      const comps=sum?.components||[];
-      // Find the "US B" grid group and its children
-      const usBGroup=comps.find(c=>c.group&&/us.?b\b|united states.?b\b/i.test(c.name||''));
-      const usBId=usBGroup?.id;
-      const usBChildren=usBId?comps.filter(c=>c.group_id===usBId):comps.filter(c=>/us.?b/i.test(c.name||''));
-      const watched=usBChildren.length?usBChildren:comps; // fallback to all if no US B found
-      const watchedIds=new Set(watched.map(c=>c.id));
-      const active=(sum?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
-        const affected=(x.components||[]).map(c=>c.id);
-        return !affected.length||affected.some(id=>watchedIds.has(id));
-      });
-      const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>{
-        if(!['in_progress','verifying'].includes((x.status||'').toLowerCase())) return false;
-        const affected=(x.components||[]).map(c=>c.id);
-        return !affected.length||affected.some(id=>watchedIds.has(id));
-      });
-      let ind=normalizeIndicator(sum?.status?.indicator||'none');
-      // Override with component-level status
-      const worstComp=watched.reduce((worst,c)=>{
-        const ci=normalizeIndicator(c.status);
-        return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;
-      },'none');
-      if(worstComp!=='none') ind=worstComp;
-      let title='',body='';
-      if(active.length){
-        const a=mostRecentEvent(active)||active[0];
-        title=a.name||'';
-        let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
-        body=desc;
-        if(ind==='none'){ const imp=normalizeIndicator(a.impact||'none'); if(imp!=='none') ind=imp; }
-      } else if(activeMaint.length){
-        ind='maintenance'; title=activeMaint[0].name||'';
-        let desc=latestUpdateBody(activeMaint[0]); if(!desc) desc=stripHtml(activeMaint[0].description||'');
-        body=desc;
+      const data=await getJson(s.su);
+      const res=data?.result||{};
+      const updated=res.status_overall?.updated ? new Date(res.status_overall.updated).toLocaleString() : new Date().toLocaleString();
+      function statusIoInd(code){
+        const c=Number(code);
+        if(c===100) return 'none';
+        if(c===200||c===300) return 'minor';
+        if(c===400||c===500||c===600) return 'major';
+        return 'unknown';
       }
-      if(usBChildren.length&&!usBGroup) body=(body?body+'\n':'')+'(Monitoring US B Grid)';
+      // Prefer US region status if available
+      const regions=(res.status||[]);
+      const usRegion=regions.find(r=>/\bus\b|united states/i.test(r.name||''));
+      const overallCode=usRegion?.status_code ?? res.status_overall?.status_code ?? 100;
+      let ind=statusIoInd(overallCode);
+      const incidents=(res.incidents||[]).filter(x=>!['resolved','postmortem'].includes((x.status||'').toLowerCase()));
+      const activeMaint=(res.maintenance?.active||[]);
+      let title='',body='';
+      if(incidents.length){
+        const inc=incidents[0];
+        title=inc.name||inc.incidents_name||'';
+        const msgs=inc.messages||inc.incident_updates||[];
+        body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        if(ind==='none') ind='minor';
+      } else if(activeMaint.length){
+        const m=activeMaint[0];
+        title=m.name||m.maintenance_name||'';
+        const msgs=m.messages||m.maintenance_updates||[];
+        body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        ind='maintenance';
+      }
       return mk(s.name,ind,title,body,updated,s.hu);
     }catch{return errSvc(s);}
   }
@@ -2950,6 +3000,48 @@ function _startBoardNet(){
   _boardNetTimer=setInterval(_fetchBoardNet,120000);
 }
 
+// Expand MBTA/Cloudflare services into one tile per alert/event for better board use of space
+function _explodeIssueTiles(issueSvcs){
+  const result=[];
+  for(const svc of issueSvcs){
+    if(svc.details?.type==='mbta'){
+      const alerts=svc.details.alerts||[];
+      const schedChanges=svc.details.schedChanges||[];
+      if(!alerts.length&&!schedChanges.length){ result.push(svc); continue; }
+      for(const a of alerts){
+        result.push({...svc, title:a.title||'Service Alert', body:a.timeframe||'',
+          _tileRoutes:a.routes||[], _tileEffectLabel:a.effectLabel||''});
+      }
+      for(const sc of schedChanges){
+        result.push({...svc, title:sc.title||'Schedule Change', body:sc.timeframe||'',
+          ind:'minor', label:'Schedule Change', _tileRoutes:sc.routes||[], _tileEffectLabel:sc.effectLabel||''});
+      }
+    } else if(svc.details?.type==='cloudflare'){
+      const maint=svc.details.maintenance||[];
+      const dcs=svc.details.dataCenters||[];
+      const rerouteDcs=dcs.filter(d=>d.ind==='rerouting');
+      const maintDcs=dcs.filter(d=>d.ind==='maintenance'||d.ind==='major'||d.ind==='minor');
+      let pushed=false;
+      for(const m of maint){
+        result.push({...svc, ind:'maintenance', label:'Maintenance', title:m.name||'Maintenance', body:'', _tileDcList:[]});
+        pushed=true;
+      }
+      if(rerouteDcs.length){
+        result.push({...svc, ind:'rerouting', label:'Traffic Rerouted', title:'Traffic Re-routing', body:'', _tileDcList:rerouteDcs});
+        pushed=true;
+      }
+      if(maintDcs.length){
+        result.push({...svc, ind:'maintenance', label:'Maintenance', title:'Data Center Maintenance', body:'', _tileDcList:maintDcs});
+        pushed=true;
+      }
+      if(!pushed) result.push(svc);
+    } else {
+      result.push(svc);
+    }
+  }
+  return result;
+}
+
 function _buildIssueTilesHTML(svcs){
   return svcs.map(svc=>{
     const logos=logoSources(svc);
@@ -2957,26 +3049,40 @@ function _buildIssueTilesHTML(svcs){
     const logoEl=logos.length
       ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
       :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
-    // For structured cards (MBTA, Cloudflare), build a text body from details when body is empty
-    let tileBody=svc.body||'';
-    if(!tileBody&&svc.details?.type==='mbta'){
-      const lines=[];
-      (svc.details.alerts||[]).forEach(a=>{
-        const r=(a.routes||[]).join(', ');
-        lines.push((r?r+': ':'')+a.title+(a.timeframe?' ('+a.timeframe+')':''));
-      });
-      (svc.details.schedChanges||[]).forEach(a=>{
-        const r=(a.routes||[]).join(', ');
-        lines.push('📅 '+(r?r+': ':'')+a.title);
-      });
-      tileBody=lines.join('\n');
-    } else if(!tileBody&&svc.details?.type==='cloudflare'){
-      const lines=[];
-      (svc.details.maintenance||[]).forEach(m=>lines.push('🔧 '+m.name));
-      (svc.details.dataCenters||[]).forEach(dc=>lines.push('• '+dc.name+' — '+(dc.ind==='rerouting'?'Re-routing':'Maintenance')));
-      tileBody=lines.join('\n');
+    // Build body inner HTML — structured tiles get route pills / DC badges
+    let bodyInnerHtml='';
+    if(svc._tileRoutes?.length){
+      const routeHtml=svc._tileRoutes.map(r=>`<span class="tv-issue-route">${esc(r)}</span>`).join('');
+      const effectHtml=svc._tileEffectLabel?`<span class="tv-issue-effect">${esc(svc._tileEffectLabel)}</span>`:'';
+      const timeHtml=svc.body?`<div class="tv-issue-timeframe">${esc(svc.body)}</div>`:'';
+      bodyInnerHtml=`<div class="tv-issue-routes">${routeHtml}${effectHtml}</div>${timeHtml}`;
+    } else if(svc._tileDcList?.length){
+      const dcHtml=svc._tileDcList.map(dc=>`<span class="tv-issue-dc-item ${dc.ind==='rerouting'?'reroute':'maint'}">${esc(dc.name)}</span>`).join('');
+      bodyInnerHtml=`<div class="tv-issue-dc-list">${dcHtml}</div>`;
+    } else {
+      // Plain text fallback (non-exploded structured details or regular services)
+      let tileBody=svc.body||'';
+      if(!tileBody&&svc.details?.type==='mbta'){
+        const lines=[];
+        (svc.details.alerts||[]).forEach(a=>{
+          const r=(a.routes||[]).join(', ');
+          lines.push((r?r+': ':'')+a.title+(a.timeframe?' ('+a.timeframe+')':''));
+        });
+        (svc.details.schedChanges||[]).forEach(a=>{
+          const r=(a.routes||[]).join(', ');
+          lines.push('📅 '+(r?r+': ':'')+a.title);
+        });
+        tileBody=lines.join('\n');
+      } else if(!tileBody&&svc.details?.type==='cloudflare'){
+        const lines=[];
+        (svc.details.maintenance||[]).forEach(m=>lines.push('🔧 '+m.name));
+        (svc.details.dataCenters||[]).forEach(dc=>lines.push('• '+dc.name+' — '+(dc.ind==='rerouting'?'Re-routing':'Maintenance')));
+        tileBody=lines.join('\n');
+      }
+      if(tileBody) bodyInnerHtml=esc(tileBody);
     }
-    const bodyEl=svc.title&&tileBody?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(tileBody)}</span></div>`:'';
+    const bodyEl=(svc.title&&bodyInnerHtml)
+      ?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${bodyInnerHtml}</span></div>`:'';
     return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
       <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
@@ -3063,10 +3169,12 @@ function renderBoardView(results){
   // Split into services with active issues vs healthy services
   const issueSvcs=sorted.filter(s=>s.ind!=='none'&&s.ind!=='unknown');
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
+  // Explode MBTA/CF into one tile per alert/event for better use of board space
+  const explodedIssues=_explodeIssueTiles(issueSvcs);
   // Build first page of issue tiles (pagination shows 3 at a time)
-  const firstPageSvcs=issueSvcs.slice(0,ISSUE_PAGE_SIZE);
+  const firstPageSvcs=explodedIssues.slice(0,ISSUE_PAGE_SIZE);
   const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
-  const totalIssuePages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  const totalIssuePages=Math.ceil(explodedIssues.length/ISSUE_PAGE_SIZE);
   const issueDotsHTML=totalIssuePages>1
     ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
     :'';
@@ -3107,7 +3215,7 @@ function renderBoardView(results){
     </div>
     ${issueSvcs.length?`
     <div class="tv-issues-section">
-      <div class="tv-section-hdr issue-hdr"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
+      <div class="tv-section-hdr issue-hdr"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages} (${explodedIssues.length} tiles)`:''}</div>
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
       ${issueDotsHTML}
     </div>`:''}
@@ -3126,7 +3234,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
-  _initIssuePagination(issueSvcs);
+  _initIssuePagination(explodedIssues);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
@@ -3150,6 +3258,7 @@ function renderBoardView(results){
   _applyBoardStationSelect();
   _renderBoardNowPlaying();
   _startBoardRadio();
+  _startWBZLoopSchedule();
   const tilesEl=document.getElementById('tv-tiles');
   tilesEl.addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -3217,6 +3326,7 @@ function exitBoardMode(){
   _stopBoardRadio();
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
+  _stopWBZLoopSchedule();
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   _applyBoardPageState();
@@ -3915,7 +4025,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
 const _TRACE_HOPS=[
   {label:'Cloudflare CDN', url:'https://cloudflare.com/cdn-cgi/trace', noCors:false},
   {label:'Google Anycast',  url:'https://dns.google/generate_204',      noCors:true},
-  {label:'Amazon AWS',      url:'https://aws.amazon.com/favicon.ico',   noCors:true},
+  {label:'Amazon AWS',      url:'https://checkip.amazonaws.com/',        noCors:true},
   // azure.microsoft.com redirects to CDN; management.azure.com is the actual Azure ARM endpoint
   {label:'Microsoft Azure', url:'https://management.azure.com/', noCors:true},
 ];
