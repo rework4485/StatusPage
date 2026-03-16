@@ -207,7 +207,7 @@
     #services-grid {
       display:flex;
       flex-direction:column;
-      gap:20px;
+      gap:12px;
       padding-bottom:28px;
     }
     .loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 0; }
@@ -218,7 +218,7 @@
     .card {
       background:linear-gradient(170deg, rgba(255,255,255,0.02), transparent 44%), var(--card);
       border:1px solid var(--border); border-radius:16px;
-      padding:16px 18px; display:flex; flex-direction:column; position:relative; overflow:hidden;
+      padding:12px 14px 10px; display:flex; flex-direction:column; position:relative; overflow:hidden;
       transition:border-color 0.3s, box-shadow 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1); cursor:pointer; animation:cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
       will-change:transform;
     }
@@ -275,23 +275,23 @@
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:10px; }
-    .inc-block { border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
     .inc-block.maint-block { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15); }
     .inc-block.reroute-block { background:rgba(20,184,166,0.06); border:1px solid rgba(20,184,166,0.15); }
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
-    .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+    .inc-label { font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(14px, 1.1vw, 20px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(13px, 0.95vw, 17px); color:var(--sub); line-height:1.55; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:200px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
+    .inc-title { font-size:clamp(13px, 1vw, 18px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(12px, 0.9vw, 15px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:120px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:6px; border-top:1px solid var(--border); margin-top:8px; gap:8px; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
     .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
     .meta-tag { font-size:11px; font-weight:600; color:var(--muted); padding:3px 9px; border-radius:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
@@ -302,10 +302,10 @@
     .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
     .issues-hdr.has-outage::before { background:var(--bad); }
     .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
-    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; align-items:stretch; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:stretch; }
 
     /* ── Service directory (bottom panel) ───────────────────────────────────── */
-    .svc-directory { display:flex; flex-direction:column; gap:14px; }
+    .svc-directory { display:flex; flex-direction:column; gap:10px; }
     .svc-cat-sec { display:flex; flex-direction:column; gap:6px; }
     .svc-cat-hdr { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--sub); padding:2px 0; }
     .svc-cat-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
@@ -314,7 +314,7 @@
     .svc-cat-badge.warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
     .svc-cat-badge.bad { color:var(--bad); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); }
     .svc-table { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:46px; }
+    .svc-row { display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; min-height:40px; }
     .svc-row:last-child { border-bottom:none; }
     .svc-row:hover { background:rgba(255,255,255,0.035); }
     .svc-row:active { background:rgba(255,255,255,0.065); }
@@ -555,8 +555,8 @@
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
 
     /* ── Status summary banner ───────────────────────────────────────────────── */
-    .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
-    .status-summary.show { display:flex; }
+    .status-summary { display:none !important; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
+    .status-summary.show { display:none !important; }
     .status-summary.ok { background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); color:#4ade80; }
     .status-summary.warn { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
     .status-summary.bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); color:#f87171; }
@@ -770,6 +770,10 @@
     .svc-uptime.up-ok   { color:var(--ok);   background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.15); }
     .svc-uptime.up-warn { color:var(--warn); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.15); }
     .svc-uptime.up-bad  { color:var(--bad);  background:rgba(239,68,68,0.08);  border:1px solid rgba(239,68,68,0.15); }
+    @media (min-width:1100px) {
+      .svc-table { display:grid; grid-template-columns:1fr 1fr; }
+      .svc-row { border-bottom:1px solid var(--border); }
+    }
     @media (min-width:1300px) { .svc-row { grid-template-columns:auto auto 1fr minmax(0,2fr) auto auto; } .svc-uptime { display:inline-flex; } }
 
     /* ── Incident body (always scrollable) ──────────────────────────────────── */
@@ -778,7 +782,7 @@
     .inc-detail-section { margin-top:10px; display:flex; flex-direction:column; gap:4px; }
     .inc-detail-hdr { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; gap:6px; }
     .inc-detail-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
-    .inc-detail-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:5px 8px; background:rgba(255,255,255,0.025); border-radius:7px; border:1px solid var(--border); }
+    .inc-detail-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 7px; background:rgba(255,255,255,0.025); border-radius:7px; border:1px solid var(--border); }
     .inc-detail-item-label { font-size:12px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .inc-detail-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
     .inc-detail-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.2); }
@@ -788,7 +792,7 @@
     .inc-detail-badge.ok      { background:rgba(34,197,94,0.1);  color:var(--ok);      border:1px solid rgba(34,197,94,0.2); }
     /* MBTA alert sub-cards */
     .inc-sub-cards { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-    .inc-sub-card { background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:9px; padding:8px 10px; display:flex; flex-direction:column; gap:5px; }
+    .inc-sub-card { background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:9px; padding:6px 8px; display:flex; flex-direction:column; gap:4px; }
     .inc-sub-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
     .inc-sub-card-title { font-size:12.5px; font-weight:600; color:var(--text); line-height:1.3; min-width:0; overflow-wrap:anywhere; flex:1; }
     .inc-sub-card-badge { display:inline-flex; align-items:center; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
@@ -2814,7 +2818,10 @@ function renderServices(results){
   const addSection=(label,items,icon)=>{
     if(!items.length) return;
     const storageKey='svc-collapse-'+label.replace(/\W+/g,'-');
-    const isCollapsed=localStorage.getItem(storageKey)==='1';
+    const allOk=items.every(s=>s.ind==='none'||s.ind==='unknown');
+    const isCollapsed=localStorage.getItem(storageKey)!==null
+      ?localStorage.getItem(storageKey)==='1'
+      :allOk;
     const sec=document.createElement('div');
     sec.className='svc-cat-sec'+(isCollapsed?' collapsed':'');
     const issueCount=items.filter(s=>s.ind!=='none'&&s.ind!=='unknown').length;
@@ -3010,29 +3017,40 @@ function _explodeIssueTiles(issueSvcs){
       const schedChanges=svc.details.schedChanges||[];
       if(!alerts.length&&!schedChanges.length){ result.push(svc); continue; }
       for(const a of alerts){
-        result.push({...svc, title:a.title||'Service Alert', body:a.timeframe||'',
-          _tileRoutes:a.routes||[], _tileEffectLabel:a.effectLabel||''});
+        const t=a.effectLabel+(a.cause?' — '+a.cause:'');
+        result.push({...svc, title:t||'Service Alert', body:a.title||'',
+          details:null, _tileRoutes:a.routes||[], _tileEffectLabel:a.effectLabel||''});
       }
       for(const sc of schedChanges){
-        result.push({...svc, title:sc.title||'Schedule Change', body:sc.timeframe||'',
-          ind:'minor', label:'Schedule Change', _tileRoutes:sc.routes||[], _tileEffectLabel:sc.effectLabel||''});
+        const t=sc.effectLabel+(sc.cause?' — '+sc.cause:'');
+        result.push({...svc, title:t||'Schedule Change', body:sc.title||'',
+          ind:'maintenance', label:'Schedule Change',
+          details:null, _tileRoutes:sc.routes||[], _tileEffectLabel:sc.effectLabel||''});
       }
     } else if(svc.details?.type==='cloudflare'){
       const maint=svc.details.maintenance||[];
       const dcs=svc.details.dataCenters||[];
       const rerouteDcs=dcs.filter(d=>d.ind==='rerouting');
-      const maintDcs=dcs.filter(d=>d.ind==='maintenance'||d.ind==='major'||d.ind==='minor');
+      const maintDcs=dcs.filter(d=>d.ind!=='rerouting'&&d.ind!=='none');
       let pushed=false;
+      // Main incident tile first (e.g. "Cloudflare Analytics Availability Issues")
+      if(svc.title&&svc.body){
+        result.push({...svc, details:null});
+        pushed=true;
+      }
       for(const m of maint){
-        result.push({...svc, ind:'maintenance', label:'Maintenance', title:m.name||'Maintenance', body:'', _tileDcList:[]});
+        result.push({...svc, ind:'maintenance', label:'Maintenance',
+          title:m.name||'Maintenance', body:m.desc||'', details:null, _tileDcList:[]});
         pushed=true;
       }
       if(rerouteDcs.length){
-        result.push({...svc, ind:'rerouting', label:'Traffic Rerouted', title:'Traffic Re-routing', body:'', _tileDcList:rerouteDcs});
+        result.push({...svc, ind:'rerouting', label:'Traffic Rerouted',
+          title:'Traffic Re-routing', body:'', details:null, _tileDcList:rerouteDcs});
         pushed=true;
       }
       if(maintDcs.length){
-        result.push({...svc, ind:'maintenance', label:'Maintenance', title:'Data Center Maintenance', body:'', _tileDcList:maintDcs});
+        result.push({...svc, ind:'maintenance', label:'Maintenance',
+          title:'Data Center Maintenance', body:'', details:null, _tileDcList:maintDcs});
         pushed=true;
       }
       if(!pushed) result.push(svc);
@@ -3052,11 +3070,12 @@ function _buildIssueTilesHTML(svcs){
       :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
     // Build body inner HTML — structured tiles get route pills / DC badges
     let bodyInnerHtml='';
-    if(svc._tileRoutes?.length){
-      const routeHtml=svc._tileRoutes.map(r=>`<span class="tv-issue-route">${esc(r)}</span>`).join('');
+    if('_tileRoutes' in svc){
+      const routeHtml=(svc._tileRoutes||[]).map(r=>`<span class="tv-issue-route">${esc(r)}</span>`).join('');
       const effectHtml=svc._tileEffectLabel?`<span class="tv-issue-effect">${esc(svc._tileEffectLabel)}</span>`:'';
-      const timeHtml=svc.body?`<div class="tv-issue-timeframe">${esc(svc.body)}</div>`:'';
-      bodyInnerHtml=`<div class="tv-issue-routes">${routeHtml}${effectHtml}</div>${timeHtml}`;
+      const detailHtml=svc.body?`<div class="tv-issue-timeframe">${esc(svc.body)}</div>`:'';
+      const routeRow=(routeHtml||effectHtml)?`<div class="tv-issue-routes">${routeHtml}${effectHtml}</div>`:'';
+      bodyInnerHtml=routeRow+detailHtml;
     } else if(svc._tileDcList?.length){
       const dcHtml=svc._tileDcList.map(dc=>`<span class="tv-issue-dc-item ${dc.ind==='rerouting'?'reroute':'maint'}">${esc(dc.name)}</span>`).join('');
       bodyInnerHtml=`<div class="tv-issue-dc-list">${dcHtml}</div>`;
