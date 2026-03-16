@@ -5,6 +5,54 @@ const UA = 'Mozilla/5.0 (compatible; StatusMonitor/1.0)';
 const SPECIAL_KEYS = new Set(special);
 
 async function fetchSpecialRoute(key, env) {
+  if (key === 'wror-now-playing') {
+    const resp = await fetch('https://playerservices.streamtheworld.com/api/livestream-redirect/WRORFM.mp3', {
+      headers: {
+        'Icy-MetaData': '1',
+        'User-Agent': UA,
+        Range: 'bytes=0-65535',
+      },
+    });
+    if (!resp.ok || !resp.body) throw new Error(`upstream ${resp.status}`);
+    const metaInt = Number(resp.headers.get('icy-metaint') || 0);
+    if (!Number.isFinite(metaInt) || metaInt <= 0) {
+      throw new Error('missing icy-metaint');
+    }
+
+    const reader = resp.body.getReader();
+    let chunk = new Uint8Array(0);
+    let totalRead = 0;
+    while (totalRead < metaInt + 2048) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalRead += value.length;
+      const merged = new Uint8Array(chunk.length + value.length);
+      merged.set(chunk);
+      merged.set(value, chunk.length);
+      chunk = merged;
+    }
+    await reader.cancel().catch(() => {});
+
+    let songtitle = '';
+    if (chunk.length > metaInt) {
+      const metaLen = (chunk[metaInt] || 0) * 16;
+      const metaStart = metaInt + 1;
+      const metaEnd = Math.min(chunk.length, metaStart + metaLen);
+      const rawMeta = new TextDecoder('utf-8').decode(chunk.slice(metaStart, metaEnd));
+      const m = rawMeta.match(/StreamTitle='([^']*)';/i);
+      if (m?.[1]) songtitle = m[1].trim();
+    }
+
+    return new Response(JSON.stringify({ songtitle }), {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
   if (key === 'ioda-na-outages') {
     const until = Math.floor(Date.now() / 1000);
     const from = until - 86400;
