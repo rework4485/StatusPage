@@ -41,7 +41,8 @@
     "google-204": "https://dns.google/generate_204",
     "x1023-now-playing": "https://stream.x1023.fm/stats?sid=2&json=1",
     "openai-summary": "https://status.openai.com/api/v2/summary.json",
-    "wbz-loop-rss": "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss"
+    "wbz-loop-rss": "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss",
+    "wocn-nowplaying": "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml"
   },
   "special": [
     "ioda-na-outages",

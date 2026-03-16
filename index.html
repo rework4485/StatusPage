@@ -285,7 +285,7 @@
     .inc-label { font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
     .inc-title { font-size:clamp(13px, 1vw, 18px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.9vw, 15px); color:var(--sub); line-height:1.5; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:120px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
+    .inc-body { font-size:clamp(12px, 0.9vw, 15px); color:var(--sub); line-height:1.5; display:block; overflow-wrap:anywhere; white-space:pre-wrap; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
@@ -595,7 +595,9 @@
     .tv-hdr-weather .tv-wx-hour { min-width:clamp(34px,3.5vw,54px); }
     /* Now playing + audio in header */
     .tv-hdr-media { display:flex; flex-direction:column; align-items:flex-start; gap:clamp(5px,0.6vh,9px); min-width:0; justify-content:center; }
-    .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
+    .tv-now-playing { display:flex; flex-direction:row; align-items:center; gap:clamp(8px,0.9vw,14px); min-width:0; width:100%; }
+    .tv-np-text { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+    .tv-np-cover { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; object-fit:cover; flex-shrink:0; }
     .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
     .tv-now-playing-track { font-size:clamp(18px,1.9vw,32px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-now-playing-meta { font-size:clamp(14px,1.4vw,22px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -1124,7 +1126,7 @@ const PREFERRED_TTS_VOICES=[
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
   {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
-  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://streamdb3web.securenetsystems.net/cirrusencore/WOCN',nowPlayingUrl:null,parse:'none',quality:'128k',baseVolume:0.5,duckVolume:0.2}
+  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://streamdb3web.securenetsystems.net/cirrusencore/WOCN',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1624,7 +1626,8 @@ const ROUTE_KEYS = {
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
   "https://status.openai.com/api/v2/summary.json": "openai-summary",
-  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss"
+  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss",
+  "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
 /* @routes-end */
@@ -2709,9 +2712,24 @@ async function _fetchNowPlaying(){
     return;
   }
   try{
-    const data=station.nowPlayingUrl.startsWith('special://')
-      ? await getJson('/proxy?svc='+station.nowPlayingUrl.replace('special://',''))
-      : await getJson(station.nowPlayingUrl);
+    const proxyUrl=station.nowPlayingUrl.startsWith('special://')
+      ?'/proxy?svc='+station.nowPlayingUrl.replace('special://','')
+      :station.nowPlayingUrl;
+    // WOCN: XML history feed — <playHistory><song><title>/<artist>/<cover>
+    if(station.parse==='wocn-xml'){
+      const resp=await fetchWithTimeout(proxyUrl,8000);
+      const text=await resp.text();
+      const doc=new DOMParser().parseFromString(text,'application/xml');
+      const first=doc.querySelector('song');
+      const track=first?.querySelector('title')?.textContent||station.name;
+      const artist=first?.querySelector('artist')?.textContent||'';
+      const cover=first?.querySelector('cover')?.textContent||null;
+      _nowPlayingInfo={track,artist,cover,ts:Date.now(),err:null,station:station.name,quality:station.quality};
+      _nowPlayingFetching=false;
+      _renderBoardNowPlaying();
+      return;
+    }
+    const data=await getJson(proxyUrl);
     const fallbackRaw=[
       data?.songtitle,
       data?.title,
@@ -2776,10 +2794,12 @@ function _renderBoardNowPlaying(){
   if(!np) return;
   const track=_nowPlayingInfo?.track||'Loading…';
   const artist=_nowPlayingInfo?.artist||_nowPlayingInfo?.station||_getBoardStation().name;
+  const cover=_nowPlayingInfo?.cover||null;
   const wasDucked=np.classList.contains('tv-np-ducked');
-  np.innerHTML=`<div class="tv-now-playing-label">Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
+  const coverEl=cover?`<img class="tv-np-cover" src="${esc(cover)}" alt="" loading="lazy" decoding="async">`:'';
+  np.innerHTML=`${coverEl}<div class="tv-np-text"><div class="tv-now-playing-label">Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
     <div class="tv-now-playing-track" title="${esc(track)}">${esc(track)}</div>
-    <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div>`;
+    <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div></div>`;
   if(wasDucked) np.classList.add('tv-np-ducked');
 }
 
