@@ -2006,11 +2006,11 @@ async function fetchOne(s){
 
       // Schedule-only path: no service disruptions, only schedule changes
       if(!serviceAlerts.length){
-        const topS=schedAlerts[0];
-        const attrS=topS.attributes||{};
+        const attrS=schedAlerts[0].attributes||{};
         const effS=attrS.effect||'';
         const lblS=EFFECT_LABEL[effS]||effS.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-        const titleS=(attrS.short_header||attrS.header||'')||(lblS);
+        // Count-based summary title — full text shows in sub-cards
+        const titleS=schedAlerts.length===1?lblS:`${schedAlerts.length} Schedule Changes`;
         const updatedS=new Date(attrS.updated_at||now).toLocaleString();
         const schedDetails=schedAlerts.map(a=>mkAlertItem(a,true));
         return mk(s.name,'maintenance',titleS,'',updatedS,s.hu,null,[],{type:'mbta',alerts:[],schedChanges:schedDetails});
@@ -2024,17 +2024,18 @@ async function fetchOne(s){
       const effectLabel=EFFECT_LABEL[eff]||eff.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const cause=attr.cause?CAUSE_LABEL[attr.cause]||null:null;
 
-      // Build title: use short_header (specific) if available, otherwise effectLabel
-      const shortHdr=attr.short_header||attr.header||'';
-      const titleParts=[];
-      if(shortHdr) titleParts.push(shortHdr);
-      else { titleParts.push(effectLabel); if(cause&&cause!=='Unknown') titleParts.push('('+cause+')'); }
-      const title=titleParts.join(' ');
-
-      // Build structured alert items for details
+      // Build structured alert items for details (full text lives in sub-cards only)
       const detailAlerts=serviceAlerts.map(a=>mkAlertItem(a,false));
       const detailSchedChanges=schedAlerts.map(a=>mkAlertItem(a,true));
       const mbtaDetails={type:'mbta',alerts:detailAlerts,schedChanges:detailSchedChanges};
+
+      // Use a count-based summary for the card title so the full alert text
+      // appears only in the structured sub-cards, never duplicated in the heading
+      const n=serviceAlerts.length;
+      const causeStr=(cause&&cause!=='Unknown')?' — '+cause:'';
+      const title=n===1
+        ?(effectLabel+causeStr)
+        :(`${n} Service Alerts`);
 
       // Body is intentionally brief — structured details render the full alert list
       const updated=new Date(attr.updated_at||now).toLocaleString();
