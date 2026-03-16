@@ -73,9 +73,15 @@
     .light-mode .net-card-icon { background:rgba(0,0,0,0.06); }
     .light-mode .net-badge-muted { background:rgba(0,0,0,0.04); }
     .light-mode .speed-bar { background:rgba(0,0,0,0.08); }
-    .light-mode .tv-tile { background:rgba(0,0,0,0.02); }
-    .light-mode .tv-tile:hover { background:rgba(0,0,0,0.05); }
+    .light-mode .tv-tile { background:rgba(0,0,0,0.02); border-color:rgba(0,0,0,0.08); }
+    .light-mode .tv-tile:hover { background:rgba(0,0,0,0.05); opacity:1; }
     .light-mode .tv-tile-logo-fb { background:rgba(0,0,0,0.08); }
+    .light-mode .tv-issue-tile { background:rgba(0,0,0,0.03); }
+    .light-mode .tv-issue-tile.cb { background:rgba(239,68,68,0.07); }
+    .light-mode .tv-issue-tile.cw { background:rgba(245,158,11,0.06); }
+    .light-mode .tv-issue-tile.cm { background:rgba(59,130,246,0.06); }
+    .light-mode .tv-issue-logo-fb { background:rgba(0,0,0,0.08); }
+    .light-mode .tv-wx-card { background:rgba(0,0,0,0.03); }
     .light-mode .inc-body { scrollbar-color:rgba(0,0,0,0.15) transparent; }
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body {
@@ -529,9 +535,16 @@
     .wx-alert { display:inline-flex; align-items:center; gap:5px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:20px; padding:2px 10px; font-size:12px; font-weight:600; color:#fbbf24; white-space:nowrap; }
     .wx-alert.warn-major { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); color:#f87171; }
     .wx-updated { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
-    /* Board weather row */
-    .tv-wx-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; padding:5px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; margin-bottom:clamp(8px,1.2vh,12px); font-size:clamp(10px,0.82vw,13px); color:var(--sub); flex-shrink:0; }
-    .light-mode .tv-wx-bar { background:rgba(0,0,0,0.03); }
+    /* Board weather card */
+    .tv-wx-card { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); padding:clamp(8px,1.1vh,14px) clamp(12px,1.4vw,20px); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; flex-shrink:0; overflow:hidden; min-width:0; }
+    .tv-wx-icon-big { font-size:clamp(26px,3.2vw,50px); line-height:1; flex-shrink:0; }
+    .tv-wx-details-col { display:flex; flex-direction:column; gap:1px; min-width:0; }
+    .tv-wx-temp-big { font-size:clamp(20px,2.6vw,40px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
+    .tv-wx-cond { font-size:clamp(11px,1.1vw,17px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-wx-loc { font-size:clamp(9px,0.82vw,13px); color:var(--muted); white-space:nowrap; }
+    .tv-wx-alerts { display:flex; flex-direction:column; gap:3px; margin-left:auto; flex-shrink:0; padding-left:8px; }
+    .tv-wx-alert-tag { font-size:clamp(9px,0.82vw,13px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:3px 8px; white-space:nowrap; }
+    .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
 
     /* ── Status summary banner ───────────────────────────────────────────────── */
     .status-summary { display:none; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; border-radius:11px; margin-bottom:4px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; }
@@ -551,35 +564,17 @@
     .filter-chip.active.fc-maint{ background:rgba(59,130,246,0.1);  color:#93c5fd; border-color:rgba(59,130,246,0.25); }
 
     /* ── TV / Status board mode ──────────────────────────────────────────────── */
-    .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(18px,2.5vw,40px); overflow:hidden; }
-    .tv-board-hdr { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:clamp(14px,2vh,24px); flex-shrink:0; border-bottom:1px solid var(--border); padding-bottom:clamp(10px,1.5vh,18px); }
-    .tv-board-brand { display:flex; align-items:center; gap:10px; font-size:clamp(16px,1.8vw,28px); font-weight:800; letter-spacing:-0.02em; }
-    .tv-board-status { font-size:clamp(12px,1.2vw,18px); font-weight:700; padding:5px 16px; border-radius:100px; }
+    .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(12px,1.8vh,24px) clamp(16px,2.2vw,36px); overflow:hidden; }
+    .tv-board-hdr { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:clamp(10px,1.4vh,18px); flex-shrink:0; border-bottom:1px solid var(--border); padding-bottom:clamp(10px,1.4vh,16px); }
+    .tv-board-brand { display:flex; align-items:center; gap:10px; font-size:clamp(13px,1.2vw,18px); font-weight:700; letter-spacing:-0.01em; color:var(--muted); }
+    .tv-board-status { font-size:clamp(16px,1.9vw,30px); font-weight:800; padding:8px 24px; border-radius:100px; letter-spacing:-0.01em; }
     .tv-board-status.ok   { background:rgba(34,197,94,0.1);  border:1px solid rgba(34,197,94,0.25);  color:#4ade80; }
     .tv-board-status.warn { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);  color:#fbbf24; }
     .tv-board-status.bad  { background:rgba(239,68,68,0.1);  border:1px solid rgba(239,68,68,0.3);   color:#f87171; }
-    .tv-clock { font-size:clamp(14px,1.5vw,24px); font-weight:600; font-variant-numeric:tabular-nums; color:var(--sub); flex-shrink:0; }
-    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(140px,13vw,220px),1fr)); grid-auto-rows:minmax(0,1fr); gap:clamp(8px,0.9vw,14px); overflow:hidden; min-height:0; }
-    .tv-tile { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:clamp(10px,1vw,16px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; min-height:0; justify-content:center; }
-    .tv-tile:hover { background:rgba(255,255,255,0.06); }
-    .tv-tile.cb { background:rgba(239,68,68,0.08);  border-color:rgba(239,68,68,0.25); }
-    .tv-tile.cw { background:rgba(245,158,11,0.07); border-color:rgba(245,158,11,0.22); }
-    .tv-tile.cm { background:rgba(59,130,246,0.07); border-color:rgba(59,130,246,0.22); }
-    .tv-tile-top { display:flex; align-items:center; gap:8px; min-width:0; }
-    .tv-tile-logo { width:clamp(20px,1.8vw,28px); height:clamp(20px,1.8vw,28px); border-radius:5px; background:#fff; object-fit:contain; flex-shrink:0; }
-    .tv-tile-logo-fb { width:clamp(20px,1.8vw,28px); height:clamp(20px,1.8vw,28px); border-radius:5px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(10px,1vw,14px); font-weight:700; flex-shrink:0; }
-    .tv-tile-name { font-size:clamp(11px,1vw,15px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-badge { font-size:clamp(9px,0.8vw,12px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
-    .tv-tile-badge.ok    { color:var(--ok); }
-    .tv-tile-badge.warn  { color:var(--warn); }
-    .tv-tile-badge.bad   { color:var(--bad); }
-    .tv-tile-badge.maint { color:var(--maint); }
-    .tv-tile-badge.reroute{ color:var(--reroute); }
-    .tv-tile-badge.unknown{ color:var(--unknown); }
-    .tv-tile-inc { font-size:clamp(9px,0.75vw,11px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-title { font-size:clamp(9px,0.8vw,12px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-body { font-size:clamp(8px,0.72vw,11px); color:var(--sub); line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
-    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; margin-bottom:clamp(10px,1.4vh,16px); font-size:clamp(10px,0.82vw,13px); color:var(--sub); flex-shrink:0; }
+    .tv-clock { font-size:clamp(22px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
+    /* Info row: weather card + network bar side by side */
+    .tv-info-row { display:flex; align-items:stretch; gap:clamp(8px,1vw,14px); margin-bottom:clamp(8px,1.1vh,14px); flex-shrink:0; min-height:0; }
+    .tv-net-bar { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; font-size:clamp(10px,0.82vw,13px); color:var(--sub); min-width:0; }
     .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.82em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
@@ -587,6 +582,45 @@
     .tv-net-ok { color:var(--ok); font-weight:600; }
     .tv-net-warn { color:var(--warn); font-weight:600; }
     .tv-net-ts { font-size:0.82em; color:var(--muted); margin-left:auto; white-space:nowrap; }
+    /* Issues section — large prominent tiles */
+    .tv-issues-section { flex-shrink:0; margin-bottom:clamp(8px,1vh,14px); }
+    .tv-section-hdr { font-size:clamp(9px,0.78vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:clamp(5px,0.65vh,9px); display:flex; align-items:center; gap:8px; }
+    .tv-section-hdr.issue-hdr { color:rgba(248,113,113,0.85); }
+    .tv-issue-tiles { display:grid; gap:clamp(8px,0.9vw,14px); }
+    .tv-issue-tile { background:rgba(255,255,255,0.04); border:2px solid rgba(255,255,255,0.1); border-radius:14px; padding:clamp(12px,1.5vw,22px); display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:border-color 0.2s,background 0.2s; overflow:hidden; }
+    .tv-issue-tile:hover { filter:brightness(1.1); }
+    .tv-issue-tile.cb { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.55); }
+    .tv-issue-tile.cw { background:rgba(245,158,11,0.1);  border-color:rgba(245,158,11,0.5); }
+    .tv-issue-tile.cm { background:rgba(59,130,246,0.1);  border-color:rgba(59,130,246,0.5); }
+    .tv-issue-tile-top { display:flex; align-items:center; gap:clamp(8px,1vw,14px); }
+    .tv-issue-logo { width:clamp(26px,2.6vw,42px); height:clamp(26px,2.6vw,42px); border-radius:8px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-issue-logo-fb { width:clamp(26px,2.6vw,42px); height:clamp(26px,2.6vw,42px); border-radius:8px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:clamp(13px,1.3vw,20px); font-weight:700; flex-shrink:0; }
+    .tv-issue-name { font-size:clamp(16px,1.8vw,28px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-0.01em; }
+    .tv-issue-badge { font-size:clamp(11px,1vw,16px); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+    .tv-issue-badge.warn   { color:var(--warn); }
+    .tv-issue-badge.bad    { color:var(--bad); }
+    .tv-issue-badge.maint  { color:var(--maint); }
+    .tv-issue-badge.reroute{ color:var(--reroute); }
+    .tv-issue-title { font-size:clamp(12px,1.2vw,19px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
+    .tv-issue-body { font-size:clamp(10px,0.95vw,15px); color:var(--sub); line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
+    /* Normal (healthy) service tiles — visible but subdued */
+    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(100px,9vw,160px),1fr)); grid-auto-rows:minmax(0,1fr); gap:clamp(5px,0.6vw,9px); overflow:hidden; min-height:0; }
+    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:9px; padding:clamp(7px,0.8vw,12px); display:flex; flex-direction:column; gap:3px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; min-height:0; justify-content:center; opacity:0.5; }
+    .tv-tile:hover { background:rgba(255,255,255,0.07); opacity:1; }
+    .tv-tile-top { display:flex; align-items:center; gap:6px; min-width:0; }
+    .tv-tile-logo { width:clamp(14px,1.3vw,20px); height:clamp(14px,1.3vw,20px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-tile-logo-fb { width:clamp(14px,1.3vw,20px); height:clamp(14px,1.3vw,20px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(7px,0.7vw,10px); font-weight:700; flex-shrink:0; }
+    .tv-tile-name { font-size:clamp(9px,0.82vw,13px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-badge { font-size:clamp(8px,0.7vw,10px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-tile-badge.ok    { color:var(--ok); }
+    .tv-tile-badge.warn  { color:var(--warn); }
+    .tv-tile-badge.bad   { color:var(--bad); }
+    .tv-tile-badge.maint { color:var(--maint); }
+    .tv-tile-badge.reroute{ color:var(--reroute); }
+    .tv-tile-badge.unknown{ color:var(--unknown); }
+    .tv-tile-inc { font-size:clamp(7px,0.65vw,10px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-title { font-size:clamp(7px,0.65vw,10px); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-body { font-size:clamp(6px,0.6vw,9px); color:var(--sub); line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
     /* Alert toast shown on board when a voice announcement fires */
     .tv-alert-toast { position:absolute; top:clamp(12px,2vh,24px); right:clamp(12px,2vw,28px); display:flex; align-items:center; gap:10px; padding:12px 20px; background:rgba(10,10,12,0.95); border:1px solid rgba(255,255,255,0.18); border-radius:12px; font-size:clamp(13px,1.2vw,18px); font-weight:600; z-index:300; backdrop-filter:blur(10px); box-shadow:0 8px 32px rgba(0,0,0,0.5); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
     .tv-alert-toast.tv-alert-hide { opacity:0; transform:translateY(-10px); }
@@ -596,7 +630,7 @@
     .tv-alert-svc { color:var(--text); }
     .tv-alert-msg { color:var(--sub); font-weight:500; }
     @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
-    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1.2vh,16px); flex-shrink:0; }
+    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(6px,0.9vh,12px); flex-shrink:0; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 13px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
     .tv-updated { font-size:11px; color:var(--muted); }
@@ -682,8 +716,9 @@
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
     .tv-board-minimal .tv-tiles,
-    .tv-board-minimal .tv-net-bar,
-    .tv-board-minimal .tv-wx-bar { display:none !important; }
+    .tv-board-minimal .tv-info-row,
+    .tv-board-minimal .tv-issues-section,
+    .tv-board-minimal .tv-section-hdr { display:none !important; }
     .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
     .tv-board-minimal .tv-minimal-status { display:flex; }
     .tv-minimal-msg { font-size:clamp(48px,8vw,120px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; text-align:center; }
@@ -2338,17 +2373,22 @@ function _renderBoardWeatherBar(){
   const{loc,period,alerts}=_wxInfo;
   const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
   const cond=period?.shortForecast||'';
-  const cStr=cond.substring(0,40);
+  const cStr=cond.substring(0,50);
   const icon=period?.isDaytime===false?'🌙':cond.match(/sunny|clear/i)?'☀️':cond.match(/cloud/i)?'⛅':cond.match(/rain|shower/i)?'🌧':cond.match(/snow/i)?'❄️':cond.match(/thunder|storm/i)?'⛈':'🌡';
-  const sep='<span class="tv-net-sep">·</span>';
-  let html=`<span class="tv-net-lbl">Weather</span>`;
-  html+=`<span class="tv-net-item">${icon} ${temp?`<b>${esc(temp)}</b>${sep}`:''}${esc(cStr)}</span>`;
-  if(loc) html+=`${sep}<span class="tv-net-item" style="color:var(--muted)">${esc(loc)}</span>`;
-  alerts.slice(0,2).forEach(a=>{
+  const alertsHTML=alerts.slice(0,2).map(a=>{
     const ev=a.properties?.event||'';
-    html+=`${sep}<span class="tv-net-item" style="color:#fbbf24;font-weight:600">⚠ ${esc(ev)}</span>`;
-  });
-  bwb.innerHTML=html;
+    const isMajor=/warning/i.test(ev);
+    return `<span class="tv-wx-alert-tag${isMajor?' wx-major':''}">&#9888; ${esc(ev)}</span>`;
+  }).join('');
+  bwb.innerHTML=`
+    <div class="tv-wx-icon-big">${icon}</div>
+    <div class="tv-wx-details-col">
+      ${temp?`<div class="tv-wx-temp-big">${esc(temp)}</div>`:''}
+      ${cStr?`<div class="tv-wx-cond">${esc(cStr)}</div>`:''}
+      ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
+    </div>
+    ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
+  `;
   bwb.style.display='';
 }
 
@@ -2519,47 +2559,57 @@ function _optimizeBoardLayout(){
   if(!board) return;
   const tilesEl=document.getElementById('tv-tiles');
   if(!tilesEl) return;
+  const issueEl=document.getElementById('tv-issue-tiles');
   const n=tilesEl.querySelectorAll('.tv-tile').length;
-  if(!n) return;
+  const issueN=issueEl?issueEl.querySelectorAll('.tv-issue-tile').length:0;
+  if(!n&&!issueN) return;
   const cs=getComputedStyle(board);
   const padH=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
   const padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
   const availW=board.clientWidth-padH;
   const hdrEl=board.querySelector('.tv-board-hdr');
-  const netEl=board.querySelector('.tv-net-bar');
-  const wxEl=board.querySelector('.tv-wx-bar');
+  const infoEl=board.querySelector('.tv-info-row');
+  const issueSecEl=board.querySelector('.tv-issues-section');
   const footEl=board.querySelector('.tv-board-footer');
-  const gap=Math.max(10,Math.round(availW*0.007));
-  const wxH=wxEl&&wxEl.style.display!=='none'?wxEl.offsetHeight+gap:0;
-  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+(netEl?netEl.offsetHeight+gap:0)+wxH+(footEl?footEl.offsetHeight+gap:0);
+  const gap=Math.max(8,Math.round(availW*0.007));
+  // Layout issue tiles with a column count based on how many there are
+  if(issueEl&&issueN>0){
+    const issueCols=Math.min(issueN,Math.max(1,Math.min(4,issueN)));
+    issueEl.style.gridTemplateColumns=`repeat(${issueCols},1fr)`;
+    issueEl.style.gap=gap+'px';
+  }
+  // Calculate remaining height for normal tiles
+  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+
+             (infoEl?infoEl.offsetHeight+gap:0)+
+             (issueSecEl?issueSecEl.offsetHeight+gap:0)+
+             (footEl?footEl.offsetHeight+gap:0);
   const availH=board.clientHeight-padV-used;
-  // Cap columns so tiles stay readable — based on natural aspect ratio of screen
-  const maxCols=Math.min(n,Math.max(3,Math.ceil(Math.sqrt(n*(availW/Math.max(availH,1))))));
+  if(!n) return;
+  // Find optimal column count for normal service tiles
+  const maxCols=Math.min(n,Math.max(4,Math.ceil(Math.sqrt(n*(availW/Math.max(availH,1))))));
   let bestCols=1,bestScore=-1;
   for(let c=1;c<=maxCols;c++){
     const r=Math.ceil(n/c);
     const tW=(availW-gap*(c-1))/c;
     const tH=(availH-gap*(r-1))/r;
-    if(tH<90||tW<160) continue; // minimum readable tile size
+    if(tH<50||tW<80) continue; // compact but still visible
     const score=tW*tH;
     if(score>bestScore){bestScore=score;bestCols=c;}
   }
+  if(bestScore<0) bestCols=Math.max(1,Math.ceil(Math.sqrt(n)));
   const rows=Math.ceil(n/bestCols);
   tilesEl.style.gridTemplateColumns=`repeat(${bestCols},1fr)`;
   tilesEl.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
   tilesEl.style.gridAutoRows=``;
   tilesEl.style.gap=gap+'px';
   const tileW=Math.floor((availW-gap*(bestCols-1))/bestCols);
-  const tileH=Math.floor((availH-gap*(Math.ceil(n/bestCols)-1))/Math.ceil(n/bestCols));
-  // TV-readable font sizes — minimum 14px names, 11px body
-  const nameFs=Math.max(14,Math.min(22,Math.floor(tileW/12)));
-  const bodyFs=Math.max(11,Math.min(15,Math.floor(tileW/16)));
-  const logoSz=Math.max(20,Math.min(32,Math.floor(nameFs*1.4)));
+  // Compact font sizes for subdued healthy tiles
+  const nameFs=Math.max(9,Math.min(16,Math.floor(tileW/10)));
+  const bodyFs=Math.max(8,Math.min(12,Math.floor(tileW/16)));
+  const logoSz=Math.max(12,Math.min(22,Math.floor(nameFs*1.2)));
   tilesEl.querySelectorAll('.tv-tile-name').forEach(el=>el.style.fontSize=nameFs+'px');
   tilesEl.querySelectorAll('.tv-tile-badge,.tv-tile-title,.tv-tile-body,.tv-tile-inc').forEach(el=>el.style.fontSize=bodyFs+'px');
   tilesEl.querySelectorAll('.tv-tile-logo,.tv-tile-logo-fb').forEach(el=>{el.style.width=logoSz+'px';el.style.height=logoSz+'px';});
-  const bodyLines=tileH<130?2:3;
-  tilesEl.querySelectorAll('.tv-tile-body').forEach(el=>el.style.webkitLineClamp=bodyLines);
 }
 
 async function _fetchBoardNet(){
@@ -2648,37 +2698,60 @@ function renderBoardView(results){
   const statusCls=outageCount>0?'bad':issueCount>0?'warn':'ok';
   const statusMsg=outageCount>0?`${outageCount} Down`:issueCount>0?`${issueCount} Issue${issueCount!==1?'s':''}`:'\u2713 All Systems Operational';
   const statusColor=outageCount>0?'var(--bad)':issueCount>0?'var(--warn)':'var(--ok)';
-  const tilesHTML=sorted.map(svc=>{
+  // Split into services with active issues vs healthy services
+  const issueSvcs=sorted.filter(s=>s.ind!=='none'&&s.ind!=='unknown');
+  const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
+  // Build large prominent issue tiles
+  const issueTilesHTML=issueSvcs.map(svc=>{
+    const logos=logoSources(svc);
+    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+    const logoEl=logos.length
+      ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
+      :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
+    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+      <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
+      <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
+      ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
+      ${svc.title&&svc.body?`<div class="tv-issue-body">${esc(svc.body)}</div>`:''}
+    </div>`;
+  }).join('');
+  // Build compact subdued normal-service tiles
+  const normalTilesHTML=normalSvcs.map(svc=>{
     const logos=logoSources(svc);
     const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
     const logoEl=logos.length
       ?`<img class="tv-tile-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
       :`<div class="tv-tile-logo-fb">${esc(fallback)}</div>`;
-    const hasInc=svc.ind!=='none'&&svc.title;
-    return `<div class="tv-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+    return `<div class="tv-tile" data-url="${esc(svc.url||'')}">
       <div class="tv-tile-top">${logoEl}<span class="tv-tile-name">${esc(svc.name)}</span></div>
       <div class="tv-tile-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
-      ${hasInc?`<div class="tv-tile-title">${esc(svc.title)}</div>`:''}
-      ${hasInc&&svc.body?`<div class="tv-tile-body">${esc(svc.body)}</div>`:''}
     </div>`;
   }).join('');
   board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
     <div class="tv-board-hdr">
       <div class="tv-board-brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
         Service Status
       </div>
       <div class="tv-board-status ${statusCls}">${statusMsg}</div>
       <div class="tv-clock" id="tv-clock"></div>
     </div>
-    <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
-    <div class="tv-wx-bar" id="tv-wx-bar" style="display:none"></div>
+    <div class="tv-info-row">
+      <div class="tv-wx-card" id="tv-wx-bar" style="display:none"></div>
+      <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
+    </div>
     <div class="tv-minimal-status">
       <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
       <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
     </div>
-    <div class="tv-tiles" id="tv-tiles">${tilesHTML}</div>
+    ${issueSvcs.length?`
+    <div class="tv-issues-section">
+      <div class="tv-section-hdr issue-hdr">&#9888; Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''}</div>
+      <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
+    </div>`:''}
+    ${normalSvcs.length?`<div class="tv-section-hdr">${issueSvcs.length?'All Services':'All Services'}</div>`:''}
+    <div class="tv-tiles" id="tv-tiles">${normalTilesHTML}</div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
       <span class="tv-updated" id="tv-updated"></span>
@@ -2700,6 +2773,16 @@ function renderBoardView(results){
   tilesEl.addEventListener('error',e=>{
     if(e.target.matches('.tv-tile-logo')) e.target.style.display='none';
   },true);
+  const issueTilesEl=document.getElementById('tv-issue-tiles');
+  if(issueTilesEl){
+    issueTilesEl.addEventListener('click',e=>{
+      const tile=e.target.closest('.tv-issue-tile');
+      if(tile&&tile.dataset.url) _safeOpen(tile.dataset.url);
+    });
+    issueTilesEl.addEventListener('error',e=>{
+      if(e.target.matches('.tv-issue-logo')) e.target.style.display='none';
+    },true);
+  }
   clearInterval(_boardClockTimer);
   const tick=()=>{
     const cl=document.getElementById('tv-clock');
