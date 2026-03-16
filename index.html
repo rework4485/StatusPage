@@ -572,6 +572,9 @@
 
     /* ── TV / Status board mode ──────────────────────────────────────────────── */
     .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,44px); overflow:hidden; }
+    .board-page .shell,
+    .board-page .status-banner-wrap { display:none !important; }
+    .board-page .tv-board { position:relative; inset:auto; min-height:100vh; }
     .tv-board-hdr { display:flex; align-items:center; gap:clamp(14px,1.6vw,24px); margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
     .tv-board-brand { display:flex; align-items:center; gap:clamp(10px,1vw,16px); flex-shrink:0; }
     .tv-brand-icon { width:clamp(34px,3.2vw,52px); height:clamp(34px,3.2vw,52px); border-radius:11px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -1259,10 +1262,12 @@ function showView(view){
 // When deployed (Cloudflare Pages), /proxy is a Pages Function available as a CORS fallback.
 // Locally, try direct fetch only.
 const _IS_DEPLOYED=window.location.protocol!=='file:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1';
-let _boardModeActive=new URLSearchParams(window.location.search).has('board');
-const _boardMinimal=new URLSearchParams(window.location.search).has('minimal');
-const _boardBannerSecs=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('speed'),10); return(Number.isFinite(v)&&v>=5&&v<=120)?v:30; })();
-const _boardAutoReload=(()=>{ const v=parseInt(new URLSearchParams(window.location.search).get('reload'),10); return(Number.isFinite(v)&&v>=3&&v<=50)?v:0; })();
+const _startupURL=new URL(window.location.href);
+const _startupParams=_startupURL.searchParams;
+let _boardModeActive=_startupParams.has('board');
+const _boardMinimal=_startupParams.has('minimal');
+const _boardBannerSecs=(()=>{ const v=parseInt(_startupParams.get('speed'),10); return(Number.isFinite(v)&&v>=5&&v<=120)?v:30; })();
+const _boardAutoReload=(()=>{ const v=parseInt(_startupParams.get('reload'),10); return(Number.isFinite(v)&&v>=3&&v<=50)?v:0; })();
 // Set banner duration CSS variable from URL param
 document.documentElement.style.setProperty('--banner-duration',_boardBannerSecs+'s');
 
@@ -2945,6 +2950,12 @@ function _stopBoardCursorHide(){
   document.body.style.cursor='';
 }
 
+function _applyBoardPageState(){
+  document.body.classList.toggle('board-page',_boardModeActive);
+  if(_boardModeActive) _startBoardCursorHide();
+  else _stopBoardCursorHide();
+}
+
 function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
@@ -2952,12 +2963,12 @@ function exitBoardMode(){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
-  _stopBoardCursorHide();
   _boardModeActive=false;
+  _applyBoardPageState();
   document.getElementById('tv-board')?.remove();
-  const url=new URL(window.location);
+  const url=new URL(window.location.href);
   url.searchParams.delete('board');
-  window.history.replaceState({},'',url);
+  window.history.replaceState({},'',url.toString());
 }
 
 // Incident card — shown in the Active Issues panel for services with problems
@@ -3737,12 +3748,9 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   // Board mode — footer button and Escape to exit
   document.getElementById('f-board-btn')?.addEventListener('click',()=>{
-    _boardModeActive=true;
-    const url=new URL(window.location); url.searchParams.set('board','');
-    window.history.replaceState({},'',url);
-    if(_lastResults.length) renderBoardView(_lastResults);
-    _startBoardNet();
-    _startBoardCursorHide();
+    const url=new URL(window.location.href);
+    url.searchParams.set('board','');
+    window.location.assign(url.toString());
   });
 
   // Theme toggle (system → light → dark → system)
@@ -3769,6 +3777,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'&&_boardModeActive&&!e.defaultPrevented) exitBoardMode();
   });
+
+  _applyBoardPageState();
 
   // Keyboard shortcuts (/, R, Escape-to-clear-search)
   document.addEventListener('keydown',e=>{
