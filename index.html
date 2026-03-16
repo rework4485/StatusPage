@@ -930,6 +930,14 @@ function cloudflareStatusLabel(status){
   return 'Unknown';
 }
 
+function cloudflareIncidentStatusLabel(status){
+  const val=String(status||'').toLowerCase().trim();
+  if(val==='investigating') return 'Investigating';
+  if(val==='identified') return 'Identified';
+  if(val==='monitoring') return 'Monitoring';
+  return '';
+}
+
 function normalizeRegionText(value){
   return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 }
@@ -1893,6 +1901,9 @@ async function fetchOne(s){
         if(ind==='none'){
           const impact=normalizeIndicator(a.impact||'none');
           if(impact!=='none') ind=impact;
+        }
+        if(!hasRerouteSignal(a.name, a.impact, a.status, a.description, latestUpdateBody(a))){
+          labelOverride=cloudflareIncidentStatusLabel(a.status) || labelOverride;
         }
         const incidentSummaries=sortedActive.map(evt=>{
           let desc=latestUpdateBody(evt);
