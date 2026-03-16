@@ -1075,13 +1075,13 @@ const PREFERRED_TTS_VOICES=[
 ];
 
 const BOARD_STATIONS=[
-  {id:'wror',name:'105.7 WROR',streamUrl:'https://playerservices.streamtheworld.com/api/livestream-redirect/WRORFM.mp3',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k'},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k'}
+  {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
 let _boardRadioEnabled=localStorage.getItem('board-radio-enabled')!=='0';
-let _boardStationId=localStorage.getItem('board-station')||'x1023';
+let _boardStationId=localStorage.getItem('board-station')||'wror';
 let _boardRadioAudio=null;
 let _radioDuckUntil=0;
 let _radioDuckTimer=null;
@@ -1226,7 +1226,7 @@ async function _startBoardRadio(){
       radio.dataset.stationId=station.id;
       radio.load();
     }
-    radio.volume=BOARD_RADIO_BASE_VOLUME;
+    radio.volume=station.baseVolume ?? BOARD_RADIO_BASE_VOLUME;
     await radio.play();
   }catch{}
 }
@@ -1239,7 +1239,8 @@ function _stopBoardRadio(){
 function _duckBoardRadio(ms=4500){
   if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
   _radioDuckUntil=Math.max(_radioDuckUntil,Date.now()+ms);
-  _setBoardRadioVolume(BOARD_RADIO_DUCK_VOLUME);
+  const station=_getBoardStation();
+  _setBoardRadioVolume(station.duckVolume ?? BOARD_RADIO_DUCK_VOLUME);
   clearTimeout(_radioDuckTimer);
   const checkRestore=()=>{
     const wait=_radioDuckUntil-Date.now();
@@ -1248,7 +1249,8 @@ function _duckBoardRadio(ms=4500){
       return;
     }
     _radioDuckUntil=0;
-    _setBoardRadioVolume(BOARD_RADIO_BASE_VOLUME);
+    const restoreStation=_getBoardStation();
+    _setBoardRadioVolume(restoreStation.baseVolume ?? BOARD_RADIO_BASE_VOLUME);
   };
   _radioDuckTimer=setTimeout(checkRestore,ms+80);
 }
