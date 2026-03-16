@@ -20,13 +20,12 @@ const lines = [
 
 const htmlPath = path.join(root, 'index.html');
 let   html     = fs.readFileSync(htmlPath, 'utf8');
-const updated  = html.replace(
-  /\/\* @routes-start[\s\S]*?@routes-end \*\//,
-  lines.join('\n')
-);
-if (updated === html) {
+const markerPattern = /\/\* @routes-start[\s\S]*?@routes-end \*\//;
+if (!markerPattern.test(html)) {
   console.error('ERROR: @routes-start marker not found in index.html');
   process.exit(1);
 }
+
+const updated = html.replace(markerPattern, lines.join('\n'));
 fs.writeFileSync(htmlPath, updated);
 console.log(`\u2713 Synced ${Object.keys(data.static).length} routes into index.html`);
