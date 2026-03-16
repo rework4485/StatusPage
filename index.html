@@ -550,7 +550,7 @@
     .tv-wx-cond { font-size:clamp(18px,2vw,30px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .tv-wx-loc { font-size:clamp(14px,1.3vw,20px); color:var(--muted); white-space:nowrap; }
     .tv-wx-alerts { display:flex; flex-direction:column; gap:4px; margin-left:auto; flex-shrink:0; padding-left:10px; }
-    .tv-wx-alert-tag { font-size:clamp(11px,1vw,16px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:4px 10px; white-space:nowrap; }
+    .tv-wx-alert-tag { font-size:clamp(13px,1.2vw,20px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:6px 12px; white-space:nowrap; }
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
 
     /* ── Status summary banner ───────────────────────────────────────────────── */
@@ -588,7 +588,7 @@
     .tv-hdr-stat { display:inline-flex; align-items:center; gap:5px; font-size:clamp(12px,0.95vw,16px); color:var(--sub); white-space:nowrap; }
     .tv-hdr-stat strong { font-size:clamp(13px,1.05vw,18px); font-weight:700; color:var(--text); }
     .tv-hdr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; margin-left:auto; }
     .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
     /* Weather card in header — wider with larger text + 3-hour forecast */
@@ -597,7 +597,7 @@
     .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(26px,2.6vw,40px) !important; letter-spacing:-0.02em !important; }
     .tv-wx-hdr .tv-wx-cond { font-size:clamp(14px,1.2vw,20px) !important; }
     .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.9vw,15px) !important; }
-    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.78vw,13px) !important; padding:3px 9px !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(13px,1.1vw,18px) !important; padding:5px 11px !important; }
     .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
     .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
     .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
@@ -638,17 +638,17 @@
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
     /* Normal (healthy) service tiles — horizontal scrolling ticker */
-    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(88px,11vh,128px); position:relative; }
+    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(98px,12.5vh,142px); position:relative; }
     .tv-tiles-track { display:flex; align-items:center; gap:clamp(10px,1vw,16px); height:100%; width:max-content; animation:tv-ticker 70s linear infinite; }
     .tv-tiles-track:hover { animation-play-state:paused; }
     @keyframes tv-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:clamp(10px,1.1vw,17px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(120px,12vw,185px); }
+    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:clamp(11px,1.2vw,19px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(135px,13.5vw,205px); }
     .tv-tile:hover { background:rgba(255,255,255,0.08); opacity:1; }
     .tv-tile-top { display:flex; align-items:center; gap:7px; min-width:0; }
-    .tv-tile-logo { width:clamp(15px,1.4vw,22px); height:clamp(15px,1.4vw,22px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
-    .tv-tile-logo-fb { width:clamp(15px,1.4vw,22px); height:clamp(15px,1.4vw,22px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(7px,0.72vw,11px); font-weight:700; flex-shrink:0; }
-    .tv-tile-name { font-size:clamp(10px,0.9vw,14px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-badge { font-size:clamp(8px,0.72vw,11px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-tile-logo { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-tile-logo-fb { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(8px,0.82vw,12px); font-weight:700; flex-shrink:0; }
+    .tv-tile-name { font-size:clamp(11px,1vw,16px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-badge { font-size:clamp(9px,0.82vw,13px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
     .tv-tile-badge.ok    { color:var(--ok); }
     .tv-tile-badge.warn  { color:var(--warn); }
     .tv-tile-badge.bad   { color:var(--bad); }
@@ -2333,7 +2333,7 @@ let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
-const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=20;
+const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
 
 async function _fetchWeather(){
@@ -2350,7 +2350,7 @@ async function _fetchWeather(){
       fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
       fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
     ]);
-    const periods=(fR.value?.properties?.periods||[]).slice(0,4);
+    const periods=(fR.value?.properties?.periods||[]).slice(0,5);
     const period=periods[0]||null;
     const alerts=(aR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
     _wxInfo={loc,period,periods,alerts,ts:Date.now()};
@@ -2411,8 +2411,8 @@ function _renderBoardWeatherBar(){
     const isMajor=/warning/i.test(ev);
     return `<span class="tv-wx-alert-tag${isMajor?' wx-major':''}">&#9888; ${esc(ev)}</span>`;
   }).join('');
-  // Next 3 hourly slots (periods[1..3])
-  const forecastSlotsHTML=(periods||[]).slice(1,4).map(p=>{
+  // Next 4 hourly slots (periods[1..4])
+  const forecastSlotsHTML=(periods||[]).slice(1,5).map(p=>{
     const t=p.temperature?`${p.temperature}°`:'';
     const hr=p.startTime?new Date(p.startTime).toLocaleTimeString('en-US',{hour:'numeric',hour12:true}):'';
     const ic=_wxIcon(p.shortForecast||'',p.isDaytime);
@@ -2754,16 +2754,37 @@ function _showIssuePage(issueSvcs, pageIdx){
   if(pgNumEl) pgNumEl.textContent=pageIdx+1;
 }
 
+function _scheduleNextIssuePage(issueSvcs, totalPages){
+  clearTimeout(_issuePageTimer);
+  _issuePageTimer=null;
+  // Wait a short time for requestAnimationFrame in _optimizeBoardLayout to finish
+  // computing scroll distances, then determine dwell based on actual scroll duration
+  setTimeout(()=>{
+    const issueEl=document.getElementById('tv-issue-tiles');
+    let maxScrollDur=0;
+    if(issueEl){
+      issueEl.querySelectorAll('.tv-issue-body-inner').forEach(inner=>{
+        const d=parseFloat(inner.style.getPropertyValue('--tv-scroll-dur'))||0;
+        if(d>maxScrollDur) maxScrollDur=d;
+      });
+    }
+    // Dwell = full scroll animation + 8s buffer to read bottom, minimum ISSUE_PAGE_SECS
+    const dwell=Math.max(ISSUE_PAGE_SECS, maxScrollDur+8);
+    _issuePageTimer=setTimeout(()=>{
+      _issuePage=(_issuePage+1)%totalPages;
+      _showIssuePage(issueSvcs,_issuePage);
+      _scheduleNextIssuePage(issueSvcs,totalPages);
+    },dwell*1000);
+  },600);
+}
+
 function _initIssuePagination(issueSvcs){
-  clearInterval(_issuePageTimer);
+  clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   _issuePage=0;
   const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
   if(totalPages<=1) return;
-  _issuePageTimer=setInterval(()=>{
-    _issuePage=(_issuePage+1)%totalPages;
-    _showIssuePage(issueSvcs,_issuePage);
-  },ISSUE_PAGE_SECS*1000);
+  _scheduleNextIssuePage(issueSvcs,totalPages);
 }
 
 function renderBoardView(results){
@@ -2776,6 +2797,7 @@ function renderBoardView(results){
     board.id='tv-board';
     board.className='tv-board';
     document.body.appendChild(board);
+    _startBoardCursorHide();
   }
   const srt=(arr)=>[...arr].sort((a,b)=>(PRI[a.ind]||9)-(PRI[b.ind]||9)||a.name.localeCompare(b.name));
   const sorted=srt(results);
@@ -2823,13 +2845,6 @@ function renderBoardView(results){
         </div>
       </div>
       <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-hdr-center">
-        <div class="tv-board-status ${statusCls}">${statusMsg}</div>
-        <div class="tv-hdr-stats">
-          ${outageCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--bad)"></span><strong>${outageCount}</strong>&nbsp;Down</span>`:''}
-          ${maintCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--maint)"></span><strong>${maintCount}</strong>&nbsp;Maintenance</span>`:''}
-        </div>
-      </div>
       <div class="tv-hdr-time">
         <div class="tv-date" id="tv-date"></div>
         <div class="tv-clock" id="tv-clock"></div>
@@ -2896,13 +2911,31 @@ function renderBoardView(results){
   _boardClockTimer=setInterval(tick,1000);
 }
 
+let _boardCursorTimer=null;
+function _boardShowCursor(){
+  document.body.style.cursor='';
+  clearTimeout(_boardCursorTimer);
+  _boardCursorTimer=setTimeout(()=>{ if(_boardModeActive) document.body.style.cursor='none'; },3000);
+}
+function _startBoardCursorHide(){
+  document.addEventListener('mousemove',_boardShowCursor);
+  _boardShowCursor();
+}
+function _stopBoardCursorHide(){
+  document.removeEventListener('mousemove',_boardShowCursor);
+  clearTimeout(_boardCursorTimer);
+  _boardCursorTimer=null;
+  document.body.style.cursor='';
+}
+
 function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
-  clearInterval(_issuePageTimer);
+  clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
+  _stopBoardCursorHide();
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
   const url=new URL(window.location);
@@ -3692,6 +3725,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     window.history.replaceState({},'',url);
     if(_lastResults.length) renderBoardView(_lastResults);
     _startBoardNet();
+    _startBoardCursorHide();
   });
 
   // Theme toggle (system → light → dark → system)
