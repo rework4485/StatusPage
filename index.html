@@ -565,14 +565,14 @@
 
     /* ── TV / Status board mode ──────────────────────────────────────────────── */
     .tv-board { position:fixed; inset:0; background:var(--bg); z-index:200; display:flex; flex-direction:column; padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,44px); overflow:hidden; }
-    .tv-board-hdr { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:20px; margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
-    .tv-board-brand { display:flex; align-items:center; gap:clamp(10px,1vw,16px); }
+    .tv-board-hdr { display:flex; align-items:center; gap:clamp(14px,1.6vw,24px); margin-bottom:clamp(12px,1.6vh,22px); flex-shrink:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:clamp(12px,1.6vh,20px); }
+    .tv-board-brand { display:flex; align-items:center; gap:clamp(10px,1vw,16px); flex-shrink:0; }
     .tv-brand-icon { width:clamp(34px,3.2vw,52px); height:clamp(34px,3.2vw,52px); border-radius:11px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .tv-brand-icon svg { width:55%; height:55%; }
     .tv-brand-text { display:flex; flex-direction:column; gap:2px; }
     .tv-brand-name { font-size:clamp(15px,1.4vw,24px); font-weight:700; letter-spacing:-0.02em; color:var(--text); }
     .tv-brand-sub { font-size:clamp(10px,0.75vw,14px); font-weight:600; color:var(--muted); letter-spacing:0.07em; text-transform:uppercase; }
-    .tv-hdr-center { display:flex; flex-direction:column; align-items:center; gap:clamp(6px,0.8vh,10px); }
+    .tv-hdr-center { display:flex; flex-direction:column; align-items:center; gap:clamp(6px,0.8vh,10px); flex:1; }
     .tv-board-status { font-size:clamp(16px,1.8vw,30px); font-weight:800; padding:8px 24px; border-radius:100px; letter-spacing:-0.01em; white-space:nowrap; }
     .tv-board-status.ok   { background:rgba(34,197,94,0.12);  border:2px solid rgba(34,197,94,0.3);  color:#4ade80; }
     .tv-board-status.warn { background:rgba(245,158,11,0.12); border:2px solid rgba(245,158,11,0.35); color:#fbbf24; }
@@ -581,12 +581,17 @@
     .tv-hdr-stat { display:inline-flex; align-items:center; gap:5px; font-size:clamp(12px,0.95vw,16px); color:var(--sub); white-space:nowrap; }
     .tv-hdr-stat strong { font-size:clamp(13px,1.05vw,18px); font-weight:700; color:var(--text); }
     .tv-hdr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
     .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
-    /* Info row: weather card + network bar side by side */
-    .tv-info-row { display:flex; align-items:stretch; gap:clamp(10px,1.2vw,18px); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; min-height:0; }
-    .tv-net-bar { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); min-width:0; }
+    /* Compact weather card when placed inside the header */
+    .tv-wx-hdr { flex-shrink:0; padding:clamp(8px,0.9vh,12px) clamp(10px,1vw,16px) !important; border-radius:10px !important; gap:clamp(8px,0.8vw,12px) !important; }
+    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(22px,2.2vw,34px) !important; }
+    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(16px,1.6vw,24px) !important; letter-spacing:-0.01em !important; }
+    .tv-wx-hdr .tv-wx-cond { font-size:clamp(11px,0.9vw,15px) !important; }
+    .tv-wx-hdr .tv-wx-loc { font-size:clamp(9px,0.75vw,12px) !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(9px,0.65vw,11px) !important; padding:2px 7px !important; }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
     .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.75em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:3px; }
@@ -734,7 +739,7 @@
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
     .tv-board-minimal .tv-tiles,
-    .tv-board-minimal .tv-info-row,
+    .tv-board-minimal .tv-net-bar,
     .tv-board-minimal .tv-issues-section,
     .tv-board-minimal .tv-section-hdr { display:none !important; }
     .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
@@ -1169,7 +1174,6 @@ function _showBoardAlert(svc, kind) {
   const el = document.createElement('div');
   el.className = `tv-alert-toast ${indCls}`;
   el.innerHTML = `${icon} <span class="tv-alert-svc">${esc(svc.name)}</span><span class="tv-alert-msg">— ${msg}</span>`;
-  board.style.position='relative';
   board.appendChild(el);
   setTimeout(()=>el.classList.add('tv-alert-hide'), 6000);
   setTimeout(()=>el.remove(), 7000);
@@ -2737,11 +2741,10 @@ function renderBoardView(results){
           <div class="tv-brand-sub">Live Monitoring</div>
         </div>
       </div>
+      <div class="tv-wx-card tv-wx-hdr" id="tv-wx-bar" style="display:none"></div>
       <div class="tv-hdr-center">
         <div class="tv-board-status ${statusCls}">${statusMsg}</div>
         <div class="tv-hdr-stats">
-          <span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--ok)"></span><strong>${okCount}</strong>&nbsp;Operational</span>
-          ${warnCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--warn)"></span><strong>${warnCount}</strong>&nbsp;Degraded</span>`:''}
           ${outageCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--bad)"></span><strong>${outageCount}</strong>&nbsp;Down</span>`:''}
           ${maintCount>0?`<span class="tv-hdr-stat"><span class="tv-hdr-dot" style="background:var(--maint)"></span><strong>${maintCount}</strong>&nbsp;Maintenance</span>`:''}
         </div>
@@ -2751,10 +2754,7 @@ function renderBoardView(results){
         <div class="tv-clock" id="tv-clock"></div>
       </div>
     </div>
-    <div class="tv-info-row">
-      <div class="tv-wx-card" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
-    </div>
+    <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
     <div class="tv-minimal-status">
       <div class="tv-minimal-msg" style="color:${statusColor}">${statusMsg}</div>
       <div class="tv-minimal-clock" id="tv-minimal-clock"></div>
