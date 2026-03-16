@@ -3351,7 +3351,13 @@ function mkIncCard(svc){
   }
   const color=LABEL_COLOR[svc.ind]||'var(--sub)';
   const blockCls=BLOCK_CLS[svc.ind]||'ok-block';
-  const incTitle=svc.title||svc.label;
+  // For MBTA structured cards, summarize alert count instead of repeating the first alert in the title
+  const mbtaAlertCnt=(svc.details?.type==='mbta')?(svc.details.alerts?.length||0):0;
+  const mbtaSchedCnt=(svc.details?.type==='mbta')?(svc.details.schedChanges?.length||0):0;
+  const mbtaTotalCnt=mbtaAlertCnt+mbtaSchedCnt;
+  const incTitle=mbtaTotalCnt>0
+    ?(mbtaTotalCnt===1?(mbtaAlertCnt?'Service Alert':'Schedule Change'):`${mbtaTotalCnt} Active Alerts`)
+    :(svc.title||svc.label);
   // Don't show the generic fallback when structured details will render the content
   const incBody=svc.body||(svc.details?'':'See the status page for full details.');
   const urlHost=svc.url?svc.url.replace(/^https?:\/\//,'').replace(/\/$/,''):'';
@@ -3359,7 +3365,14 @@ function mkIncCard(svc){
   const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
   const labels=[svc.label,...(svc.labels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
   const statusLabels=labels.length>1?`<div class="status-labels">${labels.map(l=>`<span class="status-label">${esc(l)}</span>`).join('')}</div>`:'';
-  const incTag=svc.ind==='maintenance'?'Scheduled':svc.ind==='rerouting'?'Rerouted':'Investigating';
+  // Derive incident phase tag from svc.label (some parsers set labelOverride to the incident phase)
+  // rather than hardcoding "Investigating" for all active statuses
+  const _INCIDENT_PHASES=new Set(['Investigating','Identified','Monitoring','Resolved']);
+  const _phaseLabel=_INCIDENT_PHASES.has(svc.label)?svc.label:((svc.labels||[]).find(l=>_INCIDENT_PHASES.has(l)));
+  const incTag=svc.ind==='maintenance'?'Scheduled'
+    :svc.ind==='rerouting'?'Rerouted'
+    :svc.details?.type==='mbta'?'Alert'
+    :_phaseLabel||'Active';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
   const bodyHtml=incBody?`<div class="inc-body">${esc(incBody)}</div>`:'';
 
