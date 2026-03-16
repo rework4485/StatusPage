@@ -2312,9 +2312,7 @@ async function _fetchWeather(){
     const lat=41.7226,lon=-71.2829,locName='Warren, RI';
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
-    const city=pt.properties.relativeLocation?.properties?.city||locName;
-    const state=pt.properties.relativeLocation?.properties?.state||'';
-    const loc=city+(state?' '+state:'');
+    const loc=locName;
     const forecastUrl=pt.properties.forecast;
     const [fR,aR]=await Promise.allSettled([
       fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
