@@ -2017,7 +2017,7 @@ async function fetchOne(s){
         const titleS=schedAlerts.length===1?lblS:`${schedAlerts.length} Schedule Changes`;
         const updatedS=new Date(attrS.updated_at||now).toLocaleString();
         const schedDetails=schedAlerts.map(a=>mkAlertItem(a,true));
-        return mk(s.name,'maintenance',titleS,'',updatedS,s.hu,null,[],{type:'mbta',alerts:[],schedChanges:schedDetails});
+        return mk(s.name,'maintenance',titleS,'',updatedS,s.hu,lblS,[],{type:'mbta',alerts:[],schedChanges:schedDetails});
       }
 
       // Service disruption path
@@ -2043,7 +2043,7 @@ async function fetchOne(s){
 
       // Body is intentionally brief — structured details render the full alert list
       const updated=new Date(attr.updated_at||now).toLocaleString();
-      return mk(s.name,ind,title,'',updated,s.hu,null,[],mbtaDetails);
+      return mk(s.name,ind,title,'',updated,s.hu,effectLabel,[],mbtaDetails);
     }catch{return errSvc(s);}
   }
 
@@ -3391,7 +3391,7 @@ function mkIncCard(svc){
   const _phaseLabel=_INCIDENT_PHASES.has(svc.label)?svc.label:((svc.labels||[]).find(l=>_INCIDENT_PHASES.has(l)));
   const incTag=svc.ind==='maintenance'?'Scheduled'
     :svc.ind==='rerouting'?'Rerouted'
-    :svc.details?.type==='mbta'?'Alert'
+    :svc.details?.type==='mbta'?svc.label
     :_phaseLabel||'Active';
   const incLbl=svc.ind==='rerouting'?'Traffic Notice':svc.ind==='maintenance'?'Maintenance':'Active Incident';
   const bodyHtml=incBody?`<div class="inc-body">${esc(incBody)}</div>`:'';
