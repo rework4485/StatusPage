@@ -283,13 +283,13 @@
     .inc-block.unknown-block { background:rgba(107,114,128,0.06); border:1px solid rgba(107,114,128,0.15); }
     .inc-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
     .inc-label-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-    .inc-title { font-size:clamp(13px, 1vw, 18px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
-    .inc-body { font-size:clamp(12px, 0.85vw, 15px); color:var(--sub); line-height:1.55; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:200px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
+    .inc-title { font-size:clamp(14px, 1.1vw, 20px); font-weight:600; color:var(--text); line-height:1.35; margin-bottom:5px; overflow-wrap:anywhere; }
+    .inc-body { font-size:clamp(13px, 0.95vw, 17px); color:var(--sub); line-height:1.55; display:block; overflow-y:auto; overflow-wrap:anywhere; min-height:0; max-height:200px; padding-right:4px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; white-space:pre-wrap; }
     .inc-body::-webkit-scrollbar { width:4px; }
     .inc-body::-webkit-scrollbar-track { background:transparent; }
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
-    .status-label { font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
+    .status-label { font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
     .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:6px; border-top:1px solid var(--border); margin-top:8px; gap:8px; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
     .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
@@ -541,14 +541,14 @@
     .tv-wx-divider { width:1px; align-self:stretch; background:rgba(255,255,255,0.1); flex-shrink:0; margin:0 clamp(4px,0.5vw,8px); }
     .tv-wx-forecast { display:flex; align-items:center; gap:clamp(10px,1.2vw,20px); flex-shrink:0; }
     .tv-wx-hour { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:clamp(38px,4vw,60px); }
-    .tv-wx-hr-time { font-size:clamp(10px,0.85vw,14px); font-weight:700; color:var(--muted); letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; }
-    .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,32px); line-height:1; }
-    .tv-wx-hr-temp { font-size:clamp(13px,1.2vw,19px); font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
-    .tv-wx-icon-big { font-size:clamp(44px,5vw,76px); line-height:1; flex-shrink:0; }
+    .tv-wx-hr-time { font-size:clamp(11px,0.95vw,15px); font-weight:700; color:var(--muted); letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; }
+    .tv-wx-hr-icon { font-size:clamp(22px,2.5vw,36px); line-height:1; }
+    .tv-wx-hr-temp { font-size:clamp(15px,1.4vw,22px); font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+    .tv-wx-icon-big { font-size:clamp(52px,6vw,88px); line-height:1; flex-shrink:0; }
     .tv-wx-details-col { display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .tv-wx-temp-big { font-size:clamp(36px,4.2vw,64px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
-    .tv-wx-cond { font-size:clamp(18px,2vw,30px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-wx-loc { font-size:clamp(14px,1.3vw,20px); color:var(--muted); white-space:nowrap; }
+    .tv-wx-temp-big { font-size:clamp(44px,5.2vw,78px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
+    .tv-wx-cond { font-size:clamp(22px,2.5vw,36px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-wx-loc { font-size:clamp(17px,1.6vw,25px); color:var(--muted); white-space:nowrap; }
     .tv-wx-alerts { display:flex; flex-direction:column; gap:4px; margin-left:auto; flex-shrink:0; padding-left:10px; }
     .tv-wx-alert-tag { font-size:clamp(13px,1.2vw,20px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:6px 12px; white-space:nowrap; }
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
@@ -581,23 +581,23 @@
     /* Weather in header */
     .tv-hdr-weather { display:flex; align-items:center; gap:clamp(12px,1.4vw,22px); min-width:0; overflow:hidden; }
     .tv-hdr-weather .tv-wx-now { gap:clamp(10px,1.1vw,18px); }
-    .tv-hdr-weather .tv-wx-icon-big { font-size:clamp(36px,3.8vw,60px); }
-    .tv-hdr-weather .tv-wx-temp-big { font-size:clamp(26px,2.8vw,44px); letter-spacing:-0.02em; }
-    .tv-hdr-weather .tv-wx-cond { font-size:clamp(13px,1.2vw,20px); }
-    .tv-hdr-weather .tv-wx-loc { font-size:clamp(11px,0.9vw,15px); }
+    .tv-hdr-weather .tv-wx-icon-big { font-size:clamp(44px,4.8vw,74px); }
+    .tv-hdr-weather .tv-wx-temp-big { font-size:clamp(32px,3.6vw,56px); letter-spacing:-0.02em; }
+    .tv-hdr-weather .tv-wx-cond { font-size:clamp(16px,1.6vw,26px); }
+    .tv-hdr-weather .tv-wx-loc { font-size:clamp(13px,1.1vw,19px); }
     .tv-hdr-weather .tv-wx-alert-tag { font-size:clamp(12px,1.1vw,18px); padding:5px 12px; }
-    .tv-hdr-weather .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,34px); }
-    .tv-hdr-weather .tv-wx-hr-temp { font-size:clamp(12px,1.2vw,18px); }
-    .tv-hdr-weather .tv-wx-hr-time { font-size:clamp(9px,0.8vw,13px); }
+    .tv-hdr-weather .tv-wx-hr-icon { font-size:clamp(22px,2.6vw,38px); }
+    .tv-hdr-weather .tv-wx-hr-temp { font-size:clamp(14px,1.4vw,21px); }
+    .tv-hdr-weather .tv-wx-hr-time { font-size:clamp(10px,0.9vw,15px); }
     .tv-hdr-weather .tv-wx-divider { margin:0 clamp(4px,0.4vw,8px); }
     .tv-hdr-weather .tv-wx-forecast { gap:clamp(10px,1vw,16px); }
     .tv-hdr-weather .tv-wx-hour { min-width:clamp(34px,3.5vw,54px); }
     /* Now playing + audio in header */
     .tv-hdr-media { display:flex; flex-direction:column; align-items:flex-start; gap:clamp(5px,0.6vh,9px); min-width:0; justify-content:center; }
     .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
-    .tv-now-playing-label { font-size:clamp(9px,0.7vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
-    .tv-now-playing-track { font-size:clamp(15px,1.5vw,26px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-    .tv-now-playing-meta { font-size:clamp(12px,1.1vw,18px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .tv-now-playing-track { font-size:clamp(18px,1.9vw,32px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-now-playing-meta { font-size:clamp(14px,1.4vw,22px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-ctx-audio { display:flex; align-items:center; gap:12px; flex-shrink:0; }
     .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.22); background:transparent; color:var(--text); border-radius:0; padding:3px 18px 3px 0; font-size:clamp(11px,0.88vw,14px); font-weight:600; font-family:var(--font); }
     .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.8); }
@@ -623,13 +623,13 @@
     .tv-issue-logo { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:#fff; object-fit:contain; flex-shrink:0; }
     .tv-issue-logo-fb { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:700; flex-shrink:0; }
     .tv-issue-name { font-size:clamp(18px,2.1vw,34px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-issue-badge { font-size:clamp(11px,1vw,16px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+    .tv-issue-badge { font-size:clamp(13px,1.3vw,20px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
     .tv-issue-badge.warn   { color:var(--warn); }
     .tv-issue-badge.bad    { color:var(--bad); }
     .tv-issue-badge.maint  { color:var(--maint); }
     .tv-issue-badge.reroute{ color:var(--reroute); }
-    .tv-issue-title { font-size:clamp(14px,1.4vw,23px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
-    .tv-issue-body { font-size:clamp(12px,1.1vw,18px); color:rgba(255,255,255,0.72); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
+    .tv-issue-title { font-size:clamp(17px,1.8vw,28px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
+    .tv-issue-body { font-size:clamp(14px,1.4vw,22px); color:rgba(255,255,255,0.78); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
@@ -658,18 +658,26 @@
     .tv-tile-badge.maint { color:var(--maint); }
     .tv-tile-badge.reroute{ color:var(--reroute); }
     .tv-tile-badge.unknown{ color:var(--unknown); }
-    /* Alert toast */
-    .tv-alert-toast { position:absolute; top:clamp(14px,2vh,24px); right:clamp(14px,2vw,28px); display:flex; align-items:center; gap:12px; padding:14px 22px; background:rgba(10,10,12,0.96); border:1px solid rgba(255,255,255,0.18); border-radius:14px; font-size:clamp(14px,1.25vw,20px); font-weight:600; z-index:300; backdrop-filter:blur(12px); box-shadow:0 8px 40px rgba(0,0,0,0.6); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
-    .tv-alert-toast.tv-alert-hide { opacity:0; transform:translateY(-10px); }
-    .tv-alert-toast.ind-major { border-color:rgba(239,68,68,0.5); }
-    .tv-alert-toast.ind-minor { border-color:rgba(245,158,11,0.5); }
-    .tv-alert-toast.ind-none  { border-color:rgba(34,197,94,0.5); }
-    .tv-alert-svc { color:var(--text); }
-    .tv-alert-msg { color:var(--sub); font-weight:500; }
-    @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+    /* Board alert card */
+    .tv-board-alert-card { position:absolute; top:clamp(16px,2.2vh,32px); left:50%; transform:translateX(-50%); width:min(640px,70vw); background:rgba(10,10,13,0.97); border-bottom:4px solid transparent; border-radius:20px; padding:clamp(20px,2.2vw,32px); z-index:350; backdrop-filter:blur(28px) saturate(1.4); box-shadow:0 28px 70px rgba(0,0,0,0.75); animation:board-alert-in 0.45s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.55s ease,transform 0.55s ease; pointer-events:none; text-align:center; }
+    .tv-board-alert-card::before { content:''; position:absolute; inset:0; border-radius:20px; border:1px solid rgba(255,255,255,0.09); pointer-events:none; }
+    .tv-board-alert-card.ind-major { border-left-color:#ef4444; box-shadow:0 28px 70px rgba(239,68,68,0.28); }
+    .tv-board-alert-card.ind-minor { border-left-color:#f59e0b; box-shadow:0 28px 70px rgba(245,158,11,0.22); }
+    .tv-board-alert-card.ind-none  { border-left-color:#22c55e; box-shadow:0 28px 70px rgba(34,197,94,0.22); }
+    .tv-board-alert-card.tv-alert-hide { opacity:0; transform:translateX(-50%) translateY(-12px); }
+    .tv-board-alert-inner { display:flex; align-items:center; gap:clamp(16px,2vw,28px); }
+    .tv-board-alert-icon { font-size:clamp(36px,4vw,58px); line-height:1; flex-shrink:0; }
+    .tv-board-alert-text { text-align:left; min-width:0; }
+    .tv-board-alert-heading { font-size:clamp(10px,0.85vw,14px); font-weight:800; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:4px; }
+    .tv-board-alert-heading.ind-major { color:#fca5a5; }
+    .tv-board-alert-heading.ind-minor { color:#fcd34d; }
+    .tv-board-alert-heading.ind-none  { color:#86efac; }
+    .tv-board-alert-svc { font-size:clamp(24px,2.8vw,44px); font-weight:800; letter-spacing:-0.02em; line-height:1.1; color:var(--text); margin-bottom:4px; }
+    .tv-board-alert-msg { font-size:clamp(14px,1.3vw,20px); color:var(--sub); line-height:1.4; }
+    @keyframes board-alert-in { from{opacity:0;transform:translateX(-50%) translateY(-18px) scale(0.97)} to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} }
     /* Footer */
     .tv-board-footer { display:flex; align-items:center; gap:12px; flex-shrink:0; padding-top:clamp(8px,0.9vh,14px); border-top:1px solid rgba(255,255,255,0.07); }
-    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; font-size:clamp(11px,0.95vw,15px); color:var(--sub); flex:1; min-width:0; }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; font-size:clamp(12px,1.05vw,17px); color:var(--sub); flex:1; min-width:0; }
     .tv-net-item { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.8em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:2px; }
     .tv-net-sep { color:var(--border); user-select:none; }
@@ -680,6 +688,9 @@
     .tv-updated { font-size:clamp(10px,0.82vw,13px); color:var(--muted); white-space:nowrap; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.1); color:var(--text); }
+    .tv-test-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:6px 12px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); white-space:nowrap; transition:opacity 0.3s ease,background 0.2s,color 0.2s,border-color 0.2s; }
+    .tv-test-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); border-color:rgba(255,255,255,0.18); }
+    .tv-board-footer:not(:hover) .tv-test-btn { opacity:0; pointer-events:none; }
     .f-board-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 11px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .f-board-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
     .f-theme-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
@@ -1294,18 +1305,40 @@ function queueAlert(svc, kind) {
 function _showBoardAlert(svc, kind) {
   const board = document.getElementById('tv-board');
   if (!board) return;
-  const icon = kind==='outage'?'🔴':kind==='degraded'?'🟡':'🟢';
-  const msg  = kind==='outage'?'Outage Detected':kind==='degraded'?'Service Degraded':'Restored';
+  // Remove any existing alert card
+  board.querySelectorAll('.tv-board-alert-card').forEach(e => e.remove());
+  const icon = kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅';
+  const heading = kind==='outage'?'Service Outage':kind==='degraded'?'Service Degraded':'Service Restored';
+  const detail = kind==='restored'
+    ? `${svc.name} is back to operational.`
+    : `${svc.name} is now ${svc.label?.toLowerCase()||kind}.`;
   const indCls = kind==='outage'?'ind-major':kind==='degraded'?'ind-minor':'ind-none';
   const el = document.createElement('div');
-  el.className = `tv-alert-toast ${indCls}`;
-  el.innerHTML = `${icon} <span class="tv-alert-svc">${esc(svc.name)}</span><span class="tv-alert-msg">— ${msg}</span>`;
+  el.className = `tv-board-alert-card ${indCls}`;
+  el.innerHTML = `<div class="tv-board-alert-inner">
+    <div class="tv-board-alert-icon">${icon}</div>
+    <div class="tv-board-alert-text">
+      <div class="tv-board-alert-heading ${indCls}">${heading}</div>
+      <div class="tv-board-alert-svc">${esc(svc.name)}</div>
+      <div class="tv-board-alert-msg">${esc(detail)}</div>
+    </div>
+  </div>`;
   board.appendChild(el);
-  setTimeout(()=>el.classList.add('tv-alert-hide'), 6000);
-  setTimeout(()=>el.remove(), 7000);
+  setTimeout(()=>el.classList.add('tv-alert-hide'), 9000);
+  setTimeout(()=>el.remove(), 10000);
 }
 
 function showStatusBanner(svc, kind){
+  // In board mode the banner is behind the board overlay; just release the queue
+  // after the board alert card duration so the next alert can play
+  if(_boardModeActive){
+    const speakDelay=CHIME_SPEECH_DELAY[kind]||650;
+    clearTimeout(bannerSpeechTimer);
+    bannerSpeechTimer=setTimeout(()=>speakBannerStatus(svc.name, kind), speakDelay);
+    clearTimeout(bannerTimer);
+    bannerTimer=setTimeout(()=>{ isAlertPlaying=false; processAlertQueue(); }, 10500);
+    return;
+  }
   const banner=document.getElementById('status-banner');
   if(!banner) {
     isAlertPlaying = false;
@@ -2190,6 +2223,8 @@ async function fetchOne(s){
       const items=Array.from(doc.querySelectorAll('item'));
       const now=Date.now();
       // Include items from the past 7 days and up to 30 days ahead (upcoming maintenance)
+      const NA_RE=/north.?america|united.?states|\bU\.?S\.?([-\s]|$)|canada|\bNA\b|us[-\s]east|us[-\s]west|us[-\s]central|american/i;
+      const NON_NA_RE=/\b(europe|eu[-\s]|emea|asia|apac|pacific|australia|oceania|africa|middle.?east|latin.?america|south.?america|brasil|brazil|india|japan|korea|china|hong.?kong|singapore|uk\b|united.?kingdom)\b/i;
       const relevant=items.filter(item=>{
         const pub=item.querySelector('pubDate')?.textContent;
         if(!pub) return false;
@@ -2198,6 +2233,11 @@ async function fetchOne(s){
       }).filter(item=>{
         const t=(item.querySelector('title')?.textContent||'').toLowerCase();
         return !/\b(resolv|complet|restor|postmortem|ended)\b/i.test(t);
+      }).filter(item=>{
+        const text=(item.querySelector('title')?.textContent||'')+' '+(item.querySelector('description')?.textContent||'');
+        // If it mentions a non-NA region but not NA, exclude it
+        if(NON_NA_RE.test(text) && !NA_RE.test(text)) return false;
+        return true;
       });
       if(!relevant.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
       const latest=relevant[0];
@@ -3045,6 +3085,7 @@ function renderBoardView(results){
     <div class="tv-board-footer">
       <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
       <div class="tv-footer-right">
+        <button class="tv-test-btn" id="tv-board-test-btn" type="button" title="Test alert popup">Test Alert</button>
         <span class="tv-updated" id="tv-updated"></span>
         <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
       </div>
@@ -3059,6 +3100,7 @@ function renderBoardView(results){
   _boardResizeObs=new ResizeObserver(()=>{ clearTimeout(_roDebounce); _roDebounce=setTimeout(_optimizeBoardLayout,60); });
   _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
+  document.getElementById('tv-board-test-btn')?.addEventListener('click',runAlertTest);
   document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
     _setBoardRadioEnabled(!!e.target.checked);
   });
