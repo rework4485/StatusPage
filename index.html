@@ -577,53 +577,37 @@
     .board-page .status-banner-wrap { display:none !important; }
     .board-page .tv-board { position:relative; inset:auto; min-height:100vh; }
     /* Header */
-    .tv-hdr { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:clamp(12px,1.5vw,24px); padding-bottom:clamp(10px,1.2vh,18px); border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; margin-bottom:clamp(10px,1.1vh,18px); }
-    .tv-brand { display:flex; align-items:center; gap:clamp(8px,0.9vw,14px); flex-shrink:0; }
-    .tv-brand-icon { width:clamp(30px,2.8vw,46px); height:clamp(30px,2.8vw,46px); border-radius:10px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .tv-brand-icon svg { width:55%; height:55%; }
-    .tv-brand-name { font-size:clamp(13px,1.1vw,18px); font-weight:700; letter-spacing:-0.01em; color:var(--text); white-space:nowrap; }
-    .tv-status-pill { display:flex; align-items:center; justify-content:center; gap:clamp(8px,0.9vw,14px); font-size:clamp(20px,2.2vw,38px); font-weight:800; padding:clamp(10px,1.1vh,16px) clamp(22px,2.4vw,44px); border-radius:100px; letter-spacing:-0.02em; white-space:nowrap; border:2px solid transparent; }
-    .tv-status-pill.ok   { background:rgba(34,197,94,0.1);  border-color:rgba(34,197,94,0.22);  color:#4ade80; }
-    .tv-status-pill.warn { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.28); color:#fbbf24; }
-    .tv-status-pill.bad  { background:rgba(239,68,68,0.1);  border-color:rgba(239,68,68,0.3);   color:#f87171; }
-    .tv-status-dot { width:clamp(7px,0.75vw,12px); height:clamp(7px,0.75vw,12px); border-radius:50%; flex-shrink:0; }
-    .tv-status-pill.ok   .tv-status-dot { background:#4ade80; box-shadow:0 0 6px #4ade80; animation:sdot-ok 2.5s ease-in-out infinite; }
-    .tv-status-pill.warn .tv-status-dot { background:#fbbf24; box-shadow:0 0 6px #fbbf24; animation:sdot-warn 1.8s ease-in-out infinite; }
-    .tv-status-pill.bad  .tv-status-dot { background:#f87171; box-shadow:0 0 6px #f87171; animation:sdot-bad 1.1s ease-in-out infinite; }
-    @keyframes sdot-ok   { 0%,100%{opacity:1} 50%{opacity:0.45} }
-    @keyframes sdot-warn { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    @keyframes sdot-bad  { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    .tv-clock-block { display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; }
-    .tv-clock { font-size:clamp(28px,3.2vw,54px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); letter-spacing:-0.02em; line-height:1.1; }
-    .tv-date { font-size:clamp(11px,0.95vw,16px); color:var(--muted); font-weight:500; letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
-    /* Context strip: Weather + Audio */
-    .tv-ctx { display:flex; align-items:stretch; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:12px; overflow:hidden; flex-shrink:0; margin-bottom:clamp(10px,1.2vh,20px); min-height:clamp(50px,6.5vh,80px); }
-    .tv-ctx-weather { display:flex; align-items:center; gap:clamp(10px,1.1vw,18px); padding:0 clamp(14px,1.5vw,24px); flex-shrink:0; border-right:1px solid rgba(255,255,255,0.08); }
-    .tv-ctx-media { display:flex; align-items:center; gap:clamp(12px,1.4vw,22px); padding:0 clamp(14px,1.5vw,24px); flex:1; min-width:0; }
-    /* Weather element sizes inside context strip */
-    .tv-ctx-weather .tv-wx-now { gap:clamp(8px,0.9vw,14px); }
-    .tv-ctx-weather .tv-wx-icon-big { font-size:clamp(26px,2.6vw,42px); }
-    .tv-ctx-weather .tv-wx-temp-big { font-size:clamp(18px,2vw,32px); letter-spacing:-0.02em; }
-    .tv-ctx-weather .tv-wx-cond { font-size:clamp(11px,1vw,16px); }
-    .tv-ctx-weather .tv-wx-loc { font-size:clamp(9px,0.75vw,13px); }
-    .tv-ctx-weather .tv-wx-alert-tag { font-size:clamp(11px,0.95vw,15px); padding:4px 10px; }
-    .tv-ctx-weather .tv-wx-hr-icon { font-size:clamp(14px,1.6vw,24px); }
-    .tv-ctx-weather .tv-wx-hr-temp { font-size:clamp(10px,0.95vw,15px); }
-    .tv-ctx-weather .tv-wx-hr-time { font-size:clamp(8px,0.7vw,11px); }
-    .tv-ctx-weather .tv-wx-divider { margin:0 clamp(2px,0.3vw,5px); }
-    .tv-ctx-weather .tv-wx-forecast { gap:clamp(8px,0.85vw,13px); }
-    .tv-ctx-weather .tv-wx-hour { min-width:clamp(28px,3vw,46px); }
-    /* Now playing inside context strip */
-    .tv-now-playing { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
-    .tv-now-playing-label { font-size:clamp(9px,0.7vw,11px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
-    .tv-now-playing-track { font-size:clamp(13px,1.2vw,20px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-    .tv-now-playing-meta { font-size:clamp(11px,0.95vw,16px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-    .tv-ctx-audio { display:flex; align-items:center; gap:10px; flex-shrink:0; padding-left:clamp(8px,0.8vw,14px); border-left:1px solid rgba(255,255,255,0.08); }
+    .tv-hdr { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto; align-items:center; gap:clamp(16px,1.8vw,30px); padding-bottom:clamp(10px,1.2vh,18px); border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; margin-bottom:clamp(10px,1.1vh,18px); }
+    /* Weather in header */
+    .tv-hdr-weather { display:flex; align-items:center; gap:clamp(12px,1.4vw,22px); min-width:0; overflow:hidden; }
+    .tv-hdr-weather .tv-wx-now { gap:clamp(10px,1.1vw,18px); }
+    .tv-hdr-weather .tv-wx-icon-big { font-size:clamp(36px,3.8vw,60px); }
+    .tv-hdr-weather .tv-wx-temp-big { font-size:clamp(26px,2.8vw,44px); letter-spacing:-0.02em; }
+    .tv-hdr-weather .tv-wx-cond { font-size:clamp(13px,1.2vw,20px); }
+    .tv-hdr-weather .tv-wx-loc { font-size:clamp(11px,0.9vw,15px); }
+    .tv-hdr-weather .tv-wx-alert-tag { font-size:clamp(12px,1.1vw,18px); padding:5px 12px; }
+    .tv-hdr-weather .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,34px); }
+    .tv-hdr-weather .tv-wx-hr-temp { font-size:clamp(12px,1.2vw,18px); }
+    .tv-hdr-weather .tv-wx-hr-time { font-size:clamp(9px,0.8vw,13px); }
+    .tv-hdr-weather .tv-wx-divider { margin:0 clamp(4px,0.4vw,8px); }
+    .tv-hdr-weather .tv-wx-forecast { gap:clamp(10px,1vw,16px); }
+    .tv-hdr-weather .tv-wx-hour { min-width:clamp(34px,3.5vw,54px); }
+    /* Now playing + audio in header */
+    .tv-hdr-media { display:flex; flex-direction:column; align-items:flex-start; gap:clamp(5px,0.6vh,9px); min-width:0; justify-content:center; }
+    .tv-now-playing { display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
+    .tv-now-playing-label { font-size:clamp(9px,0.7vw,12px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .tv-now-playing-track { font-size:clamp(15px,1.5vw,26px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-now-playing-meta { font-size:clamp(12px,1.1vw,18px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-ctx-audio { display:flex; align-items:center; gap:12px; flex-shrink:0; }
     .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.22); background:transparent; color:var(--text); border-radius:0; padding:3px 18px 3px 0; font-size:clamp(11px,0.88vw,14px); font-weight:600; font-family:var(--font); }
     .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.8); }
     .tv-radio-toggle { display:inline-flex; align-items:center; gap:6px; border:none; border-bottom:1px solid rgba(255,255,255,0.22); border-radius:0; padding:3px 0; background:transparent; color:var(--sub); font-size:clamp(11px,0.88vw,14px); font-weight:600; cursor:pointer; }
     .tv-radio-toggle input { accent-color:#22c55e; width:13px; height:13px; cursor:pointer; }
     .tv-radio-toggle span { color:var(--text); }
+    /* Clock */
+    .tv-clock-block { display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; }
+    .tv-clock { font-size:clamp(28px,3.2vw,54px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); letter-spacing:-0.02em; line-height:1.1; }
+    .tv-date { font-size:clamp(11px,0.95vw,16px); color:var(--muted); font-weight:500; letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     /* Section label */
     .tv-section-hdr { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:clamp(6px,0.7vh,10px); display:flex; align-items:center; gap:6px; flex-shrink:0; }
     .tv-section-hdr.issue-hdr { color:rgba(248,113,113,0.85); }
@@ -778,7 +762,6 @@
 
     /* ── Board minimal mode ─────────────────────────────────────────────────── */
     .tv-board-minimal .tv-ticker-wrap,
-    .tv-board-minimal .tv-ctx,
     .tv-board-minimal .tv-issues-section { display:none !important; }
     .tv-minimal-status { display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:clamp(10px,2vh,20px); }
     .tv-board-minimal .tv-minimal-status { display:flex; }
@@ -3029,19 +3012,8 @@ function renderBoardView(results){
   board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
     <div class="tv-hdr">
-      <div class="tv-brand">
-        <div class="tv-brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-        <div class="tv-brand-name">Service Status</div>
-      </div>
-      <div class="tv-status-pill ${statusCls}"><span class="tv-status-dot"></span>${statusMsg}</div>
-      <div class="tv-clock-block">
-        <div class="tv-clock" id="tv-clock"></div>
-        <div class="tv-date" id="tv-date"></div>
-      </div>
-    </div>
-    <div class="tv-ctx">
-      <div class="tv-ctx-weather" id="tv-wx-bar" style="display:none"></div>
-      <div class="tv-ctx-media">
+      <div class="tv-hdr-weather" id="tv-wx-bar" style="display:none"></div>
+      <div class="tv-hdr-media">
         <div class="tv-now-playing" id="tv-now-playing"></div>
         <div class="tv-ctx-audio">
           <select class="tv-station-select" id="tv-station-select" title="Choose radio station">${BOARD_STATIONS.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('')}</select>
@@ -3050,6 +3022,10 @@ function renderBoardView(results){
             <span>Radio</span>
           </label>
         </div>
+      </div>
+      <div class="tv-clock-block">
+        <div class="tv-clock" id="tv-clock"></div>
+        <div class="tv-date" id="tv-date"></div>
       </div>
     </div>
     <div class="tv-minimal-status">
