@@ -615,8 +615,7 @@
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
     .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.75); }
-    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
-    .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
+    .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:2px 2px 6px; background:transparent; border:none; border-radius:0; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.75em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:3px; }
     .tv-net-sep { color:var(--border); user-select:none; }
@@ -870,6 +869,7 @@ const SVCS=[
   {name:'Google Workspace',su:'https://www.google.com/appsstatus/dashboard/incidents.json',hu:'https://workspace.google.com/dashboard/',p:'gworkspace',cat:'app'},
   {name:'Apple Services',su:'https://www.apple.com/support/systemstatus/data/system_status_en_US.js',hu:'https://www.apple.com/support/systemstatus/',p:'apple',cat:'app'},
   {name:'Apple Developer',su:'https://developer.apple.com/system-status/data/system_status_en_US.js',hu:'https://developer.apple.com/system-status/',p:'appledeveloper',cat:'app'},
+  {name:'OpenAI',su:'https://status.openai.com/api/v2/summary.json',hu:'https://status.openai.com',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/summary.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/summary.json',hu:'https://status.dnsfilter.com',cat:'infra'},
@@ -1075,8 +1075,8 @@ const PREFERRED_TTS_VOICES=[
 ];
 
 const BOARD_STATIONS=[
-  {id:'wror',name:'105.7 WROR',streamUrl:'https://playerservices.streamtheworld.com/api/livestream-redirect/WRORFM.mp3',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k'},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'320k'}
+  {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1226,7 +1226,7 @@ async function _startBoardRadio(){
       radio.dataset.stationId=station.id;
       radio.load();
     }
-    radio.volume=BOARD_RADIO_BASE_VOLUME;
+    radio.volume=station.baseVolume ?? BOARD_RADIO_BASE_VOLUME;
     await radio.play();
   }catch{}
 }
@@ -1239,7 +1239,8 @@ function _stopBoardRadio(){
 function _duckBoardRadio(ms=4500){
   if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
   _radioDuckUntil=Math.max(_radioDuckUntil,Date.now()+ms);
-  _setBoardRadioVolume(BOARD_RADIO_DUCK_VOLUME);
+  const station=_getBoardStation();
+  _setBoardRadioVolume(station.duckVolume ?? BOARD_RADIO_DUCK_VOLUME);
   clearTimeout(_radioDuckTimer);
   const checkRestore=()=>{
     const wait=_radioDuckUntil-Date.now();
@@ -1248,7 +1249,8 @@ function _duckBoardRadio(ms=4500){
       return;
     }
     _radioDuckUntil=0;
-    _setBoardRadioVolume(BOARD_RADIO_BASE_VOLUME);
+    const restoreStation=_getBoardStation();
+    _setBoardRadioVolume(restoreStation.baseVolume ?? BOARD_RADIO_BASE_VOLUME);
   };
   _radioDuckTimer=setTimeout(checkRestore,ms+80);
 }
@@ -1461,7 +1463,8 @@ const ROUTE_KEYS = {
   "https://ip-api.com/json": "ip-api",
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
-  "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing"
+  "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
+  "https://status.openai.com/api/v2/summary.json": "openai-summary"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
 /* @routes-end */
@@ -2547,10 +2550,21 @@ async function _fetchNowPlaying(){
     const data=station.nowPlayingUrl.startsWith('special://')
       ? await getJson('/proxy?svc='+station.nowPlayingUrl.replace('special://',''))
       : await getJson(station.nowPlayingUrl);
-    const parsed=_parseNowPlayingSong(data?.songtitle||data?.title||'',station);
+    const fallbackRaw=[
+      data?.songtitle,
+      data?.title,
+      data?.currentSong,
+      data?.now_playing?.song?.text,
+      data?.icestats?.source?.title
+    ].find(Boolean)||'';
+    const parsed=_parseNowPlayingSong(fallbackRaw,station);
     _nowPlayingInfo={...parsed,ts:Date.now(),err:null,station:station.name,quality:station.quality};
   }catch{
-    _nowPlayingInfo={track:'Unavailable',artist:station.name,ts:Date.now(),err:'unavailable',station:station.name,quality:station.quality};
+    _nowPlayingInfo={
+      track:_nowPlayingInfo?.track||'Unavailable',
+      artist:_nowPlayingInfo?.artist||station.name,
+      ts:Date.now(),err:'unavailable',station:station.name,quality:station.quality
+    };
   }
   _nowPlayingFetching=false;
   _renderBoardNowPlaying();
