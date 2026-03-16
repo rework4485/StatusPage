@@ -720,8 +720,8 @@
     #n-ok { color:var(--ok) !important; }
 
     /* ── Per-service refresh time & stale indicator ───────────────────────────── */
-    .card-fetched { font-size:11px; color:var(--muted); margin-left:2px; }
-    .card-fetched.stale { color:#f59e0b; font-weight:600; }
+    .card-fetched,.card-age-ts { font-size:11px; color:var(--muted); }
+    .card-fetched.stale,.card-age-ts.stale { color:#f59e0b; font-weight:600; }
 
     /* ── Mobile responsive ───────────────────────────────────────────────────── */
     @media (max-width: 640px) {
@@ -1312,17 +1312,31 @@ async function _playWBZLoop(){
     if(!audioUrl) return;
     if(!_boardLoopAudio) _boardLoopAudio=new Audio();
     const loopEl=_boardLoopAudio;
-    // Silence radio completely during the news break (not just duck)
+    // Fade radio out over 2s, then play news (fully silent during break)
     clearTimeout(_radioDuckTimer);
     _radioDuckUntil=0;
-    _setBoardRadioVolume(0);
     document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
+    await _fadeOutBoardRadio(2000);
     loopEl.src=audioUrl;
     const station=_getBoardStation();
     loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
     loopEl.onended=_fadeInBoardRadioAfterLoop;
     await loopEl.play();
   }catch{ /* network or playback error — skip this hour */ }
+}
+
+function _fadeOutBoardRadio(durationMs=2000){
+  return new Promise(resolve=>{
+    if(!_boardRadioAudio){ resolve(); return; }
+    const steps=20, stepMs=durationMs/steps;
+    const startVol=_boardRadioAudio.volume;
+    let step=0;
+    const timer=setInterval(()=>{
+      step++;
+      _setBoardRadioVolume(Math.max(0,startVol*(1-step/steps)));
+      if(step>=steps){ clearInterval(timer); _setBoardRadioVolume(0); resolve(); }
+    },stepMs);
+  });
 }
 
 function _fadeInBoardRadioAfterLoop(){
@@ -3534,8 +3548,7 @@ function mkIncCard(svc){
       ${detailsHtml}
     </div>
     <div class="card-meta">
-      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${svc.updated}${svc.fetchedAt?` <span class="card-fetched${(Date.now()-svc.fetchedAt)>STALE_MS?' stale':''}" title="Fetched from provider">${(Date.now()-svc.fetchedAt)>STALE_MS?'· ⚠ Stale':'· Fetched '+fmtFetchAge(svc.fetchedAt)}</span>`:''}</div>
-      <div class="meta-tag">${incTag}${(svc.labels||[]).length>1?' · Multi-status':''}</div>
+      <div class="meta-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="card-age-ts${(svc.fetchedAt&&(Date.now()-svc.fetchedAt)>STALE_MS)?' stale':''}" data-fetched-at="${svc.fetchedAt||0}" title="${svc.updated}">${svc.fetchedAt?fmtFetchAge(svc.fetchedAt):'—'}</span></div>
     </div>`;
   d.querySelector('.c-url')?.addEventListener('click',e=>e.stopPropagation());
   const cLogoImg=d.querySelector('.c-logo');
@@ -4331,6 +4344,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   _wxTimer=setInterval(_fetchWeather, 15*60*1000);
   _fetchNowPlaying();
   _nowPlayingTimer=setInterval(_fetchNowPlaying, 30000);
+  // Running "time ago" timer — updates all card age timestamps every 30s
+  setInterval(()=>{
+    document.querySelectorAll('.card-age-ts[data-fetched-at]').forEach(el=>{
+      const ts=parseInt(el.dataset.fetchedAt,10);
+      if(!ts) return;
+      el.textContent=fmtFetchAge(ts);
+      el.classList.toggle('stale',(Date.now()-ts)>STALE_MS);
+    });
+  },30000);
 
   window.addEventListener('beforeunload',()=>{
     _pollIntervals.forEach(id=>clearInterval(id));
