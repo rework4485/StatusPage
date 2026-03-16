@@ -302,7 +302,7 @@
     .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
     .issues-hdr.has-outage::before { background:var(--bad); }
     .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
-    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:stretch; }
+    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:start; }
 
     /* ── Service directory (bottom panel) ───────────────────────────────────── */
     .svc-directory { display:flex; flex-direction:column; gap:10px; }
