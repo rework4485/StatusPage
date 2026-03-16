@@ -670,7 +670,11 @@
     .tv-alert-svc { color:var(--text); }
     .tv-alert-msg { color:var(--sub); font-weight:500; }
     @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
-    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1vh,14px); flex-shrink:0; }
+    .tv-board-footer { display:flex; align-items:center; justify-content:space-between; margin-top:clamp(8px,1vh,14px); flex-shrink:0; gap:12px; }
+    .tv-board-controls { display:flex; align-items:center; gap:12px; }
+    .tv-radio-toggle { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,0.18); border-radius:999px; padding:5px 12px; background:rgba(255,255,255,0.04); color:var(--sub); font-size:12px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+    .tv-radio-toggle input { accent-color:#22c55e; width:14px; height:14px; cursor:pointer; }
+    .tv-radio-toggle span { color:var(--text); }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.1); color:var(--text); }
     .tv-updated { font-size:12px; color:var(--muted); }
@@ -1063,6 +1067,14 @@ const PREFERRED_TTS_VOICES=[
   'Samantha'
 ];
 
+const BOARD_RADIO_STREAM_URL='https://stream.x1023.fm/HD1';
+const BOARD_RADIO_BASE_VOLUME=0.35;
+const BOARD_RADIO_DUCK_VOLUME=0.12;
+let _boardRadioEnabled=localStorage.getItem('board-radio-enabled')!=='0';
+let _boardRadioAudio=null;
+let _radioDuckUntil=0;
+let _radioDuckTimer=null;
+
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -1121,12 +1133,15 @@ function speakBannerStatus(serviceName, kind){
   if(_alertsMuted) return;
   if(!('speechSynthesis' in window)) return;
   const status=TTS_STATUS_LABEL[kind] || 'Status Updated';
-  const utterance=new SpeechSynthesisUtterance(`${serviceName}. ${status}.`);
+  const spokenText=`${serviceName}. ${status}.`;
+  const utterance=new SpeechSynthesisUtterance(spokenText);
   const voice=getPreferredVoice();
   if(voice) utterance.voice=voice;
   utterance.rate=1;
   utterance.pitch=1;
   utterance.volume=1;
+  const estimatedMs=Math.max(2600,Math.round((spokenText.length/14)*1000));
+  utterance.onstart=()=>_duckBoardRadio(estimatedMs+900);
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
@@ -1162,6 +1177,64 @@ function chime(kind){
     .catch(()=>{});
 }
 
+function _initBoardRadioAudio(){
+  if(_boardRadioAudio) return _boardRadioAudio;
+  const el=new Audio(BOARD_RADIO_STREAM_URL);
+  el.preload='none';
+  el.crossOrigin='anonymous';
+  el.loop=true;
+  el.volume=BOARD_RADIO_BASE_VOLUME;
+  _boardRadioAudio=el;
+  return el;
+}
+
+function _setBoardRadioVolume(target){
+  if(!_boardRadioAudio) return;
+  _boardRadioAudio.volume=Math.min(1,Math.max(0,target));
+}
+
+function _startBoardRadio(){
+  if(!_boardModeActive||!_boardRadioEnabled) return;
+  const radio=_initBoardRadioAudio();
+  radio.volume=BOARD_RADIO_BASE_VOLUME;
+  radio.play().catch(()=>{});
+}
+
+function _stopBoardRadio(){
+  if(!_boardRadioAudio) return;
+  _boardRadioAudio.pause();
+}
+
+function _duckBoardRadio(ms=4500){
+  if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
+  _radioDuckUntil=Math.max(_radioDuckUntil,Date.now()+ms);
+  _setBoardRadioVolume(BOARD_RADIO_DUCK_VOLUME);
+  clearTimeout(_radioDuckTimer);
+  const checkRestore=()=>{
+    const wait=_radioDuckUntil-Date.now();
+    if(wait>0){
+      _radioDuckTimer=setTimeout(checkRestore,wait+80);
+      return;
+    }
+    _radioDuckUntil=0;
+    _setBoardRadioVolume(BOARD_RADIO_BASE_VOLUME);
+  };
+  _radioDuckTimer=setTimeout(checkRestore,ms+80);
+}
+
+function _applyBoardRadioToggle(){
+  const toggle=document.getElementById('tv-radio-toggle');
+  if(toggle) toggle.checked=_boardRadioEnabled;
+}
+
+function _setBoardRadioEnabled(enabled,{persist=true}={}){
+  _boardRadioEnabled=!!enabled;
+  if(persist) localStorage.setItem('board-radio-enabled',_boardRadioEnabled?'1':'0');
+  _applyBoardRadioToggle();
+  if(_boardModeActive&&_boardRadioEnabled) _startBoardRadio();
+  else _stopBoardRadio();
+}
+
 let bannerTimer;
 let bannerSpeechTimer;
 const alertQueue = [];
@@ -1173,6 +1246,7 @@ function processAlertQueue() {
   isAlertPlaying = true;
   const { svc, kind } = alertQueue.shift();
 
+  _duckBoardRadio(5200);
   chime(kind);
   showStatusBanner(svc, kind);
 }
@@ -2886,7 +2960,13 @@ function renderBoardView(results){
     ${normalSvcs.length?`<div class="tv-section-hdr" style="margin-top:${issueSvcs.length?'2px':'0'};"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> All Services &mdash; ${normalSvcs.length} operational</div>`:''}
     <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
     <div class="tv-board-footer">
-      <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
+      <div class="tv-board-controls">
+        <label class="tv-radio-toggle" for="tv-radio-toggle" title="Play Cape Cod's X on the board">
+          <input id="tv-radio-toggle" type="checkbox" ${_boardRadioEnabled?'checked':''}>
+          <span>Radio</span>
+        </label>
+        <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
+      </div>
       <span class="tv-updated" id="tv-updated"></span>
     </div>`;
   _renderBoardNetBar();
@@ -2899,6 +2979,11 @@ function renderBoardView(results){
   _boardResizeObs=new ResizeObserver(()=>{ clearTimeout(_roDebounce); _roDebounce=setTimeout(_optimizeBoardLayout,60); });
   _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
+  document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
+    _setBoardRadioEnabled(!!e.target.checked);
+  });
+  _applyBoardRadioToggle();
+  _startBoardRadio();
   const tilesEl=document.getElementById('tv-tiles');
   tilesEl.addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -2960,6 +3045,10 @@ function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
+  clearTimeout(_radioDuckTimer);
+  _radioDuckTimer=null;
+  _radioDuckUntil=0;
+  _stopBoardRadio();
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
