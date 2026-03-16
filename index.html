@@ -537,6 +537,13 @@
     .wx-updated { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
     /* Board weather card */
     .tv-wx-card { display:flex; align-items:center; gap:clamp(12px,1.5vw,22px); padding:clamp(10px,1.3vh,18px) clamp(16px,1.8vw,28px); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; flex-shrink:0; overflow:hidden; min-width:0; }
+    .tv-wx-now { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); flex-shrink:0; }
+    .tv-wx-divider { width:1px; align-self:stretch; background:rgba(255,255,255,0.1); flex-shrink:0; margin:0 clamp(4px,0.5vw,8px); }
+    .tv-wx-forecast { display:flex; align-items:center; gap:clamp(10px,1.2vw,20px); flex-shrink:0; }
+    .tv-wx-hour { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:clamp(38px,4vw,60px); }
+    .tv-wx-hr-time { font-size:clamp(10px,0.85vw,14px); font-weight:700; color:var(--muted); letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; }
+    .tv-wx-hr-icon { font-size:clamp(20px,2.2vw,32px); line-height:1; }
+    .tv-wx-hr-temp { font-size:clamp(13px,1.2vw,19px); font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
     .tv-wx-icon-big { font-size:clamp(44px,5vw,76px); line-height:1; flex-shrink:0; }
     .tv-wx-details-col { display:flex; flex-direction:column; gap:2px; min-width:0; }
     .tv-wx-temp-big { font-size:clamp(36px,4.2vw,64px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
@@ -584,13 +591,16 @@
     .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
     .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
-    /* Weather card in header — wider with medium-sized text */
-    .tv-wx-hdr { flex-shrink:0; min-width:clamp(180px,18vw,300px); padding:clamp(10px,1.1vh,16px) clamp(14px,1.4vw,22px) !important; border-radius:12px !important; gap:clamp(10px,1.1vw,16px) !important; }
-    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(30px,3vw,46px) !important; }
-    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(22px,2.2vw,34px) !important; letter-spacing:-0.02em !important; }
-    .tv-wx-hdr .tv-wx-cond { font-size:clamp(13px,1.15vw,19px) !important; }
-    .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.88vw,14px) !important; }
-    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.75vw,13px) !important; padding:3px 9px !important; }
+    /* Weather card in header — wider with larger text + 3-hour forecast */
+    .tv-wx-hdr { flex-shrink:0; min-width:clamp(260px,28vw,480px); padding:clamp(10px,1.1vh,16px) clamp(16px,1.6vw,26px) !important; border-radius:12px !important; gap:clamp(12px,1.3vw,20px) !important; }
+    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(34px,3.4vw,52px) !important; }
+    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(26px,2.6vw,40px) !important; letter-spacing:-0.02em !important; }
+    .tv-wx-hdr .tv-wx-cond { font-size:clamp(14px,1.2vw,20px) !important; }
+    .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.9vw,15px) !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.78vw,13px) !important; padding:3px 9px !important; }
+    .tv-wx-hdr .tv-wx-hr-icon { font-size:clamp(22px,2.4vw,36px) !important; }
+    .tv-wx-hdr .tv-wx-hr-temp { font-size:clamp(14px,1.3vw,21px) !important; }
+    .tv-wx-hdr .tv-wx-hr-time { font-size:clamp(10px,0.82vw,14px) !important; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -2323,7 +2333,7 @@ let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
-const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=8;
+const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=20;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
 
 async function _fetchWeather(){
@@ -2335,14 +2345,15 @@ async function _fetchWeather(){
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
     const loc=locName;
-    const forecastUrl=pt.properties.forecast;
+    const forecastHourlyUrl=pt.properties.forecastHourly;
     const [fR,aR]=await Promise.allSettled([
-      fetchWithTimeout(forecastUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
       fetchWithTimeout(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null),
     ]);
-    const period=fR.value?.properties?.periods?.[0];
+    const periods=(fR.value?.properties?.periods||[]).slice(0,4);
+    const period=periods[0]||null;
     const alerts=(aR.value?.features||[]).filter(a=>/warning|watch|advisory/i.test(a.properties?.event||''));
-    _wxInfo={loc,period,alerts,ts:Date.now()};
+    _wxInfo={loc,period,periods,alerts,ts:Date.now()};
   }catch{_wxInfo={err:'Weather unavailable'};}
   _wxFetching=false;
   _renderWeather();
@@ -2374,28 +2385,54 @@ function _renderWeather(){
   _renderBoardWeatherBar();
 }
 
+function _wxIcon(cond,isDaytime){
+  if(isDaytime===false) return '🌙';
+  if(/sunny|clear/i.test(cond)) return '☀️';
+  if(/partly.*cloud|mostly.*clear/i.test(cond)) return '⛅';
+  if(/cloud/i.test(cond)) return '☁️';
+  if(/thunder|storm/i.test(cond)) return '⛈';
+  if(/rain|shower|drizzle/i.test(cond)) return '🌧';
+  if(/snow|blizzard/i.test(cond)) return '❄️';
+  if(/fog|mist/i.test(cond)) return '🌫';
+  if(/wind/i.test(cond)) return '💨';
+  return '🌡';
+}
+
 function _renderBoardWeatherBar(){
   const bwb=document.getElementById('tv-wx-bar');
   if(!bwb) return;
   if(!_wxInfo||_wxInfo.err){bwb.style.display='none';return;}
-  const{loc,period,alerts}=_wxInfo;
+  const{loc,period,periods,alerts}=_wxInfo;
   const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
   const cond=period?.shortForecast||'';
-  const cStr=cond.substring(0,50);
-  const icon=period?.isDaytime===false?'🌙':cond.match(/sunny|clear/i)?'☀️':cond.match(/cloud/i)?'⛅':cond.match(/rain|shower/i)?'🌧':cond.match(/snow/i)?'❄️':cond.match(/thunder|storm/i)?'⛈':'🌡';
+  const icon=_wxIcon(cond,period?.isDaytime);
   const alertsHTML=alerts.slice(0,2).map(a=>{
     const ev=a.properties?.event||'';
     const isMajor=/warning/i.test(ev);
     return `<span class="tv-wx-alert-tag${isMajor?' wx-major':''}">&#9888; ${esc(ev)}</span>`;
   }).join('');
+  // Next 3 hourly slots (periods[1..3])
+  const forecastSlotsHTML=(periods||[]).slice(1,4).map(p=>{
+    const t=p.temperature?`${p.temperature}°`:'';
+    const hr=p.startTime?new Date(p.startTime).toLocaleTimeString('en-US',{hour:'numeric',hour12:true}):'';
+    const ic=_wxIcon(p.shortForecast||'',p.isDaytime);
+    return `<div class="tv-wx-hour">
+      <div class="tv-wx-hr-time">${esc(hr)}</div>
+      <div class="tv-wx-hr-icon">${ic}</div>
+      <div class="tv-wx-hr-temp">${esc(t)}</div>
+    </div>`;
+  }).join('');
   bwb.innerHTML=`
-    <div class="tv-wx-icon-big">${icon}</div>
-    <div class="tv-wx-details-col">
-      ${temp?`<div class="tv-wx-temp-big">${esc(temp)}</div>`:''}
-      ${cStr?`<div class="tv-wx-cond">${esc(cStr)}</div>`:''}
-      ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
+    <div class="tv-wx-now">
+      <div class="tv-wx-icon-big">${icon}</div>
+      <div class="tv-wx-details-col">
+        ${temp?`<div class="tv-wx-temp-big">${esc(temp)}</div>`:''}
+        ${cond?`<div class="tv-wx-cond">${esc(cond.substring(0,40))}</div>`:''}
+        ${loc?`<div class="tv-wx-loc">${esc(loc)}</div>`:''}
+      </div>
+      ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
     </div>
-    ${alertsHTML?`<div class="tv-wx-alerts">${alertsHTML}</div>`:''}
+    ${forecastSlotsHTML?`<div class="tv-wx-divider"></div><div class="tv-wx-forecast">${forecastSlotsHTML}</div>`:''}
   `;
   bwb.style.display='';
 }
