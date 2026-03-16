@@ -1123,7 +1123,8 @@ const PREFERRED_TTS_VOICES=[
 
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12}
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
+  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://streamdb3web.securenetsystems.net/cirrusencore/WOCN',nowPlayingUrl:null,parse:'none',quality:'128k',baseVolume:0.5,duckVolume:0.2}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1311,15 +1312,33 @@ async function _playWBZLoop(){
     if(!audioUrl) return;
     if(!_boardLoopAudio) _boardLoopAudio=new Audio();
     const loopEl=_boardLoopAudio;
-    // Estimate ~5 min for The Loop; duck board radio for that duration
-    const LOOP_DUCK_MS=5*60*1000+5000;
-    _duckBoardRadio(LOOP_DUCK_MS);
+    // Silence radio completely during the news break (not just duck)
+    clearTimeout(_radioDuckTimer);
+    _radioDuckUntil=0;
+    _setBoardRadioVolume(0);
+    document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
     loopEl.src=audioUrl;
     const station=_getBoardStation();
     loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
-    loopEl.onended=()=>{ /* duck timer naturally restores board radio volume */ };
+    loopEl.onended=_fadeInBoardRadioAfterLoop;
     await loopEl.play();
   }catch{ /* network or playback error — skip this hour */ }
+}
+
+function _fadeInBoardRadioAfterLoop(){
+  document.getElementById('tv-now-playing')?.classList.remove('tv-np-ducked');
+  if(!_boardRadioAudio||!_boardRadioEnabled) return;
+  const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
+  const target=isNaN(savedVol)?(_getBoardStation().baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
+  // Fade in over 4 seconds in 40 steps
+  const steps=40, durationMs=4000;
+  const stepMs=durationMs/steps;
+  let step=0;
+  const timer=setInterval(()=>{
+    step++;
+    _setBoardRadioVolume(Math.min(target,(target/steps)*step));
+    if(step>=steps) clearInterval(timer);
+  },stepMs);
 }
 
 function _startWBZLoopSchedule(){
@@ -2669,6 +2688,12 @@ async function _fetchNowPlaying(){
   if(_nowPlayingFetching) return;
   _nowPlayingFetching=true;
   const station=_getBoardStation();
+  if(!station.nowPlayingUrl){
+    _nowPlayingInfo={track:station.name,artist:'',ts:Date.now(),err:null,station:station.name,quality:station.quality};
+    _nowPlayingFetching=false;
+    _renderBoardNowPlaying();
+    return;
+  }
   try{
     const data=station.nowPlayingUrl.startsWith('special://')
       ? await getJson('/proxy?svc='+station.nowPlayingUrl.replace('special://',''))
