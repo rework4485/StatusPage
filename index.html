@@ -588,7 +588,7 @@
     .tv-hdr-stat { display:inline-flex; align-items:center; gap:5px; font-size:clamp(12px,0.95vw,16px); color:var(--sub); white-space:nowrap; }
     .tv-hdr-stat strong { font-size:clamp(13px,1.05vw,18px); font-weight:700; color:var(--text); }
     .tv-hdr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+    .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; margin-left:auto; }
     .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
     /* Weather card in header — wider with larger text + 3-hour forecast */
@@ -638,17 +638,17 @@
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
     /* Normal (healthy) service tiles — horizontal scrolling ticker */
-    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(88px,11vh,128px); position:relative; }
+    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(98px,12.5vh,142px); position:relative; }
     .tv-tiles-track { display:flex; align-items:center; gap:clamp(10px,1vw,16px); height:100%; width:max-content; animation:tv-ticker 70s linear infinite; }
     .tv-tiles-track:hover { animation-play-state:paused; }
     @keyframes tv-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:clamp(10px,1.1vw,17px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(120px,12vw,185px); }
+    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:clamp(11px,1.2vw,19px); display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.55; flex-shrink:0; min-width:clamp(135px,13.5vw,205px); }
     .tv-tile:hover { background:rgba(255,255,255,0.08); opacity:1; }
     .tv-tile-top { display:flex; align-items:center; gap:7px; min-width:0; }
-    .tv-tile-logo { width:clamp(15px,1.4vw,22px); height:clamp(15px,1.4vw,22px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
-    .tv-tile-logo-fb { width:clamp(15px,1.4vw,22px); height:clamp(15px,1.4vw,22px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(7px,0.72vw,11px); font-weight:700; flex-shrink:0; }
-    .tv-tile-name { font-size:clamp(10px,0.9vw,14px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-tile-badge { font-size:clamp(8px,0.72vw,11px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
+    .tv-tile-logo { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
+    .tv-tile-logo-fb { width:clamp(17px,1.6vw,25px); height:clamp(17px,1.6vw,25px); border-radius:4px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(8px,0.82vw,12px); font-weight:700; flex-shrink:0; }
+    .tv-tile-name { font-size:clamp(11px,1vw,16px); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-tile-badge { font-size:clamp(9px,0.82vw,13px); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; }
     .tv-tile-badge.ok    { color:var(--ok); }
     .tv-tile-badge.warn  { color:var(--warn); }
     .tv-tile-badge.bad   { color:var(--bad); }
