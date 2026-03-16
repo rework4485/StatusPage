@@ -537,11 +537,11 @@
     .wx-updated { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
     /* Board weather card */
     .tv-wx-card { display:flex; align-items:center; gap:clamp(10px,1.2vw,18px); padding:clamp(8px,1.1vh,14px) clamp(12px,1.4vw,20px); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; flex-shrink:0; overflow:hidden; min-width:0; }
-    .tv-wx-icon-big { font-size:clamp(26px,3.2vw,50px); line-height:1; flex-shrink:0; }
+    .tv-wx-icon-big { font-size:clamp(32px,3.8vw,60px); line-height:1; flex-shrink:0; }
     .tv-wx-details-col { display:flex; flex-direction:column; gap:1px; min-width:0; }
-    .tv-wx-temp-big { font-size:clamp(20px,2.6vw,40px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
-    .tv-wx-cond { font-size:clamp(11px,1.1vw,17px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-wx-loc { font-size:clamp(9px,0.82vw,13px); color:var(--muted); white-space:nowrap; }
+    .tv-wx-temp-big { font-size:clamp(26px,3.2vw,48px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1.1; }
+    .tv-wx-cond { font-size:clamp(14px,1.4vw,21px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tv-wx-loc { font-size:clamp(11px,1vw,15px); color:var(--muted); white-space:nowrap; }
     .tv-wx-alerts { display:flex; flex-direction:column; gap:3px; margin-left:auto; flex-shrink:0; padding-left:8px; }
     .tv-wx-alert-tag { font-size:clamp(9px,0.82vw,13px); font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:3px 8px; white-space:nowrap; }
     .tv-wx-alert-tag.wx-major { color:#f87171; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.35); }
@@ -574,7 +574,7 @@
     .tv-clock { font-size:clamp(22px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
     /* Info row: weather card + network bar side by side */
     .tv-info-row { display:flex; align-items:stretch; gap:clamp(8px,1vw,14px); margin-bottom:clamp(8px,1.1vh,14px); flex-shrink:0; min-height:0; }
-    .tv-net-bar { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; font-size:clamp(10px,0.82vw,13px); color:var(--sub); min-width:0; }
+    .tv-net-bar { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; font-size:clamp(13px,1.05vw,17px); color:var(--sub); min-width:0; }
     .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .tv-net-lbl { font-weight:700; font-size:0.82em; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
@@ -601,11 +601,17 @@
     .tv-issue-badge.bad    { color:var(--bad); }
     .tv-issue-badge.maint  { color:var(--maint); }
     .tv-issue-badge.reroute{ color:var(--reroute); }
-    .tv-issue-title { font-size:clamp(12px,1.2vw,19px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
-    .tv-issue-body { font-size:clamp(10px,0.95vw,15px); color:var(--sub); line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; overflow-wrap:anywhere; }
-    /* Normal (healthy) service tiles — visible but subdued */
-    .tv-tiles { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(clamp(100px,9vw,160px),1fr)); grid-auto-rows:minmax(0,1fr); gap:clamp(5px,0.6vw,9px); overflow:hidden; min-height:0; }
-    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:9px; padding:clamp(7px,0.8vw,12px); display:flex; flex-direction:column; gap:3px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; min-height:0; justify-content:center; opacity:0.5; }
+    .tv-issue-title { font-size:clamp(13px,1.3vw,21px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
+    .tv-issue-body { font-size:clamp(11px,1.05vw,16px); color:var(--text); line-height:1.5; overflow:hidden; max-height:5.25em; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
+    .tv-issue-body-inner { display:block; }
+    .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,10s) ease-in-out 1.5s infinite; }
+    @keyframes tv-body-scroll { 0%,22%{transform:translateY(0)} 78%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
+    /* Normal (healthy) service tiles — horizontal scrolling ticker */
+    .tv-tiles { flex-shrink:0; overflow:hidden; height:clamp(64px,8.5vh,96px); position:relative; }
+    .tv-tiles-track { display:flex; align-items:center; gap:clamp(6px,0.7vw,10px); height:100%; width:max-content; animation:tv-ticker 45s linear infinite; }
+    .tv-tiles-track:hover { animation-play-state:paused; }
+    @keyframes tv-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .tv-tile { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:9px; padding:clamp(7px,0.8vw,12px); display:flex; flex-direction:column; gap:3px; cursor:pointer; transition:border-color 0.2s,background 0.2s,opacity 0.2s; overflow:hidden; height:100%; box-sizing:border-box; justify-content:center; opacity:0.5; flex-shrink:0; min-width:clamp(90px,9vw,150px); }
     .tv-tile:hover { background:rgba(255,255,255,0.07); opacity:1; }
     .tv-tile-top { display:flex; align-items:center; gap:6px; min-width:0; }
     .tv-tile-logo { width:clamp(14px,1.3vw,20px); height:clamp(14px,1.3vw,20px); border-radius:4px; background:#fff; object-fit:contain; flex-shrink:0; }
@@ -2560,17 +2566,10 @@ function _optimizeBoardLayout(){
   const tilesEl=document.getElementById('tv-tiles');
   if(!tilesEl) return;
   const issueEl=document.getElementById('tv-issue-tiles');
-  const n=tilesEl.querySelectorAll('.tv-tile').length;
   const issueN=issueEl?issueEl.querySelectorAll('.tv-issue-tile').length:0;
-  if(!n&&!issueN) return;
   const cs=getComputedStyle(board);
   const padH=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
-  const padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
   const availW=board.clientWidth-padH;
-  const hdrEl=board.querySelector('.tv-board-hdr');
-  const infoEl=board.querySelector('.tv-info-row');
-  const issueSecEl=board.querySelector('.tv-issues-section');
-  const footEl=board.querySelector('.tv-board-footer');
   const gap=Math.max(8,Math.round(availW*0.007));
   // Layout issue tiles with a column count based on how many there are
   if(issueEl&&issueN>0){
@@ -2578,38 +2577,42 @@ function _optimizeBoardLayout(){
     issueEl.style.gridTemplateColumns=`repeat(${issueCols},1fr)`;
     issueEl.style.gap=gap+'px';
   }
-  // Calculate remaining height for normal tiles
-  const used=(hdrEl?hdrEl.offsetHeight+gap:0)+
-             (infoEl?infoEl.offsetHeight+gap:0)+
-             (issueSecEl?issueSecEl.offsetHeight+gap:0)+
-             (footEl?footEl.offsetHeight+gap:0);
-  const availH=board.clientHeight-padV-used;
-  if(!n) return;
-  // Find optimal column count for normal service tiles
-  const maxCols=Math.min(n,Math.max(4,Math.ceil(Math.sqrt(n*(availW/Math.max(availH,1))))));
-  let bestCols=1,bestScore=-1;
-  for(let c=1;c<=maxCols;c++){
-    const r=Math.ceil(n/c);
-    const tW=(availW-gap*(c-1))/c;
-    const tH=(availH-gap*(r-1))/r;
-    if(tH<50||tW<80) continue; // compact but still visible
-    const score=tW*tH;
-    if(score>bestScore){bestScore=score;bestCols=c;}
+  // Ticker mode for normal service tiles
+  const trackEl=document.getElementById('tv-tiles-track');
+  if(trackEl){
+    // Scale ticker speed to content width
+    const halfW=trackEl.scrollWidth/2;
+    if(halfW>0){
+      const dur=Math.max(20,Math.round(halfW/90));
+      trackEl.style.animationDuration=dur+'s';
+    }
+    // Font/logo sizes for ticker tiles
+    const tileH=tilesEl.clientHeight||80;
+    const nameFs=Math.max(9,Math.min(14,Math.floor(tileH/6)));
+    const badgeFs=Math.max(8,Math.min(11,Math.floor(tileH/8)));
+    const logoSz=Math.max(12,Math.min(22,Math.floor(tileH*0.28)));
+    trackEl.querySelectorAll('.tv-tile-name').forEach(el=>el.style.fontSize=nameFs+'px');
+    trackEl.querySelectorAll('.tv-tile-badge').forEach(el=>el.style.fontSize=badgeFs+'px');
+    trackEl.querySelectorAll('.tv-tile-logo,.tv-tile-logo-fb').forEach(el=>{el.style.width=logoSz+'px';el.style.height=logoSz+'px';});
   }
-  if(bestScore<0) bestCols=Math.max(1,Math.ceil(Math.sqrt(n)));
-  const rows=Math.ceil(n/bestCols);
-  tilesEl.style.gridTemplateColumns=`repeat(${bestCols},1fr)`;
-  tilesEl.style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
-  tilesEl.style.gridAutoRows=``;
-  tilesEl.style.gap=gap+'px';
-  const tileW=Math.floor((availW-gap*(bestCols-1))/bestCols);
-  // Compact font sizes for subdued healthy tiles
-  const nameFs=Math.max(9,Math.min(16,Math.floor(tileW/10)));
-  const bodyFs=Math.max(8,Math.min(12,Math.floor(tileW/16)));
-  const logoSz=Math.max(12,Math.min(22,Math.floor(nameFs*1.2)));
-  tilesEl.querySelectorAll('.tv-tile-name').forEach(el=>el.style.fontSize=nameFs+'px');
-  tilesEl.querySelectorAll('.tv-tile-badge,.tv-tile-title,.tv-tile-body,.tv-tile-inc').forEach(el=>el.style.fontSize=bodyFs+'px');
-  tilesEl.querySelectorAll('.tv-tile-logo,.tv-tile-logo-fb').forEach(el=>{el.style.width=logoSz+'px';el.style.height=logoSz+'px';});
+  // Initialise issue body slow-scroll after layout paint
+  requestAnimationFrame(()=>{
+    if(!issueEl) return;
+    issueEl.querySelectorAll('.tv-issue-body').forEach(el=>{
+      const inner=el.querySelector('.tv-issue-body-inner');
+      if(!inner) return;
+      inner.classList.remove('tv-scrolling');
+      inner.style.removeProperty('--tv-scroll-dist');
+      inner.style.removeProperty('--tv-scroll-dur');
+      const dist=inner.scrollHeight-el.clientHeight;
+      if(dist>8){
+        inner.style.setProperty('--tv-scroll-dist',`-${dist}px`);
+        const dur=Math.max(8,Math.min(25,Math.round(dist/14)));
+        inner.style.setProperty('--tv-scroll-dur',`${dur}s`);
+        inner.classList.add('tv-scrolling');
+      }
+    });
+  });
 }
 
 async function _fetchBoardNet(){
@@ -2712,7 +2715,7 @@ function renderBoardView(results){
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
       <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
       ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
-      ${svc.title&&svc.body?`<div class="tv-issue-body">${esc(svc.body)}</div>`:''}
+      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
     </div>`;
   }).join('');
   // Build compact subdued normal-service tiles
@@ -2751,7 +2754,7 @@ function renderBoardView(results){
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
     </div>`:''}
     ${normalSvcs.length?`<div class="tv-section-hdr">${issueSvcs.length?'All Services':'All Services'}</div>`:''}
-    <div class="tv-tiles" id="tv-tiles">${normalTilesHTML}</div>
+    <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
     <div class="tv-board-footer">
       <button class="tv-exit-btn" id="tv-exit-btn">Exit Board</button>
       <span class="tv-updated" id="tv-updated"></span>
