@@ -1298,8 +1298,17 @@ function queueAlert(svc, kind) {
   if (alertQueue.length >= MAX_ALERT_QUEUE) return;
   if(kind==='outage'||kind==='degraded') _recordIssue(svc.name);
   alertQueue.push({ svc, kind });
-  if (_boardModeActive) _showBoardAlert(svc, kind);
   processAlertQueue();
+}
+
+function getAlertPresentation(svc, kind){
+  const heading = kind==='outage' ? 'Service Outage' : kind==='degraded' ? 'Service Degraded' : 'Service Restored';
+  const icon = kind==='outage' ? '🚨' : kind==='degraded' ? '⚠️' : '✅';
+  const detail = kind==='restored'
+    ? `${svc.name} is back to operational.`
+    : `${svc.name} is now ${TTS_STATUS_LABEL[kind]?.toLowerCase() || svc.label?.toLowerCase() || kind}.`;
+  const indCls = kind==='outage' ? 'ind-major' : kind==='degraded' ? 'ind-minor' : 'ind-none';
+  return { heading, icon, detail, indCls };
 }
 
 function _showBoardAlert(svc, kind) {
@@ -1307,12 +1316,7 @@ function _showBoardAlert(svc, kind) {
   if (!board) return;
   // Remove any existing alert card
   board.querySelectorAll('.tv-board-alert-card').forEach(e => e.remove());
-  const icon = kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅';
-  const heading = kind==='outage'?'Service Outage':kind==='degraded'?'Service Degraded':'Service Restored';
-  const detail = kind==='restored'
-    ? `${svc.name} is back to operational.`
-    : `${svc.name} is now ${svc.label?.toLowerCase()||kind}.`;
-  const indCls = kind==='outage'?'ind-major':kind==='degraded'?'ind-minor':'ind-none';
+  const { icon, heading, detail, indCls } = getAlertPresentation(svc, kind);
   const el = document.createElement('div');
   el.className = `tv-board-alert-card ${indCls}`;
   el.innerHTML = `<div class="tv-board-alert-inner">
@@ -1332,6 +1336,7 @@ function showStatusBanner(svc, kind){
   // In board mode the banner is behind the board overlay; just release the queue
   // after the board alert card duration so the next alert can play
   if(_boardModeActive){
+    _showBoardAlert(svc, kind);
     const speakDelay=CHIME_SPEECH_DELAY[kind]||650;
     clearTimeout(bannerSpeechTimer);
     bannerSpeechTimer=setTimeout(()=>speakBannerStatus(svc.name, kind), speakDelay);
@@ -1345,18 +1350,11 @@ function showStatusBanner(svc, kind){
     processAlertQueue();
     return;
   }
-  const heading=kind==='outage'
-    ? 'Service Outage'
-    : kind==='degraded'
-      ? 'Service Degraded'
-      : 'Service Restored';
-  const detail=kind==='restored'
-    ? `${svc.name} is back to operational.`
-    : `${svc.name} is now ${svc.label.toLowerCase()}.`;
+  const { heading, icon, detail } = getAlertPresentation(svc, kind);
   banner.className=`status-banner ${kind}`;
   banner.innerHTML=`
     <div class="status-banner-main">
-      <div class="status-banner-icon">${kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅'}</div>
+      <div class="status-banner-icon">${icon}</div>
       <div class="status-banner-text">
         <div class="status-banner-heading">${heading}</div>
         <div class="status-banner-title">${svc.name}</div>
@@ -2235,8 +2233,9 @@ async function fetchOne(s){
         return !/\b(resolv|complet|restor|postmortem|ended)\b/i.test(t);
       }).filter(item=>{
         const text=(item.querySelector('title')?.textContent||'')+' '+(item.querySelector('description')?.textContent||'');
-        // If it mentions a non-NA region but not NA, exclude it
-        if(NON_NA_RE.test(text) && !NA_RE.test(text)) return false;
+        // Strict North America scope: require an NA match and exclude non-NA-only incidents
+        if(!NA_RE.test(text)) return false;
+        if(NON_NA_RE.test(text)) return false;
         return true;
       });
       if(!relevant.length) return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
