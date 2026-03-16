@@ -1276,9 +1276,11 @@ const ROUTE_KEYS = {
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies"]);
 /* @routes-end */
 
-// Build proxy URL using route key if available; unknown URLs fall back to direct fetch.
+// Build proxy URL using route key if available.
+// On deployed origins, try proxy first to avoid browser-side CORS failures/noise.
+// Unknown URLs still fall back to direct fetch.
 const PROXIES=_IS_DEPLOYED
-  ?[u=>u, u=>{ const k=ROUTE_KEYS[u]; return k?`/proxy?svc=${k}`:undefined; }]
+  ?[u=>{ const k=ROUTE_KEYS[u]; return k?`/proxy?svc=${k}`:undefined; }, u=>u]
   :[u=>u];
 
 async function fetchWithTimeout(url, timeout=15000){
@@ -2269,12 +2271,20 @@ async function _fetchWeather(){
     const cached=sessionStorage.getItem('_wx_coords');
     if(cached){try{const c=JSON.parse(cached);lat=c.lat;lon=c.lon;locName=c.name||'';}catch{}}
     if(!lat){
-      const ipd=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null).catch(()=>null);
-      if(ipd?.lat){
-        lat=ipd.lat;lon=ipd.lon;
-        locName=(ipd.city||'')+(ipd.regionName?', '+ipd.regionName:'');
-        sessionStorage.setItem('_wx_coords',JSON.stringify({lat,lon,name:locName}));
+      // Prefer Cloudflare meta first (usually CORS-friendly from browsers).
+      const meta=await fetchWithTimeout('https://speed.cloudflare.com/meta',8000).then(r=>r.ok?r.json():null).catch(()=>null);
+      if(meta?.latitude&&meta?.longitude){
+        lat=Number(meta.latitude);lon=Number(meta.longitude);
+        locName=(meta.city||'')+(meta.region?', '+meta.region:'');
+      } else {
+        // Fallback via configured route/proxy strategy.
+        const ipd=await getJson('https://ip-api.com/json').catch(()=>null);
+        if(ipd?.lat){
+          lat=ipd.lat;lon=ipd.lon;
+          locName=(ipd.city||'')+(ipd.regionName?', '+ipd.regionName:'');
+        }
       }
+      if(lat&&lon) sessionStorage.setItem('_wx_coords',JSON.stringify({lat,lon,name:locName}));
     }
     if(!lat){_wxInfo={err:'Location unavailable'};_wxFetching=false;_renderWeather();return;}
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
