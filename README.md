@@ -41,7 +41,7 @@ Browser
 
 ---
 
-## Deploying to Cloudflare Workers
+## Deploying to Cloudflare Pages
 
 ### Prerequisites
 
@@ -53,25 +53,14 @@ wrangler login
 ### Deploy
 
 ```bash
-wrangler deploy
+wrangler pages deploy .
 ```
 
-`wrangler.toml` is pre-configured with the `[assets]` binding pointing at the repo root. The Worker serves `index.html` as the static asset and handles `/proxy` and `/events` itself.
+Cloudflare Pages serves `index.html` as a static asset and runs `functions/proxy.js` for `/proxy` requests.
 
 ### Custom domain
 
-Assign a Workers Route or custom domain in the Cloudflare dashboard under **Workers & Pages → your worker → Settings → Triggers**.
-
----
-
-## Deploying to Vercel (alternative)
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-`vercel.json` rewrites `/proxy` → `/api/proxy.js`. The Vercel function uses the same route table as `worker.js` but without server-side caching or SSE (the browser falls back to per-service polling automatically).
+Attach your custom domain in the Cloudflare dashboard under **Workers & Pages → your Pages project → Custom domains**.
 
 ---
 
@@ -85,19 +74,19 @@ npx serve .
 python3 -m http.server 8080
 ```
 
-In local mode `_IS_DEPLOYED` is `false`; the app skips the Worker proxy and SSE and fetches service APIs directly from the browser (most support CORS).
+In local mode `_IS_DEPLOYED` is `false`; the app skips the `/proxy` function and fetches service APIs directly from the browser (most support CORS).
 
 ---
 
 ## Adding a service
 
-1. **Worker route table** — add an entry in the `ROUTES` object in `worker.js`:
+1. **Route table** — add an entry in `routes.json` under `static`:
    ```js
    'myservice-status': 'https://status.example.com/api/v2/status.json',
    'myservice-incidents': 'https://status.example.com/api/v2/incidents.json',
    ```
 
-2. **Vercel route table** — add the same entries to `ROUTES` in `api/proxy.js`.
+2. **Pages function route table** — add the same entries to `ROUTES` in `functions/proxy.js`.
 
 3. **Client route map** — add matching entries to `ROUTE_KEYS` in `index.html`:
    ```js
@@ -119,8 +108,8 @@ In local mode `_IS_DEPLOYED` is `false`; the app skips the Worker proxy and SSE 
 
 | Control | Implementation |
 |---------|---------------|
-| No-SSRF proxy | Route table in `worker.js`; `?svc=<key>` only — raw URLs rejected with 404 |
-| Security headers | CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy set by Worker on every HTML response |
+| No-SSRF proxy | Route table in `functions/proxy.js`; `?svc=<key>` only — raw URLs rejected with 404 |
+| Security headers | Configure Cloudflare response headers in Pages/Rules as desired; proxy responses include CORS + no-store headers |
 | XSS mitigation | All upstream API text (incident titles, bodies, service names) passed through `esc()` before `innerHTML` insertion |
 | CORS | Proxy endpoints return `Access-Control-Allow-Origin: *` intentionally (public status data); page origin itself is restricted by CSP |
 | DDoS / rate limiting | Cloudflare's network-level protection; add a Rate Limiting rule in the CF dashboard for additional control |
@@ -130,11 +119,9 @@ In local mode `_IS_DEPLOYED` is `false`; the app skips the Worker proxy and SSE 
 ## File structure
 
 ```
-index.html          — Single-file SPA (UI + all parsers + SSE client)
-worker.js           — Cloudflare Worker (proxy + SSE + asset serving)
-wrangler.toml       — Workers deployment config
-api/proxy.js        — Vercel serverless function (route-table proxy, no cache)
-functions/proxy.js  — Legacy Cloudflare Pages function (superseded by worker.js)
-_routes.json        — Pages function routing hints (retained for compat)
-vercel.json         — Vercel rewrite rules
+index.html          — Single-file SPA (UI + all parsers)
+functions/proxy.js  — Cloudflare Pages Function (route-table proxy)
+routes.json         — Static/special route-key definitions
+_routes.json        — Pages function routing hints
+scripts/build.js    — Syncs route keys into `index.html`
 ```
