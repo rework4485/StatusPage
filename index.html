@@ -1601,6 +1601,13 @@ function fmtFetchAge(fetchedAt){
   return hrs+'h ago';
 }
 
+function fmtClockTime(ts){
+  if(!ts) return '';
+  const d=new Date(ts);
+  if(Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+}
+
 // Relative time for longer durations (last outage, footer update time)
 function fmtRelTime(ts){
   const secs=Math.floor((Date.now()-ts)/1000);
@@ -2924,7 +2931,7 @@ function _renderBoardNetBar(){
     `<span class="tv-net-item"><span class="${isIPv6?'tv-net-ok':''}">${isIPv6?'IPv6':'IPv4'}</span></span>`,
     dnsProvider?`<span class="tv-net-item"><span class="tv-net-lbl">DNS</span>${esc(dnsProvider)}</span>`:'',
     warp?`<span class="tv-net-item tv-net-ok">WARP</span>`:'',
-    ts?`<span class="tv-net-ts">net updated ${fmtFetchAge(ts)}</span>`:'',
+    ts?`<span class="tv-net-ts" title="${esc(fmtFetchAge(ts))}">net updated ${esc(fmtClockTime(ts))}</span>`:'',
   ].filter(Boolean);
   bar.innerHTML=parts.join(sep);
   _optimizeBoardLayout();
