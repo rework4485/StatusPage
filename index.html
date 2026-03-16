@@ -1770,7 +1770,7 @@ async function fetchOne(s){
         const lblS=EFFECT_LABEL[effS]||effS.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
         const causeS=attrS.cause?CAUSE_LABEL[attrS.cause]||null:null;
         const hdrS=attrS.short_header||attrS.header||'';
-        const titleS=hdrS?trunc(hdrS,90):(lblS+(causeS?' ('+causeS+')':''));
+        const titleS=hdrS||(lblS+(causeS?' ('+causeS+')':''));
         const partsS=[];
         if(attrS.timeframe) partsS.push('When: '+attrS.timeframe);
         const rns=routeNamesFor(topS);
@@ -1779,7 +1779,7 @@ async function fetchOne(s){
           const extras=schedAlerts.slice(1).map(a=>{
             const aEff=a.attributes?.effect||'';
             const aHdr=a.attributes?.short_header||a.attributes?.header||'';
-            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+trunc(aHdr,70):'');
+            return '• '+(EFFECT_LABEL[aEff]||aEff.replace(/_/g,' '))+(aHdr?' — '+aHdr:'');
           });
           partsS.push(extras.join('\n'));
         }
@@ -1799,7 +1799,7 @@ async function fetchOne(s){
       // Build title: use short_header (specific) if available, otherwise effectLabel
       const shortHdr=attr.short_header||attr.header||'';
       const titleParts=[];
-      if(shortHdr) titleParts.push(trunc(shortHdr,90));
+      if(shortHdr) titleParts.push(shortHdr);
       else { titleParts.push(effectLabel); if(cause&&cause!=='Unknown') titleParts.push('('+cause+')'); }
       const title=titleParts.join(' ');
 
@@ -1814,7 +1814,7 @@ async function fetchOne(s){
         const sameEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')===eff);
         const diffEff=serviceAlerts.slice(1).filter(a=>(a.attributes?.effect||'')!==eff);
         if(sameEff.length===1){
-          const h=trunc(sameEff[0].attributes?.short_header||sameEff[0].attributes?.header||'',70);
+          const h=sameEff[0].attributes?.short_header||sameEff[0].attributes?.header||'';
           if(h) parts.push('• '+h);
         } else if(sameEff.length>1){
           parts.push('• '+sameEff.length+' additional '+effectLabel.toLowerCase()+'s');
@@ -1822,7 +1822,7 @@ async function fetchOne(s){
         diffEff.slice(0,2).forEach(a=>{
           const aEff=a.attributes?.effect||'';
           const aLbl=EFFECT_LABEL[aEff]||aEff.replace(/_/g,' ');
-          const aH=trunc(a.attributes?.short_header||a.attributes?.header||'',70);
+          const aH=a.attributes?.short_header||a.attributes?.header||'';
           parts.push('• '+aLbl+(aH?' — '+aH:''));
         });
       }
@@ -1833,7 +1833,7 @@ async function fetchOne(s){
         const sEff=schedTop.attributes?.effect||'';
         const sHdr=schedTop.attributes?.short_header||schedTop.attributes?.header||'';
         const sLbl=EFFECT_LABEL[sEff]||'Modified Schedule';
-        parts.push('📅 '+sLbl+(sHdr?' — '+trunc(sHdr,70):''));
+        parts.push('📅 '+sLbl+(sHdr?' — '+sHdr:''));
       }
 
       const body=parts.join('\n');
@@ -1895,6 +1895,7 @@ async function fetchOne(s){
       let title='', body='', labelOverride='';
       let hasRerouteNotice=false;
       const extraStatuses=[];
+      let hasPriorityIncident=false;
       if(active.length){
         const sortedActive=[...active].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a));
         const a=sortedActive[0];
@@ -1910,9 +1911,14 @@ async function fetchOne(s){
           if(!desc) desc=stripHtml(evt.description||'');
           return {name:evt.name||'Service Disruption', desc};
         });
+        hasPriorityIncident=sortedActive.some(evt=>{
+          const impact=normalizeIndicator(evt.impact||'none');
+          const statusText=`${evt.name||''} ${evt.status||''} ${evt.impact||''} ${evt.description||''} ${latestUpdateBody(evt)||''}`.toLowerCase();
+          return impact==='major'||impact==='minor'||/\binvestigating\b|\bdegraded\b|\bdown\b|\boutage\b/.test(statusText);
+        });
         if(sortedActive.some(evt=>hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt)))){
           hasRerouteNotice=true;
-          if(ind==='minor') ind='none';
+          if(ind==='minor'&&!hasPriorityIncident) ind='none';
         }
         title=incidentSummaries[0].name;
         body=incidentSummaries[0].desc;
@@ -1928,7 +1934,7 @@ async function fetchOne(s){
           const desc=latestUpdateBody(evt) || stripHtml(evt.body || 'Cloudflare is performing ongoing maintenance.');
           return {name:evt.name||'Ongoing maintenance', desc};
         });
-        if(ind!=='major') ind='maintenance';
+        if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
         if(!body) body=maintSummaries[0].desc;
         const maintLines=maintSummaries.map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('\n');
@@ -1965,11 +1971,11 @@ async function fetchOne(s){
           labelOverride=cloudflareStatusLabel(topIssue.status);
         }
       }
-      if(ind==='rerouting'){
+      if(ind==='rerouting'&&!hasPriorityIncident){
         hasRerouteNotice=true;
         ind='none';
       }
-      if(!hasRerouteNotice && hasReroutingComponents && ind==='minor'){
+      if(!hasPriorityIncident&&!hasRerouteNotice && hasReroutingComponents && ind==='minor'){
         hasRerouteNotice=true;
       }
       if(!labelOverride && watched.length){
@@ -1978,7 +1984,7 @@ async function fetchOne(s){
           .sort((a,b)=>((PRI[componentStatusToIndicator(a.status)]||9)-(PRI[componentStatusToIndicator(b.status)]||9)) || a.name.localeCompare(b.name))[0];
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
-      if(hasRerouteNotice){
+      if(hasRerouteNotice&&!hasPriorityIncident){
         ind='rerouting';
         labelOverride='Operational';
         extraStatuses.push('Re-routed');
