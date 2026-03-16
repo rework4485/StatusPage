@@ -1074,8 +1074,8 @@ const PREFERRED_TTS_VOICES=[
 ];
 
 const BOARD_STATIONS=[
-  {id:'wror',name:'105.7 WROR',streamUrl:'https://playerservices.streamtheworld.com/api/livestream-redirect/WRORFM.mp3',nowPlayingUrl:'special://wror-now-playing'},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1'}
+  {id:'wror',name:'105.7 WROR',streamUrl:'https://playerservices.streamtheworld.com/api/livestream-redirect/WRORFM.mp3',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k'},
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'320k'}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1198,10 +1198,9 @@ function chime(kind){
 
 function _initBoardRadioAudio(){
   if(_boardRadioAudio) return _boardRadioAudio;
-  const el=new Audio(_getBoardStation().streamUrl);
+  const el=new Audio();
   el.preload='none';
   el.crossOrigin='anonymous';
-  el.loop=true;
   el.volume=BOARD_RADIO_BASE_VOLUME;
   _boardRadioAudio=el;
   return el;
@@ -1212,13 +1211,23 @@ function _setBoardRadioVolume(target){
   _boardRadioAudio.volume=Math.min(1,Math.max(0,target));
 }
 
-function _startBoardRadio(){
+async function _startBoardRadio(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   const station=_getBoardStation();
   const radio=_initBoardRadioAudio();
-  if(radio.src!==station.streamUrl) radio.src=station.streamUrl;
-  radio.volume=BOARD_RADIO_BASE_VOLUME;
-  radio.play().catch(()=>{});
+  try{
+    const current=(radio.dataset.stationId||'');
+    if(current!==station.id){
+      radio.pause();
+      radio.removeAttribute('src');
+      radio.load();
+      radio.src=station.streamUrl;
+      radio.dataset.stationId=station.id;
+      radio.load();
+    }
+    radio.volume=BOARD_RADIO_BASE_VOLUME;
+    await radio.play();
+  }catch{}
 }
 
 function _stopBoardRadio(){
@@ -2517,28 +2526,30 @@ function _wxIcon(cond,isDaytime){
   return '🌡';
 }
 
-function _parseNowPlayingSong(songtitle){
+function _parseNowPlayingSong(songtitle,station=_getBoardStation()){
   const raw=String(songtitle||'').trim();
-  if(!raw) return {track:'Station ID',artist:_getBoardStation().name};
-  const parts=raw.split(' - ').map(v=>v.trim()).filter(Boolean);
+  if(!raw) return {track:'Station ID',artist:station.name};
+  const cleaned=raw.replace(/^"+|"+$/g,'').trim();
+  const parts=cleaned.split(' - ').map(v=>v.trim()).filter(Boolean);
   if(parts.length>=2){
-    return {artist:parts[0],track:parts[1],extra:parts.slice(2).join(' - ')};
+    if(station.parse==='track-artist') return {track:parts[0],artist:parts.slice(1).join(' - ')};
+    return {artist:parts[0],track:parts[1]||parts[0]};
   }
-  return {track:raw,artist:''};
+  return {track:cleaned,artist:station.name};
 }
 
 async function _fetchNowPlaying(){
   if(_nowPlayingFetching) return;
   _nowPlayingFetching=true;
+  const station=_getBoardStation();
   try{
-    const station=_getBoardStation();
     const data=station.nowPlayingUrl.startsWith('special://')
       ? await getJson('/proxy?svc='+station.nowPlayingUrl.replace('special://',''))
       : await getJson(station.nowPlayingUrl);
-    const parsed=_parseNowPlayingSong(data?.songtitle||data?.title||'');
-    _nowPlayingInfo={...parsed,ts:Date.now(),err:null,station:station.name};
+    const parsed=_parseNowPlayingSong(data?.songtitle||data?.title||'',station);
+    _nowPlayingInfo={...parsed,ts:Date.now(),err:null,station:station.name,quality:station.quality};
   }catch{
-    if(!_nowPlayingInfo) _nowPlayingInfo={track:'',artist:'',ts:0,err:'unavailable',station:_getBoardStation().name};
+    _nowPlayingInfo={track:'Unavailable',artist:station.name,ts:Date.now(),err:'unavailable',station:station.name,quality:station.quality};
   }
   _nowPlayingFetching=false;
   _renderBoardNowPlaying();
@@ -3038,11 +3049,13 @@ function renderBoardView(results){
   document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
     _setBoardRadioEnabled(!!e.target.checked);
   });
-  document.getElementById('tv-station-select')?.addEventListener('change',(e)=>{
+  document.getElementById('tv-station-select')?.addEventListener('change',async (e)=>{
     _boardStationId=e.target.value;
     localStorage.setItem('board-station',_boardStationId);
+    _nowPlayingInfo={track:'Loading…',artist:_getBoardStation().name,station:_getBoardStation().name};
+    _renderBoardNowPlaying();
     _stopBoardRadio();
-    _startBoardRadio();
+    await _startBoardRadio();
     _fetchNowPlaying();
   });
   _applyBoardRadioToggle();

@@ -22,7 +22,8 @@ async function fetchSpecialRoute(key, env) {
     const reader = resp.body.getReader();
     let chunk = new Uint8Array(0);
     let totalRead = 0;
-    while (totalRead < metaInt + 2048) {
+    const targetBytes = Math.min(metaInt * 3 + 4096, 180000);
+    while (totalRead < targetBytes) {
       const { done, value } = await reader.read();
       if (done) break;
       totalRead += value.length;
@@ -34,13 +35,17 @@ async function fetchSpecialRoute(key, env) {
     await reader.cancel().catch(() => {});
 
     let songtitle = '';
-    if (chunk.length > metaInt) {
-      const metaLen = (chunk[metaInt] || 0) * 16;
-      const metaStart = metaInt + 1;
+    for (let pos = metaInt; pos < chunk.length && !songtitle; ) {
+      const metaLen = (chunk[pos] || 0) * 16;
+      const metaStart = pos + 1;
       const metaEnd = Math.min(chunk.length, metaStart + metaLen);
       const rawMeta = new TextDecoder('utf-8').decode(chunk.slice(metaStart, metaEnd));
       const m = rawMeta.match(/StreamTitle='([^']*)';/i);
-      if (m?.[1]) songtitle = m[1].trim();
+      if (m?.[1]) {
+        const title = m[1].trim();
+        if (title) songtitle = title;
+      }
+      pos = metaEnd + metaInt;
     }
 
     return new Response(JSON.stringify({ songtitle }), {
