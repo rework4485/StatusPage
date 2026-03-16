@@ -584,13 +584,17 @@
     .tv-hdr-time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
     .tv-date { font-size:clamp(11px,0.9vw,15px); font-weight:500; color:var(--muted); letter-spacing:0.03em; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .tv-clock { font-size:clamp(24px,3vw,48px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); flex-shrink:0; letter-spacing:-0.02em; }
-    /* Compact weather card when placed inside the header */
-    .tv-wx-hdr { flex-shrink:0; padding:clamp(8px,0.9vh,12px) clamp(10px,1vw,16px) !important; border-radius:10px !important; gap:clamp(8px,0.8vw,12px) !important; }
-    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(22px,2.2vw,34px) !important; }
-    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(16px,1.6vw,24px) !important; letter-spacing:-0.01em !important; }
-    .tv-wx-hdr .tv-wx-cond { font-size:clamp(11px,0.9vw,15px) !important; }
-    .tv-wx-hdr .tv-wx-loc { font-size:clamp(9px,0.75vw,12px) !important; }
-    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(9px,0.65vw,11px) !important; padding:2px 7px !important; }
+    /* Weather card in header — wider with medium-sized text */
+    .tv-wx-hdr { flex-shrink:0; min-width:clamp(180px,18vw,300px); padding:clamp(10px,1.1vh,16px) clamp(14px,1.4vw,22px) !important; border-radius:12px !important; gap:clamp(10px,1.1vw,16px) !important; }
+    .tv-wx-hdr .tv-wx-icon-big { font-size:clamp(30px,3vw,46px) !important; }
+    .tv-wx-hdr .tv-wx-temp-big { font-size:clamp(22px,2.2vw,34px) !important; letter-spacing:-0.02em !important; }
+    .tv-wx-hdr .tv-wx-cond { font-size:clamp(13px,1.15vw,19px) !important; }
+    .tv-wx-hdr .tv-wx-loc { font-size:clamp(11px,0.88vw,14px) !important; }
+    .tv-wx-hdr .tv-wx-alert-tag { font-size:clamp(10px,0.75vw,13px) !important; padding:3px 9px !important; }
+    /* Issue page dots */
+    .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(8px,0.9vh,14px); flex-shrink:0; }
+    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
+    .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.75); }
     .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 14px; padding:10px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; font-size:clamp(15px,1.4vw,22px); color:var(--sub); margin-bottom:clamp(10px,1.3vh,18px); flex-shrink:0; }
     .light-mode .tv-net-bar { background:rgba(0,0,0,0.03); }
     .tv-net-item { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
@@ -2318,6 +2322,8 @@ let _curFilter='all';
 let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
+let _issuePageTimer=null,_issuePage=0;
+const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=8;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false;
 
 async function _fetchWeather(){
@@ -2678,6 +2684,51 @@ function _startBoardNet(){
   _boardNetTimer=setInterval(_fetchBoardNet,120000);
 }
 
+function _buildIssueTilesHTML(svcs){
+  return svcs.map(svc=>{
+    const logos=logoSources(svc);
+    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
+    const logoEl=logos.length
+      ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
+      :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
+    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+      <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
+      <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
+      ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
+      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function _showIssuePage(issueSvcs, pageIdx){
+  const tilesEl=document.getElementById('tv-issue-tiles');
+  if(!tilesEl) return;
+  const page=issueSvcs.slice(pageIdx*ISSUE_PAGE_SIZE,(pageIdx+1)*ISSUE_PAGE_SIZE);
+  tilesEl.style.transition='opacity 0.35s';
+  tilesEl.style.opacity='0';
+  setTimeout(()=>{
+    tilesEl.innerHTML=_buildIssueTilesHTML(page);
+    _optimizeBoardLayout();
+    tilesEl.style.opacity='1';
+  },350);
+  const dotsEl=document.getElementById('tv-page-dots');
+  if(dotsEl) dotsEl.querySelectorAll('.tv-page-dot').forEach((d,i)=>d.classList.toggle('active',i===pageIdx));
+  const pgNumEl=document.getElementById('tv-page-num');
+  if(pgNumEl) pgNumEl.textContent=pageIdx+1;
+}
+
+function _initIssuePagination(issueSvcs){
+  clearInterval(_issuePageTimer);
+  _issuePageTimer=null;
+  _issuePage=0;
+  const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  if(totalPages<=1) return;
+  _issuePageTimer=setInterval(()=>{
+    _issuePage=(_issuePage+1)%totalPages;
+    _showIssuePage(issueSvcs,_issuePage);
+  },ISSUE_PAGE_SECS*1000);
+}
+
 function renderBoardView(results){
   _boardLastUpdate=Date.now();
   if(!_boardNetTimer) _startBoardNet();
@@ -2703,20 +2754,13 @@ function renderBoardView(results){
   // Split into services with active issues vs healthy services
   const issueSvcs=sorted.filter(s=>s.ind!=='none'&&s.ind!=='unknown');
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
-  // Build large prominent issue tiles
-  const issueTilesHTML=issueSvcs.map(svc=>{
-    const logos=logoSources(svc);
-    const fallback=(svc.name||'?').trim().charAt(0).toUpperCase();
-    const logoEl=logos.length
-      ?`<img class="tv-issue-logo" src="${esc(logos[0])}" alt="${esc(svc.name)}" loading="lazy" decoding="async">`
-      :`<div class="tv-issue-logo-fb">${esc(fallback)}</div>`;
-    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
-      <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
-      <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
-      ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
-      ${svc.title&&svc.body?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${esc(svc.body)}</span></div>`:''}
-    </div>`;
-  }).join('');
+  // Build first page of issue tiles (pagination shows 3 at a time)
+  const firstPageSvcs=issueSvcs.slice(0,ISSUE_PAGE_SIZE);
+  const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
+  const totalIssuePages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
+  const issueDotsHTML=totalIssuePages>1
+    ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
+    :'';
   // Build compact subdued normal-service tiles
   const normalTilesHTML=normalSvcs.map(svc=>{
     const logos=logoSources(svc);
@@ -2761,8 +2805,9 @@ function renderBoardView(results){
     </div>
     ${issueSvcs.length?`
     <div class="tv-issues-section">
-      <div class="tv-section-hdr issue-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected</div>
+      <div class="tv-section-hdr issue-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg> Active Issues &middot; ${issueSvcs.length} service${issueSvcs.length!==1?'s':''} affected${totalIssuePages>1?` &middot; page <span id="tv-page-num">1</span>/${totalIssuePages}`:''}</div>
       <div class="tv-issue-tiles" id="tv-issue-tiles">${issueTilesHTML}</div>
+      ${issueDotsHTML}
     </div>`:''}
     ${normalSvcs.length?`<div class="tv-section-hdr" style="margin-top:${issueSvcs.length?'2px':'0'};"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> All Services &mdash; ${normalSvcs.length} operational</div>`:''}
     <div class="tv-tiles" id="tv-tiles"><div class="tv-tiles-track" id="tv-tiles-track">${normalTilesHTML}${normalTilesHTML}</div></div>
@@ -2773,6 +2818,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
+  _initIssuePagination(issueSvcs);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
@@ -2817,6 +2863,8 @@ function exitBoardMode(){
   clearInterval(_boardClockTimer);
   clearInterval(_boardNetTimer);
   _boardNetTimer=null;
+  clearInterval(_issuePageTimer);
+  _issuePageTimer=null;
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   document.getElementById('tv-board')?.remove();
