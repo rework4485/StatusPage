@@ -623,13 +623,13 @@
     .tv-issue-logo { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:#fff; object-fit:contain; flex-shrink:0; }
     .tv-issue-logo-fb { width:clamp(28px,2.8vw,46px); height:clamp(28px,2.8vw,46px); border-radius:9px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:700; flex-shrink:0; }
     .tv-issue-name { font-size:clamp(18px,2.1vw,34px); font-weight:700; letter-spacing:-0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tv-issue-badge { font-size:clamp(11px,1vw,16px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+    .tv-issue-badge { font-size:clamp(13px,1.3vw,20px); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
     .tv-issue-badge.warn   { color:var(--warn); }
     .tv-issue-badge.bad    { color:var(--bad); }
     .tv-issue-badge.maint  { color:var(--maint); }
     .tv-issue-badge.reroute{ color:var(--reroute); }
-    .tv-issue-title { font-size:clamp(14px,1.4vw,23px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
-    .tv-issue-body { font-size:clamp(12px,1.1vw,18px); color:rgba(255,255,255,0.72); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
+    .tv-issue-title { font-size:clamp(17px,1.8vw,28px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
+    .tv-issue-body { font-size:clamp(14px,1.4vw,22px); color:rgba(255,255,255,0.78); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
@@ -658,15 +658,21 @@
     .tv-tile-badge.maint { color:var(--maint); }
     .tv-tile-badge.reroute{ color:var(--reroute); }
     .tv-tile-badge.unknown{ color:var(--unknown); }
-    /* Alert toast */
-    .tv-alert-toast { position:absolute; top:clamp(14px,2vh,24px); right:clamp(14px,2vw,28px); display:flex; align-items:center; gap:12px; padding:14px 22px; background:rgba(10,10,12,0.96); border:1px solid rgba(255,255,255,0.18); border-radius:14px; font-size:clamp(14px,1.25vw,20px); font-weight:600; z-index:300; backdrop-filter:blur(12px); box-shadow:0 8px 40px rgba(0,0,0,0.6); animation:toast-in 0.35s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.5s,transform 0.5s; pointer-events:none; }
-    .tv-alert-toast.tv-alert-hide { opacity:0; transform:translateY(-10px); }
-    .tv-alert-toast.ind-major { border-color:rgba(239,68,68,0.5); }
-    .tv-alert-toast.ind-minor { border-color:rgba(245,158,11,0.5); }
-    .tv-alert-toast.ind-none  { border-color:rgba(34,197,94,0.5); }
-    .tv-alert-svc { color:var(--text); }
-    .tv-alert-msg { color:var(--sub); font-weight:500; }
-    @keyframes toast-in { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+    /* Board alert card */
+    .tv-board-alert-card { position:absolute; bottom:clamp(70px,10vh,120px); right:clamp(22px,2.5vw,44px); width:min(460px,38vw); background:rgba(10,10,13,0.97); border-left:4px solid transparent; border-radius:20px; padding:clamp(20px,2.2vw,32px); z-index:350; backdrop-filter:blur(28px) saturate(1.4); box-shadow:0 28px 70px rgba(0,0,0,0.75); animation:board-alert-in 0.45s cubic-bezier(.22,1,.36,1) both; transition:opacity 0.55s ease,transform 0.55s ease; pointer-events:none; }
+    .tv-board-alert-card::before { content:''; position:absolute; inset:0; border-radius:20px; border:1px solid rgba(255,255,255,0.09); pointer-events:none; }
+    .tv-board-alert-card.ind-major { border-left-color:#ef4444; box-shadow:0 28px 70px rgba(239,68,68,0.28); }
+    .tv-board-alert-card.ind-minor { border-left-color:#f59e0b; box-shadow:0 28px 70px rgba(245,158,11,0.22); }
+    .tv-board-alert-card.ind-none  { border-left-color:#22c55e; box-shadow:0 28px 70px rgba(34,197,94,0.22); }
+    .tv-board-alert-card.tv-alert-hide { opacity:0; transform:translateY(12px); }
+    .tv-board-alert-icon { font-size:clamp(28px,3vw,44px); line-height:1; margin-bottom:10px; }
+    .tv-board-alert-heading { font-size:clamp(10px,0.85vw,14px); font-weight:800; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px; }
+    .tv-board-alert-heading.ind-major { color:#fca5a5; }
+    .tv-board-alert-heading.ind-minor { color:#fcd34d; }
+    .tv-board-alert-heading.ind-none  { color:#86efac; }
+    .tv-board-alert-svc { font-size:clamp(22px,2.4vw,38px); font-weight:800; letter-spacing:-0.02em; line-height:1.1; color:var(--text); margin-bottom:6px; }
+    .tv-board-alert-msg { font-size:clamp(14px,1.3vw,20px); color:var(--sub); line-height:1.4; }
+    @keyframes board-alert-in { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
     /* Footer */
     .tv-board-footer { display:flex; align-items:center; gap:12px; flex-shrink:0; padding-top:clamp(8px,0.9vh,14px); border-top:1px solid rgba(255,255,255,0.07); }
     .tv-net-bar { display:flex; align-items:center; flex-wrap:wrap; gap:3px 10px; font-size:clamp(12px,1.05vw,17px); color:var(--sub); flex:1; min-width:0; }
@@ -680,6 +686,9 @@
     .tv-updated { font-size:clamp(10px,0.82vw,13px); color:var(--muted); white-space:nowrap; }
     .tv-exit-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:var(--sub); border-radius:8px; padding:6px 16px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .tv-exit-btn:hover { background:rgba(255,255,255,0.1); color:var(--text); }
+    .tv-test-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:6px 12px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); white-space:nowrap; transition:opacity 0.3s ease,background 0.2s,color 0.2s,border-color 0.2s; }
+    .tv-test-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); border-color:rgba(255,255,255,0.18); }
+    .tv-board-footer:not(:hover) .tv-test-btn { opacity:0; pointer-events:none; }
     .f-board-btn { border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--sub); border-radius:7px; padding:5px 11px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; font-family:var(--font); transition:all 0.2s; }
     .f-board-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); }
     .f-theme-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
@@ -1294,18 +1303,33 @@ function queueAlert(svc, kind) {
 function _showBoardAlert(svc, kind) {
   const board = document.getElementById('tv-board');
   if (!board) return;
-  const icon = kind==='outage'?'🔴':kind==='degraded'?'🟡':'🟢';
-  const msg  = kind==='outage'?'Outage Detected':kind==='degraded'?'Service Degraded':'Restored';
+  // Remove any existing alert card
+  board.querySelectorAll('.tv-board-alert-card').forEach(e => e.remove());
+  const icon = kind==='outage'?'🚨':kind==='degraded'?'⚠️':'✅';
+  const heading = kind==='outage'?'Service Outage':kind==='degraded'?'Service Degraded':'Service Restored';
+  const detail = kind==='restored'
+    ? `${svc.name} is back to operational.`
+    : `${svc.name} is now ${svc.label?.toLowerCase()||kind}.`;
   const indCls = kind==='outage'?'ind-major':kind==='degraded'?'ind-minor':'ind-none';
   const el = document.createElement('div');
-  el.className = `tv-alert-toast ${indCls}`;
-  el.innerHTML = `${icon} <span class="tv-alert-svc">${esc(svc.name)}</span><span class="tv-alert-msg">— ${msg}</span>`;
+  el.className = `tv-board-alert-card ${indCls}`;
+  el.innerHTML = `<div class="tv-board-alert-icon">${icon}</div>
+    <div class="tv-board-alert-heading ${indCls}">${heading}</div>
+    <div class="tv-board-alert-svc">${esc(svc.name)}</div>
+    <div class="tv-board-alert-msg">${esc(detail)}</div>`;
   board.appendChild(el);
-  setTimeout(()=>el.classList.add('tv-alert-hide'), 6000);
-  setTimeout(()=>el.remove(), 7000);
+  setTimeout(()=>el.classList.add('tv-alert-hide'), 9000);
+  setTimeout(()=>el.remove(), 10000);
 }
 
 function showStatusBanner(svc, kind){
+  // In board mode the banner is behind the board overlay; just release the queue
+  // after the board alert card duration so the next alert can play
+  if(_boardModeActive){
+    clearTimeout(bannerTimer);
+    bannerTimer=setTimeout(()=>{ isAlertPlaying=false; processAlertQueue(); }, 10500);
+    return;
+  }
   const banner=document.getElementById('status-banner');
   if(!banner) {
     isAlertPlaying = false;
@@ -3052,6 +3076,7 @@ function renderBoardView(results){
     <div class="tv-board-footer">
       <div class="tv-net-bar" id="tv-net-bar"><span class="tv-net-lbl">Network</span> Loading…</div>
       <div class="tv-footer-right">
+        <button class="tv-test-btn" id="tv-board-test-btn" type="button" title="Test alert popup">Test Alert</button>
         <span class="tv-updated" id="tv-updated"></span>
         <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
       </div>
@@ -3066,6 +3091,7 @@ function renderBoardView(results){
   _boardResizeObs=new ResizeObserver(()=>{ clearTimeout(_roDebounce); _roDebounce=setTimeout(_optimizeBoardLayout,60); });
   _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
+  document.getElementById('tv-board-test-btn')?.addEventListener('click',runAlertTest);
   document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
     _setBoardRadioEnabled(!!e.target.checked);
   });
