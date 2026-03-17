@@ -1281,110 +1281,6 @@ function _stopBoardRadio(){
   _boardRadioAudio.pause();
 }
 
-// ── CBS News On The Hour top-of-hour news break ──
-let _boardLoopAudio=null;
-let _boardLoopTimer=null;
-let _pendingLoopAudioUrl=null;
-let _pendingLoopTrack='';
-let _pendingLoopDeadline=0;
-const _WBZ_LOOP_RSS='https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest';
-
-function _scheduleWBZLoop(){
-  clearTimeout(_boardLoopTimer);
-  const now=new Date();
-  const msToNextHour=(59-now.getMinutes())*60000+(60-now.getSeconds())*1000-now.getMilliseconds();
-  _boardLoopTimer=setTimeout(_playWBZLoop, msToNextHour);
-}
-
-async function _playWBZLoop(){
-  _scheduleWBZLoop(); // Always reschedule for next hour
-  if(!_boardModeActive||!_boardRadioEnabled) return;
-  if(!_boardRadioAudio||_boardRadioAudio.paused) return; // Only play if radio is actually running
-  try{
-    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=cbs-news-rss':_WBZ_LOOP_RSS;
-    const resp=await fetchWithTimeout(proxyUrl,10000);
-    if(!resp.ok) return;
-    const text=await resp.text();
-    const doc=new DOMParser().parseFromString(text,'application/xml');
-    const enclosure=doc.querySelector('item enclosure');
-    const audioUrl=enclosure?.getAttribute('url');
-    if(!audioUrl) return;
-    // Wait for the current song to finish before starting the news break.
-    // Record the current track; _fetchNowPlaying will fire the break when the
-    // track changes or after a 3-minute deadline so it never waits forever.
-    // Switch to fast polling (5s) so we catch the track change promptly.
-    _pendingLoopAudioUrl=audioUrl;
-    _pendingLoopTrack=_nowPlayingInfo?.track||'';
-    _pendingLoopDeadline=Date.now()+3*60*1000;
-    _setNowPlayingPollRate(NP_POLL_FAST);
-  }catch{ /* network or playback error — skip this hour */ }
-}
-
-async function _triggerNewsBreak(){
-  const audioUrl=_pendingLoopAudioUrl;
-  _pendingLoopAudioUrl=null;
-  _pendingLoopTrack='';
-  _pendingLoopDeadline=0;
-  _setNowPlayingPollRate(NP_POLL_NORMAL); // restore normal poll rate
-  if(!audioUrl||!_boardModeActive||!_boardRadioEnabled) return;
-  if(!_boardRadioAudio||_boardRadioAudio.paused) return;
-  try{
-    if(!_boardLoopAudio) _boardLoopAudio=new Audio();
-    const loopEl=_boardLoopAudio;
-    clearTimeout(_radioDuckTimer);
-    _radioDuckUntil=0;
-    document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
-    await _fadeOutBoardRadio(2000);
-    loopEl.src=audioUrl;
-    const station=_getBoardStation();
-    loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
-    loopEl.onended=_fadeInBoardRadioAfterLoop;
-    await loopEl.play();
-  }catch{ /* playback error — skip */ }
-}
-
-function _fadeOutBoardRadio(durationMs=2000){
-  return new Promise(resolve=>{
-    if(!_boardRadioAudio){ resolve(); return; }
-    const steps=20, stepMs=durationMs/steps;
-    const startVol=_boardRadioAudio.volume;
-    let step=0;
-    const timer=setInterval(()=>{
-      step++;
-      _setBoardRadioVolume(Math.max(0,startVol*(1-step/steps)));
-      if(step>=steps){ clearInterval(timer); _setBoardRadioVolume(0); resolve(); }
-    },stepMs);
-  });
-}
-
-function _fadeInBoardRadioAfterLoop(){
-  document.getElementById('tv-now-playing')?.classList.remove('tv-np-ducked');
-  if(!_boardRadioAudio||!_boardRadioEnabled) return;
-  const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
-  const target=isNaN(savedVol)?(_getBoardStation().baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
-  // Fade in over 4 seconds in 40 steps
-  const steps=40, durationMs=4000;
-  const stepMs=durationMs/steps;
-  let step=0;
-  const timer=setInterval(()=>{
-    step++;
-    _setBoardRadioVolume(Math.min(target,(target/steps)*step));
-    if(step>=steps) clearInterval(timer);
-  },stepMs);
-}
-
-function _startWBZLoopSchedule(){
-  _scheduleWBZLoop();
-}
-
-function _stopWBZLoopSchedule(){
-  clearTimeout(_boardLoopTimer);
-  _boardLoopTimer=null;
-  if(_pendingLoopAudioUrl){ _pendingLoopAudioUrl=null; _setNowPlayingPollRate(NP_POLL_NORMAL); }
-  _pendingLoopTrack='';
-  _pendingLoopDeadline=0;
-  if(_boardLoopAudio){ _boardLoopAudio.pause(); _boardLoopAudio.src=''; }
-}
 
 function _duckBoardRadio(ms=4500){
   if(!_boardRadioAudio||_boardRadioAudio.paused||!_boardRadioEnabled) return;
@@ -1645,7 +1541,6 @@ const ROUTE_KEYS = {
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=1&json=1": "x1023-now-playing",
   "https://status.openai.com/api/v2/summary.json": "openai-summary",
-  "https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest": "cbs-news-rss",
   "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
@@ -2128,9 +2023,20 @@ async function fetchOne(s){
       const northAmericaGroupId=components.find(c=>c.group && String(c.name||'').toLowerCase().trim()==='north america')?.id;
       const watched=components.filter(c=>targetGroupIds.has(c.id) || targetGroupIds.has(c.group_id));
       const watchedIds=new Set(watched.map(c=>c.id));
+      const activeMaintenance=(md?.scheduled_maintenances||[]).filter(x=>{
+        if(!['in_progress','verifying','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!x.components?.length) return true;
+        return x.components.some(c=>watchedIds.has(c.id));
+      });
+      const hasActiveMaintenanceForComponent=(componentId)=>
+        activeMaintenance.some(x=>!x.components?.length||x.components.some(c=>c.id===componentId));
       const cloudflareComponentIndicator=(component)=>{
         const base=componentStatusToIndicator(component?.status);
-        if(base==='none' || base==='maintenance' || base==='unknown') return base;
+        if(base==='none' || base==='unknown') return base;
+        if(base==='maintenance'){
+          if(!hasActiveMaintenanceForComponent(component?.id)) return 'none';
+          return 'maintenance';
+        }
         const isNorthAmericaChild=!!northAmericaGroupId && component?.group_id===northAmericaGroupId;
         if(isNorthAmericaChild || hasRerouteSignal(component?.name, component?.description)) return 'rerouting';
         return base;
@@ -2152,11 +2058,6 @@ async function fetchOne(s){
 
       const active=(id?.incidents||[]).filter(x=>{
         if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
-        if(!x.components?.length) return true;
-        return x.components.some(c=>watchedIds.has(c.id));
-      });
-      const activeMaintenance=(md?.scheduled_maintenances||[]).filter(x=>{
-        if(!['in_progress','verifying','monitoring'].includes((x.status||'').toLowerCase())) return false;
         if(!x.components?.length) return true;
         return x.components.some(c=>watchedIds.has(c.id));
       });
@@ -2853,12 +2754,6 @@ async function _fetchNowPlaying(){
   }
   _nowPlayingFetching=false;
   _renderBoardNowPlaying();
-  // Fire pending news break once the track changes or the deadline passes
-  if(_pendingLoopAudioUrl){
-    const trackChanged=(_nowPlayingInfo?.track||'')!==_pendingLoopTrack;
-    const deadlinePassed=Date.now()>=_pendingLoopDeadline;
-    if(trackChanged||deadlinePassed) _triggerNewsBreak();
-  }
 }
 
 function _renderBoardWeatherBar(){
@@ -3553,7 +3448,6 @@ function renderBoardView(results){
   });
   _renderBoardNowPlaying();
   _startBoardRadio();
-  _startWBZLoopSchedule();
   const tilesEl=document.getElementById('tv-tiles');
   tilesEl.addEventListener('click',e=>{
     const tile=e.target.closest('.tv-tile');
@@ -3621,7 +3515,6 @@ function exitBoardMode(){
   _stopBoardRadio();
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
-  _stopWBZLoopSchedule();
   if(_boardResizeObs){ _boardResizeObs.disconnect(); _boardResizeObs=null; }
   _boardModeActive=false;
   _applyBoardPageState();
