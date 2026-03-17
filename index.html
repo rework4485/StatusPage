@@ -275,7 +275,7 @@
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:10px; }
-    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
@@ -1287,10 +1287,10 @@ function _stopBoardRadio(){
   _boardRadioAudio.pause();
 }
 
-// ── WBZ "The Loop" top-of-hour news break ──
+// ── CBS News On The Hour top-of-hour news break ──
 let _boardLoopAudio=null;
 let _boardLoopTimer=null;
-const _WBZ_LOOP_RSS='https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss';
+const _WBZ_LOOP_RSS='https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest';
 
 function _scheduleWBZLoop(){
   clearTimeout(_boardLoopTimer);
@@ -1304,7 +1304,7 @@ async function _playWBZLoop(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   if(!_boardRadioAudio||_boardRadioAudio.paused) return; // Only play if radio is actually running
   try{
-    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=wbz-loop-rss':_WBZ_LOOP_RSS;
+    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=cbs-news-rss':_WBZ_LOOP_RSS;
     const resp=await fetchWithTimeout(proxyUrl,10000);
     if(!resp.ok) return;
     const text=await resp.text();
@@ -1626,7 +1626,7 @@ const ROUTE_KEYS = {
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
   "https://status.openai.com/api/v2/summary.json": "openai-summary",
-  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss",
+  "https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest": "cbs-news-rss",
   "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
