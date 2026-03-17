@@ -48,6 +48,7 @@
     .light-mode .f-board-btn,
     .light-mode .f-refresh-btn,
     .light-mode .f-theme-btn,
+    .light-mode .f-settings-btn,
     .light-mode .tv-exit-btn,
     .light-mode .test-btn,
     .light-mode .net-refresh-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
@@ -58,6 +59,7 @@
     .light-mode .f-board-btn:hover,
     .light-mode .f-refresh-btn:hover,
     .light-mode .f-theme-btn:hover,
+    .light-mode .f-settings-btn:hover,
     .light-mode .tv-exit-btn:hover,
     .light-mode .net-refresh-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.16); }
     .light-mode .net-run-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
@@ -321,7 +323,7 @@
     .svc-row:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; background:rgba(255,255,255,0.035); }
     .card:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
     .nav-tab:focus-visible,.filter-chip:focus-visible,
-    .f-board-btn:focus-visible,.f-theme-btn:focus-visible,.f-refresh-btn:focus-visible,
+    .f-board-btn:focus-visible,.f-theme-btn:focus-visible,.f-refresh-btn:focus-visible,.f-settings-btn:focus-visible,
     .test-btn:focus-visible,.net-refresh-btn:focus-visible,.net-run-btn:focus-visible,
     .tv-exit-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
     .svc-search:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:-2px; }
@@ -600,6 +602,7 @@
     .tv-np-cover { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; object-fit:cover; flex-shrink:0; }
     .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .tv-now-playing-track { font-size:clamp(18px,1.9vw,32px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .tv-now-playing-track.tv-np-stale { opacity:0.5; font-style:italic; }
     .tv-now-playing-meta { font-size:clamp(14px,1.4vw,22px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-np-duck-label { display:none; font-size:clamp(10px,0.82vw,13px); font-weight:600; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; }
     .tv-np-ducked .tv-now-playing-track,
@@ -770,6 +773,9 @@
     .light-mode .svc-search-clear { background:rgba(0,0,0,0.1); color:var(--sub); }
     .light-mode .svc-search-clear:hover { background:rgba(0,0,0,0.18); color:var(--text); }
 
+    /* ── Search no-results ───────────────────────────────────────────────────── */
+    .svc-no-results { padding:28px 0; text-align:center; color:var(--muted); font-size:14px; }
+
     /* ── Collapsible category sections ─────────────────────────────────────── */
     .svc-cat-hdr { cursor:pointer; }
     .svc-cat-hdr:hover { color:var(--text); }
@@ -797,6 +803,33 @@
     .f-mute-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
     .light-mode .f-mute-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
     .light-mode .f-mute-btn:hover { background:rgba(0,0,0,0.08); }
+
+    /* ── Settings gear button ───────────────────────────────────────────────── */
+    .f-settings-btn { border:1px solid var(--border); background:rgba(128,128,128,0.06); color:var(--sub); border-radius:7px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:var(--font); transition:all 0.2s; line-height:1; }
+    .f-settings-btn:hover { background:rgba(128,128,128,0.12); color:var(--text); }
+    .f-settings-btn:focus-visible { outline:2px solid rgba(59,130,246,0.6); outline-offset:2px; }
+    .light-mode .f-settings-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .f-settings-btn:hover { background:rgba(0,0,0,0.08); }
+
+    /* ── Settings dialog ────────────────────────────────────────────────────── */
+    .settings-dialog { position:fixed; inset:0; margin:auto; width:min(420px,90vw); max-height:80vh; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:0; box-shadow:0 8px 40px rgba(0,0,0,0.5); color:var(--text); font-family:var(--font); overflow:hidden; }
+    .settings-dialog::backdrop { background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); }
+    .settings-dialog-inner { padding:20px; display:flex; flex-direction:column; gap:18px; }
+    .settings-dialog-hdr { display:flex; align-items:center; justify-content:space-between; }
+    .settings-dialog-title { font-size:15px; font-weight:700; letter-spacing:0.03em; }
+    .settings-dialog-close { background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:2px 6px; border-radius:5px; line-height:1; transition:color 0.15s; }
+    .settings-dialog-close:hover { color:var(--text); }
+    .settings-section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:10px; }
+    .settings-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:5px 0; }
+    .settings-label { font-size:13px; color:var(--sub); flex:1; }
+    .settings-control { display:flex; align-items:center; gap:8px; }
+    .settings-val { font-size:12px; color:var(--muted); min-width:28px; text-align:right; }
+    .settings-range { accent-color:rgba(59,130,246,0.8); width:110px; cursor:pointer; }
+    .settings-num { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--font); font-size:13px; padding:3px 7px; width:56px; text-align:center; }
+    .settings-num:focus { outline:none; border-color:rgba(59,130,246,0.6); }
+    .settings-check { accent-color:rgba(59,130,246,0.8); width:15px; height:15px; cursor:pointer; }
+    .settings-divider { border:none; border-top:1px solid var(--border); margin:0; }
+    .settings-hint { font-size:11px; color:var(--muted); line-height:1.5; }
 
     @media (min-width:1100px) {
       .svc-table { display:grid; grid-template-columns:1fr 1fr; }
@@ -908,11 +941,43 @@
       <div class="f-meta" id="f-meta"></div>
     </div>
     <button class="f-mute-btn" id="f-mute-btn" type="button" title="Mute notifications">🔔</button>
+    <button class="f-settings-btn" id="f-settings-btn" type="button" title="Settings">⚙</button>
     <button class="f-theme-btn" id="f-theme-btn" type="button" title="Toggle light/dark mode">☀</button>
     <button class="f-board-btn" id="f-board-btn" type="button" title="Open status board">Board</button>
     <button class="f-refresh-btn" id="f-refresh-btn" type="button" title="Refresh now">↻</button>
   </div>
 </div>
+<dialog id="settings-dialog" class="settings-dialog">
+  <div class="settings-dialog-inner">
+    <div class="settings-dialog-hdr">
+      <span class="settings-dialog-title">Settings</span>
+      <button class="settings-dialog-close" id="settings-dialog-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div>
+      <div class="settings-section-title">Board Mode</div>
+      <div class="settings-row">
+        <label class="settings-label" for="settings-speed">Banner speed</label>
+        <div class="settings-control">
+          <input type="range" class="settings-range" id="settings-speed" min="5" max="120" step="5" value="30">
+          <span class="settings-val" id="settings-speed-val">30s</span>
+        </div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label" for="settings-reload-toggle">Auto-reload on failure</label>
+        <input type="checkbox" class="settings-check" id="settings-reload-toggle">
+      </div>
+      <div class="settings-row" id="settings-reload-row" style="display:none">
+        <label class="settings-label" for="settings-reload">Reload after</label>
+        <div class="settings-control">
+          <input type="number" class="settings-num" id="settings-reload" min="3" max="50" value="10">
+          <span class="settings-val">failures</span>
+        </div>
+      </div>
+    </div>
+    <hr class="settings-divider">
+    <p class="settings-hint">Speed and reload settings apply when entering Board mode. URL parameters (<code>?speed=</code>, <code>?reload=</code>) override these values.</p>
+  </div>
+</dialog>
 <div class="status-banner-wrap" aria-live="assertive" aria-atomic="true"><div class="status-banner" id="status-banner"></div></div>
 <script>
 
@@ -1127,8 +1192,8 @@ const PREFERRED_TTS_VOICES=[
 ];
 
 const BOARD_STATIONS=[
-  {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'special://x1023-now-playing',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
+  {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25,albumArt:'itunes'},
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'special://x1023-now-playing',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12,albumArt:'itunes'},
   {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN?play',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2},
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
@@ -2620,10 +2685,10 @@ function nextLogo(img){
   img.src=sources[idx];
 }
 
-let _curFilter='all';
+let _curFilter=localStorage.getItem('svc-filter')||'all';
 let _lastResults=[];
 let _boardClockTimer=null,_boardLastUpdate=null;
-let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
+let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false,_boardNetFailCount=0;
 let _issuePageTimer=null,_issuePage=0;
 const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false,_deviceLocation=null;
@@ -2686,7 +2751,12 @@ async function _fetchWeather(){
 function _renderWeather(){
   const bar=document.getElementById('weather-bar');
   if(!bar) return;
-  if(!_wxInfo||_wxInfo.err){bar.className='weather-bar';return;}
+  if(!_wxInfo){bar.className='weather-bar';return;}
+  if(_wxInfo.err){
+    bar.innerHTML=`<span class="wx-icon">⚠</span><span class="wx-cond">${esc(_wxInfo.err)}</span>`;
+    bar.className='weather-bar show';
+    return;
+  }
   const{loc,period,alerts}=_wxInfo;
   const temp=period?`${period.temperature}°${period.temperatureUnit||'F'}`:'';
   const cond=period?.shortForecast||'';
@@ -2836,7 +2906,9 @@ function _renderBoardWeatherBar(){
 function _renderBoardNowPlaying(){
   const np=document.getElementById('tv-now-playing');
   if(!np) return;
-  const track=_nowPlayingInfo?.track||'Loading…';
+  const stale=!!_nowPlayingInfo?.err;
+  const track=_nowPlayingInfo?.track||(stale?'':null)||'Loading…';
+  const trackDisplay=stale&&track&&track!=='Unavailable'?`${track} (?)`:(track||'Loading…');
   const artist=_nowPlayingInfo?.artist||_nowPlayingInfo?.station||_getBoardStation().name;
   const cover=_nowPlayingInfo?.cover||null;
   const wasDucked=np.classList.contains('tv-np-ducked');
@@ -2849,13 +2921,14 @@ function _renderBoardNowPlaying(){
   const eqPaused=!_boardRadioEnabled?'paused':'';
   const eqEl=`<span class="tv-np-eq ${eqPaused}" aria-hidden="true"><span></span><span></span><span></span><span></span></span>`;
   np.innerHTML=`${coverEl}<div class="tv-np-text"><div class="tv-now-playing-label">${eqEl}Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
-    <div class="tv-now-playing-track" title="${esc(track)}">${esc(track)}</div>
+    <div class="tv-now-playing-track${stale?' tv-np-stale':''}" title="${esc(trackDisplay)}">${esc(trackDisplay)}</div>
     <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div></div>`;
   if(wasDucked) np.classList.add('tv-np-ducked');
 }
 
 function applyFilter(grid,filter){
   _curFilter=filter;
+  localStorage.setItem('svc-filter',filter);
   grid.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===filter));
   const test=el=>filter==='all'||(filter==='issues'?el.dataset.ind!=='none'&&el.dataset.ind!=='unknown':el.dataset.ind===filter);
   grid.querySelectorAll('.card[data-ind]').forEach(el=>{ el.style.display=test(el)?'':'none'; });
@@ -2868,7 +2941,7 @@ function applyFilter(grid,filter){
 function renderServices(results){
   const grid=document.getElementById('services-grid');
   if(!grid) return;
-  const _prevSearch=(grid.querySelector('.svc-search')||{}).value||'';
+  const _prevSearch=(grid.querySelector('.svc-search')||{}).value||localStorage.getItem('svc-search')||'';
   grid.innerHTML='';
   const loadEl=document.getElementById('loading-el');
   if(loadEl) loadEl.style.display='none';
@@ -2921,7 +2994,9 @@ function renderServices(results){
   const _doSearch=()=>{
     const q=srch.value.trim();
     const qLow=q.toLowerCase();
+    if(q) localStorage.setItem('svc-search',q); else localStorage.removeItem('svc-search');
     searchWrap.classList.toggle('has-query',q.length>0);
+    let anyVisible=false;
     dir.querySelectorAll('.svc-cat-sec').forEach(sec=>{
       let any=false;
       sec.querySelectorAll('.svc-row').forEach(row=>{
@@ -2942,7 +3017,16 @@ function renderServices(results){
       });
       sec.style.display=any?'':'none';
       if(q&&any) sec.classList.remove('collapsed');
+      if(any) anyVisible=true;
     });
+    // No-results message
+    let noResultsEl=dir.querySelector('.svc-no-results');
+    if(q&&!anyVisible){
+      if(!noResultsEl){ noResultsEl=document.createElement('div'); noResultsEl.className='svc-no-results'; dir.appendChild(noResultsEl); }
+      noResultsEl.textContent=`No services match "${q}"`;
+    } else {
+      noResultsEl?.remove();
+    }
   };
   srch.addEventListener('input',()=>{ clearTimeout(_srchTimer); _srchTimer=setTimeout(_doSearch,150); });
   srchClear.addEventListener('click',()=>{ srch.value=''; _doSearch(); srch.focus(); });
@@ -3124,8 +3208,10 @@ async function _fetchBoardNet(){
       detectDohResolver(),
     ]);
     _boardNetInfo={cf:cfR.value||{},meta:metaR.value||{},lat:latR.value||null,gLat:gLatR.value||null,resolver:resolverR.value||null,ts:Date.now()};
+    _boardNetFailCount=0;
   }catch{
-    _boardNetInfo={cf:{},meta:{},lat:null,gLat:null,resolver:null,ts:Date.now()};
+    _boardNetFailCount++;
+    if(!_boardNetInfo) _boardNetInfo={cf:{},meta:{},lat:null,gLat:null,resolver:null,ts:null};
   }
   _boardNetFetching=false;
   _renderBoardNetBar();
@@ -3135,6 +3221,7 @@ function _renderBoardNetBar(){
   const bar=document.getElementById('tv-net-bar');
   if(!bar) return;
   if(!_boardNetInfo){ bar.innerHTML='<span class="tv-net-lbl">Network</span> Loading…'; return; }
+  if(_boardNetFailCount>=2){ bar.innerHTML='<span class="tv-net-lbl">Network</span> ⚠ Unavailable'; return; }
   const {cf,meta,lat,gLat,resolver,ts}=_boardNetInfo;
   const ip=cf.ip||'—';
   const isp=meta.asOrganization||'—';
@@ -4418,12 +4505,61 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!isRefreshing) _startRefresh();
   });
 
-  // Board mode — footer button and Escape to exit
+  // Board mode — footer button injects saved settings as URL params
   document.getElementById('f-board-btn')?.addEventListener('click',()=>{
     const url=new URL(window.location.href);
     url.searchParams.set('board','');
+    // Only apply localStorage values if URL doesn't already override them
+    if(!_startupParams.has('speed')){
+      const s=localStorage.getItem('board-speed');
+      if(s) url.searchParams.set('speed',s); else url.searchParams.delete('speed');
+    }
+    if(!_startupParams.has('reload')){
+      const r=localStorage.getItem('board-reload');
+      if(r&&r!=='0') url.searchParams.set('reload',r); else url.searchParams.delete('reload');
+    }
     window.location.assign(url.toString());
   });
+
+  // Settings panel
+  (()=>{
+    const dlg=document.getElementById('settings-dialog');
+    const speedEl=document.getElementById('settings-speed');
+    const speedVal=document.getElementById('settings-speed-val');
+    const reloadToggle=document.getElementById('settings-reload-toggle');
+    const reloadRow=document.getElementById('settings-reload-row');
+    const reloadNum=document.getElementById('settings-reload');
+    if(!dlg) return;
+    function _loadSettings(){
+      const s=parseInt(localStorage.getItem('board-speed'),10);
+      const r=parseInt(localStorage.getItem('board-reload'),10);
+      const speed=Number.isFinite(s)&&s>=5&&s<=120?s:30;
+      const reload=Number.isFinite(r)&&r>=3&&r<=50?r:10;
+      const reloadOn=!!localStorage.getItem('board-reload')&&localStorage.getItem('board-reload')!=='0';
+      speedEl.value=speed;
+      speedVal.textContent=speed+'s';
+      reloadToggle.checked=reloadOn;
+      reloadNum.value=reload;
+      reloadRow.style.display=reloadOn?'':'none';
+    }
+    speedEl?.addEventListener('input',()=>{
+      speedVal.textContent=speedEl.value+'s';
+      localStorage.setItem('board-speed',speedEl.value);
+    });
+    reloadToggle?.addEventListener('change',()=>{
+      reloadRow.style.display=reloadToggle.checked?'':'none';
+      localStorage.setItem('board-reload',reloadToggle.checked?reloadNum.value:'0');
+    });
+    reloadNum?.addEventListener('input',()=>{
+      if(reloadToggle.checked) localStorage.setItem('board-reload',reloadNum.value);
+    });
+    document.getElementById('f-settings-btn')?.addEventListener('click',()=>{
+      _loadSettings();
+      dlg.showModal();
+    });
+    document.getElementById('settings-dialog-close')?.addEventListener('click',()=>dlg.close());
+    dlg.addEventListener('click',(e)=>{ if(e.target===dlg) dlg.close(); });
+  })();
 
   // Theme toggle (system → light → dark → system)
   const THEMES=['system','light','dark'];
@@ -4460,7 +4596,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     else if(e.key==='r'||e.key==='R'){ e.preventDefault(); if(!isRefreshing) _startRefresh(); }
     else if(e.key==='Escape'&&!_boardModeActive){
       const srch=document.querySelector('.svc-search');
-      if(srch&&srch.value){ srch.value=''; srch.dispatchEvent(new Event('input')); }
+      if(srch&&srch.value){ srch.value=''; localStorage.removeItem('svc-search'); srch.dispatchEvent(new Event('input')); }
     }
   });
 
