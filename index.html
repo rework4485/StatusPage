@@ -1127,7 +1127,7 @@ const PREFERRED_TTS_VOICES=[
 
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',albumArt:'itunes',quality:'128k',baseVolume:0.35,duckVolume:0.12},
   {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'32k AAC+',baseVolume:0.5,duckVolume:0.2}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
@@ -2754,7 +2754,17 @@ async function _fetchNowPlaying(){
       data?.icestats?.source?.title
     ].find(Boolean)||'';
     const parsed=_parseNowPlayingSong(fallbackRaw,station);
-    _nowPlayingInfo={...parsed,ts:Date.now(),err:null,station:station.name,quality:station.quality};
+    let cover=null;
+    if(station.albumArt==='itunes'&&parsed.artist&&parsed.track&&parsed.track!==station.name){
+      try{
+        const term=encodeURIComponent(`${parsed.artist} ${parsed.track}`);
+        const ar=await fetchWithTimeout(`https://itunes.apple.com/search?term=${term}&entity=song&limit=1`,5000);
+        const ad=await ar.json();
+        const artUrl=ad?.results?.[0]?.artworkUrl100;
+        if(artUrl) cover=artUrl.replace('100x100bb','600x600bb');
+      }catch{}
+    }
+    _nowPlayingInfo={...parsed,cover,ts:Date.now(),err:null,station:station.name,quality:station.quality};
   }catch{
     _nowPlayingInfo={
       track:_nowPlayingInfo?.track||'Unavailable',
