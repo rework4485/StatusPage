@@ -598,7 +598,7 @@
     .tv-now-playing { display:flex; flex-direction:row; align-items:center; gap:clamp(8px,0.9vw,14px); min-width:0; width:100%; }
     .tv-np-text { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
     .tv-np-cover { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; object-fit:cover; flex-shrink:0; }
-    .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .tv-now-playing-label { font-size:clamp(10px,0.85vw,14px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:5px; }
     .tv-now-playing-track { font-size:clamp(18px,1.9vw,32px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-now-playing-meta { font-size:clamp(14px,1.4vw,22px); color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .tv-np-duck-label { display:none; font-size:clamp(10px,0.82vw,13px); font-weight:600; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; }
@@ -608,12 +608,35 @@
     .tv-ctx-audio { display:flex; align-items:center; gap:12px; flex-shrink:0; }
     .tv-station-select { border:none; border-bottom:1px solid rgba(255,255,255,0.22); background:transparent; color:var(--text); border-radius:0; padding:3px 18px 3px 0; font-size:clamp(11px,0.88vw,14px); font-weight:600; font-family:var(--font); }
     .tv-station-select:focus { outline:none; border-bottom-color:rgba(59,130,246,0.8); }
-    .tv-radio-toggle { display:inline-flex; align-items:center; gap:6px; border:none; border-bottom:1px solid rgba(255,255,255,0.22); border-radius:0; padding:3px 0; background:transparent; color:var(--sub); font-size:clamp(11px,0.88vw,14px); font-weight:600; cursor:pointer; }
-    .tv-radio-toggle input { accent-color:#22c55e; width:13px; height:13px; cursor:pointer; }
-    .tv-radio-toggle span { color:var(--text); }
+
     .tv-radio-vol-slider { -webkit-appearance:none; appearance:none; width:clamp(44px,4.5vw,72px); height:3px; border-radius:2px; background:rgba(255,255,255,0.2); outline:none; cursor:pointer; flex-shrink:0; align-self:center; }
     .tv-radio-vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; border-radius:50%; background:var(--text); cursor:pointer; }
     .tv-radio-vol-slider::-moz-range-thumb { width:11px; height:11px; border-radius:50%; background:var(--text); border:none; cursor:pointer; }
+    /* Equalizer bars – animated while radio plays */
+    @keyframes tv-eq1{0%,100%{height:4px}25%{height:14px}50%{height:8px}75%{height:12px}}
+    @keyframes tv-eq2{0%,100%{height:8px}25%{height:5px}50%{height:14px}75%{height:6px}}
+    @keyframes tv-eq3{0%,100%{height:12px}25%{height:8px}50%{height:4px}75%{height:14px}}
+    @keyframes tv-eq4{0%,100%{height:6px}25%{height:12px}50%{height:10px}75%{height:4px}}
+    .tv-np-eq { display:inline-flex; align-items:flex-end; gap:2px; height:clamp(10px,1vw,16px); flex-shrink:0; }
+    .tv-np-eq span { width:clamp(2px,0.2vw,3px); border-radius:1px; background:#22c55e; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-duration:1.1s; }
+    .tv-np-eq span:nth-child(1){animation-name:tv-eq1;animation-delay:0s;}
+    .tv-np-eq span:nth-child(2){animation-name:tv-eq2;animation-delay:0.18s;}
+    .tv-np-eq span:nth-child(3){animation-name:tv-eq3;animation-delay:0.09s;}
+    .tv-np-eq span:nth-child(4){animation-name:tv-eq4;animation-delay:0.27s;}
+    .tv-np-eq.paused span { animation-play-state:paused; height:3px!important; }
+    /* Radio play/pause icon button */
+    .tv-radio-playbtn { display:inline-flex; align-items:center; justify-content:center; width:clamp(24px,2.2vw,36px); height:clamp(24px,2.2vw,36px); border-radius:50%; border:none; background:rgba(255,255,255,0.1); color:var(--text); cursor:pointer; flex-shrink:0; transition:background 0.15s,color 0.15s; padding:0; }
+    .tv-radio-playbtn:hover { background:rgba(255,255,255,0.2); }
+    .tv-radio-playbtn.playing { background:rgba(34,197,94,0.18); color:#22c55e; }
+    /* Radio mute button */
+    .tv-radio-mute-btn { display:inline-flex; align-items:center; justify-content:center; width:clamp(18px,1.6vw,26px); height:clamp(18px,1.6vw,26px); border:none; background:transparent; color:var(--muted); cursor:pointer; flex-shrink:0; padding:0; transition:color 0.15s; }
+    .tv-radio-mute-btn:hover { color:var(--text); }
+    .tv-radio-mute-btn.muted { color:rgba(248,113,113,0.75); }
+    /* Spotify / Apple Music embed player */
+    .tv-radio-embed-wrap { width:100%; border-radius:10px; overflow:hidden; }
+    .tv-radio-embed-wrap iframe { display:block; width:100%; border:none; border-radius:10px; }
+    /* Album art fallback (when no cover URL) */
+    .tv-np-cover-fallback { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:800; color:rgba(255,255,255,0.45); background:rgba(255,255,255,0.07); letter-spacing:-0.02em; }
     /* Clock */
     .tv-clock-block { display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; }
     .tv-clock { font-size:clamp(28px,3.2vw,54px); font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); letter-spacing:-0.02em; line-height:1.1; }
@@ -1109,13 +1132,20 @@ const PREFERRED_TTS_VOICES=[
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
   {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'special://x1023-now-playing',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
-  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN?play',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2}
+  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN?play',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2},
+  {id:'spotify',name:'Spotify',type:'embed',embedUrl:'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0',embedHeight:80},
+  {id:'applemusic',name:'Apple Music',type:'embed',embedUrl:'https://embed.music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149ebe4d9eda91338',embedHeight:175}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
+const _ICON_PLAY=`<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`;
+const _ICON_PAUSE=`<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+const _ICON_VOL=`<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+const _ICON_MUTE=`<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
 let _boardRadioEnabled=localStorage.getItem('board-radio-enabled')!=='0';
 let _boardStationId=localStorage.getItem('board-station')||'wror';
 let _boardRadioAudio=null;
+let _boardRadioMuted=false;
 let _radioDuckUntil=0;
 let _radioDuckTimer=null;
 
@@ -1235,6 +1265,7 @@ function _initBoardRadioAudio(){
   const el=new Audio();
   el.preload='none';
   el.volume=BOARD_RADIO_BASE_VOLUME;
+  el.muted=_boardRadioMuted;
   _boardRadioAudio=el;
   return el;
 }
@@ -1247,6 +1278,23 @@ function _setBoardRadioVolume(target){
 async function _startBoardRadio(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   const station=_getBoardStation();
+  if(station.type==='embed'){
+    // Stop any audio stream first
+    if(_boardRadioAudio) _boardRadioAudio.pause();
+    _updateBoardMediaLayout();
+    const wrap=document.getElementById('tv-radio-embed-wrap');
+    if(wrap&&!wrap.querySelector('iframe')){
+      const fr=document.createElement('iframe');
+      fr.src=station.embedUrl;
+      fr.setAttribute('width','100%');
+      fr.setAttribute('height',String(station.embedHeight||80));
+      fr.allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      fr.loading='lazy';
+      wrap.appendChild(fr);
+    }
+    return;
+  }
+  _updateBoardMediaLayout();
   const radio=_initBoardRadioAudio();
   const current=(radio.dataset.stationId||'');
   if(current!==station.id){
@@ -1271,8 +1319,10 @@ async function _startBoardRadio(){
 }
 
 function _stopBoardRadio(){
-  if(!_boardRadioAudio) return;
-  _boardRadioAudio.pause();
+  if(_boardRadioAudio) _boardRadioAudio.pause();
+  const wrap=document.getElementById('tv-radio-embed-wrap');
+  if(wrap) wrap.innerHTML='';
+  _updateBoardMediaLayout();
 }
 
 
@@ -1299,8 +1349,42 @@ function _duckBoardRadio(ms=4500){
 }
 
 function _applyBoardRadioToggle(){
-  const toggle=document.getElementById('tv-radio-toggle');
-  if(toggle) toggle.checked=_boardRadioEnabled;
+  const btn=document.getElementById('tv-radio-playbtn');
+  if(!btn) return;
+  btn.classList.toggle('playing',_boardRadioEnabled);
+  btn.title=_boardRadioEnabled?'Pause radio':'Play radio';
+  btn.innerHTML=_boardRadioEnabled?_ICON_PAUSE:_ICON_PLAY;
+}
+
+function _applyBoardRadioMuteBtn(){
+  const btn=document.getElementById('tv-radio-mute-btn');
+  if(!btn) return;
+  btn.classList.toggle('muted',_boardRadioMuted);
+  btn.title=_boardRadioMuted?'Unmute':'Mute';
+  btn.innerHTML=_boardRadioMuted?_ICON_MUTE:_ICON_VOL;
+}
+
+function _toggleBoardRadioMute(){
+  _boardRadioMuted=!_boardRadioMuted;
+  if(_boardRadioAudio) _boardRadioAudio.muted=_boardRadioMuted;
+  _applyBoardRadioMuteBtn();
+}
+
+function _applyBoardEq(){
+  const eq=document.querySelector('.tv-np-eq');
+  if(eq) eq.classList.toggle('paused',!_boardRadioEnabled||_getBoardStation().type==='embed');
+}
+
+function _updateBoardMediaLayout(){
+  const isEmbed=_getBoardStation().type==='embed';
+  const npEl=document.getElementById('tv-now-playing');
+  const embedWrap=document.getElementById('tv-radio-embed-wrap');
+  const muteBtn=document.getElementById('tv-radio-mute-btn');
+  const volSlider=document.getElementById('tv-radio-vol');
+  if(npEl) npEl.style.display=isEmbed?'none':'';
+  if(embedWrap) embedWrap.style.display=isEmbed?'':'none';
+  if(muteBtn) muteBtn.style.display=isEmbed?'none':'';
+  if(volSlider) volSlider.style.display=isEmbed?'none':'';
 }
 
 function _applyBoardRadioVolSlider(){
@@ -1314,6 +1398,7 @@ function _setBoardRadioEnabled(enabled,{persist=true}={}){
   _boardRadioEnabled=!!enabled;
   if(persist) localStorage.setItem('board-radio-enabled',_boardRadioEnabled?'1':'0');
   _applyBoardRadioToggle();
+  _applyBoardEq();
   if(_boardModeActive&&_boardRadioEnabled) _startBoardRadio();
   else _stopBoardRadio();
 }
@@ -2778,8 +2863,15 @@ function _renderBoardNowPlaying(){
   const artist=_nowPlayingInfo?.artist||_nowPlayingInfo?.station||_getBoardStation().name;
   const cover=_nowPlayingInfo?.cover||null;
   const wasDucked=np.classList.contains('tv-np-ducked');
-  const coverEl=cover?`<img class="tv-np-cover" src="${esc(cover)}" alt="" loading="lazy" decoding="async">`:'';
-  np.innerHTML=`${coverEl}<div class="tv-np-text"><div class="tv-now-playing-label">Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
+  // Album art or fallback initial
+  const stInit=esc(_getBoardStation().name.charAt(0).toUpperCase());
+  const coverEl=cover
+    ?`<img class="tv-np-cover" src="${esc(cover)}" alt="" loading="lazy" decoding="async">`
+    :`<div class="tv-np-cover-fallback" aria-hidden="true">${stInit}</div>`;
+  // Equalizer bars
+  const eqPaused=!_boardRadioEnabled?'paused':'';
+  const eqEl=`<span class="tv-np-eq ${eqPaused}" aria-hidden="true"><span></span><span></span><span></span><span></span></span>`;
+  np.innerHTML=`${coverEl}<div class="tv-np-text"><div class="tv-now-playing-label">${eqEl}Now Playing<span class="tv-np-duck-label"> · ⏸ News Break</span></div>
     <div class="tv-now-playing-track" title="${esc(track)}">${esc(track)}</div>
     <div class="tv-now-playing-meta" title="${esc(artist)}">${esc(artist)}</div></div>`;
   if(wasDucked) np.classList.add('tv-np-ducked');
@@ -3341,12 +3433,11 @@ function renderBoardView(results){
       <div class="tv-hdr-weather" id="tv-wx-bar" style="display:none"></div>
       <div class="tv-hdr-media">
         <div class="tv-now-playing" id="tv-now-playing"></div>
+        <div class="tv-radio-embed-wrap" id="tv-radio-embed-wrap" style="display:none"></div>
         <div class="tv-ctx-audio">
           <select class="tv-station-select" id="tv-station-select" title="Choose radio station">${BOARD_STATIONS.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('')}</select>
-          <label class="tv-radio-toggle" for="tv-radio-toggle" title="Play board radio">
-            <input id="tv-radio-toggle" type="checkbox" ${_boardRadioEnabled?'checked':''}>
-            <span>Radio</span>
-          </label>
+          <button class="tv-radio-playbtn${_boardRadioEnabled?' playing':''}" id="tv-radio-playbtn" type="button" title="${_boardRadioEnabled?'Pause radio':'Play radio'}">${_boardRadioEnabled?_ICON_PAUSE:_ICON_PLAY}</button>
+          <button class="tv-radio-mute-btn" id="tv-radio-mute-btn" type="button" title="Mute">${_ICON_VOL}</button>
           <input type="range" id="tv-radio-vol" class="tv-radio-vol-slider" min="0" max="1" step="0.05" title="Volume">
         </div>
       </div>
@@ -3402,8 +3493,11 @@ function renderBoardView(results){
     _issuePageTimer=null;
     _scheduleNextIssuePage(issuePages);
   });
-  document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
-    _setBoardRadioEnabled(!!e.target.checked);
+  document.getElementById('tv-radio-playbtn')?.addEventListener('click',()=>{
+    _setBoardRadioEnabled(!_boardRadioEnabled);
+  });
+  document.getElementById('tv-radio-mute-btn')?.addEventListener('click',()=>{
+    _toggleBoardRadioMute();
   });
   document.getElementById('tv-station-select')?.addEventListener('change',async (e)=>{
     _boardStationId=e.target.value;
@@ -3415,8 +3509,10 @@ function renderBoardView(results){
     _fetchNowPlaying();
   });
   _applyBoardRadioToggle();
+  _applyBoardRadioMuteBtn();
   _applyBoardStationSelect();
   _applyBoardRadioVolSlider();
+  _updateBoardMediaLayout();
   document.getElementById('tv-radio-vol')?.addEventListener('input',(e)=>{
     const v=parseFloat(e.target.value);
     if(_boardRadioAudio&&!(_radioDuckUntil>Date.now())) _setBoardRadioVolume(v);
