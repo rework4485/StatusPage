@@ -1304,9 +1304,11 @@ async function _playWBZLoop(){
     // Wait for the current song to finish before starting the news break.
     // Record the current track; _fetchNowPlaying will fire the break when the
     // track changes or after a 3-minute deadline so it never waits forever.
+    // Switch to fast polling (5s) so we catch the track change promptly.
     _pendingLoopAudioUrl=audioUrl;
     _pendingLoopTrack=_nowPlayingInfo?.track||'';
     _pendingLoopDeadline=Date.now()+3*60*1000;
+    _setNowPlayingPollRate(NP_POLL_FAST);
   }catch{ /* network or playback error — skip this hour */ }
 }
 
@@ -1315,6 +1317,7 @@ async function _triggerNewsBreak(){
   _pendingLoopAudioUrl=null;
   _pendingLoopTrack='';
   _pendingLoopDeadline=0;
+  _setNowPlayingPollRate(NP_POLL_NORMAL); // restore normal poll rate
   if(!audioUrl||!_boardModeActive||!_boardRadioEnabled) return;
   if(!_boardRadioAudio||_boardRadioAudio.paused) return;
   try{
@@ -1369,7 +1372,7 @@ function _startWBZLoopSchedule(){
 function _stopWBZLoopSchedule(){
   clearTimeout(_boardLoopTimer);
   _boardLoopTimer=null;
-  _pendingLoopAudioUrl=null;
+  if(_pendingLoopAudioUrl){ _pendingLoopAudioUrl=null; _setNowPlayingPollRate(NP_POLL_NORMAL); }
   _pendingLoopTrack='';
   _pendingLoopDeadline=0;
   if(_boardLoopAudio){ _boardLoopAudio.pause(); _boardLoopAudio.src=''; }
@@ -2670,6 +2673,11 @@ let _issuePageTimer=null,_issuePage=0;
 const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
 let _wxInfo=null,_wxTimer=null,_wxFetching=false,_deviceLocation=null;
 let _nowPlayingInfo=null,_nowPlayingTimer=null,_nowPlayingFetching=false;
+const NP_POLL_NORMAL=30000, NP_POLL_FAST=5000;
+function _setNowPlayingPollRate(ms){
+  if(_nowPlayingTimer){ clearInterval(_nowPlayingTimer); _nowPlayingTimer=null; }
+  _nowPlayingTimer=setInterval(_fetchNowPlaying,ms);
+}
 
 async function _getDeviceLocation(){
   if(_deviceLocation) return _deviceLocation;
@@ -4495,7 +4503,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   _fetchWeather();
   _wxTimer=setInterval(_fetchWeather, 15*60*1000);
   _fetchNowPlaying();
-  _nowPlayingTimer=setInterval(_fetchNowPlaying, 30000);
+  _setNowPlayingPollRate(NP_POLL_NORMAL);
   // Running "time ago" timer — updates all card age timestamps every 30s
   setInterval(()=>{
     document.querySelectorAll('.card-age-ts[data-fetched-at]').forEach(el=>{
