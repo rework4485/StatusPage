@@ -654,7 +654,6 @@
     .tv-issue-dc-item.maint   { background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.45); color:#60a5fa; }
     .tv-issue-cf-body { font-size:clamp(13px,1.2vw,18px); color:rgba(255,255,255,0.7); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .tv-issue-section-hdr { font-size:clamp(9px,0.75vw,12px); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.32); margin-top:clamp(6px,0.7vh,10px); padding-bottom:clamp(3px,0.3vh,4px); border-bottom:1px solid rgba(255,255,255,0.08); }
-    .tv-issue-maint-item { font-size:clamp(12px,1.1vw,17px); color:rgba(255,255,255,0.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:clamp(2px,0.2vh,4px) 0; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
     .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
@@ -3249,7 +3248,8 @@ function _buildIssueTilesHTML(svcs){
       const cfMaint=svc.details.maintenance||[];
       if(cfMaint.length){
         cfParts.push(`<div class="tv-issue-section-hdr">Maintenance</div>`);
-        cfMaint.forEach(m=>cfParts.push(`<div class="tv-issue-maint-item">${esc(m.name)}</div>`));
+        const maintHtml=cfMaint.map(m=>`<span class="tv-issue-dc-item maint">${esc(m.name)}</span>`).join('');
+        cfParts.push(`<div class="tv-issue-dc-list">${maintHtml}</div>`);
       }
       const cfDcs=svc.details.dataCenters||[];
       const cfRerouteDcs=cfDcs.filter(d=>d.ind==='rerouting');
