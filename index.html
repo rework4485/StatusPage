@@ -923,7 +923,7 @@ const SVCS=[
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/summary.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/summary.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
-  {name:'Azure',su:'https://azure.status.microsoft/en-us/status/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
+  {name:'Azure',su:'https://azure.status.microsoft/en-us/status/feed/',hu:'https://azure.status.microsoft/en-us/status',p:'azure',cat:'infra'},
   {name:'Google Cloud',su:'https://status.cloud.google.com/incidents.json',hu:'https://status.cloud.google.com',p:'gcloud',cat:'infra'},
   {name:'Oracle Cloud',su:'https://ocistatus.oraclecloud.com/api/v2/status.json',cu:'https://ocistatus.oraclecloud.com/api/v2/components.json',hu:'https://ocistatus.oraclecloud.com',p:'oci',cat:'infra'},
   {name:'IBM Cloud',su:'https://cloud.ibm.com/status/api/notifications/feed.rss',hu:'https://cloud.ibm.com/status',p:'ibm',cat:'infra'},
@@ -1078,28 +1078,16 @@ function isAwsRssItemFresh(pubDateText){
   return (Date.now()-published)<=AWS_RSS_ACTIVE_WINDOW_MS;
 }
 
-function extractAzureAmericasTable(html){
-  const m=html.match(/<table[^>]*data-zone-name=["']americas["'][^>]*class=["'][^"']*region-status-table[^"']*["'][^>]*>[\s\S]*?<\/table>/i);
-  return m ? m[0] : '';
-}
-
-function parseAzureAmericasStatus(tableHtml){
-  const rowRegex=/<tr>([\s\S]*?)<\/tr>/gi;
-  const labels=[];
-  const impactedRows=[];
-  let rowMatch;
-  while((rowMatch=rowRegex.exec(tableHtml))!==null){
-    const row=rowMatch[1];
-    const nameMatch=row.match(/<td[^>]*>\s*([\s\S]*?)<\/td>/i);
-    const serviceName=nameMatch ? stripHtml(nameMatch[1]).replace(/\s+/g,' ').trim() : '';
-    const rowLabels=[...row.matchAll(/data-label=["']([^"']+)["']/gi)].map(m=>String(m[1]||'').trim());
-    if(!rowLabels.length) continue;
-    labels.push(...rowLabels);
-    if(rowLabels.some(label=>/critical|warning|degraded|disrupted/i.test(label))){
-      impactedRows.push({serviceName, labels:rowLabels});
-    }
-  }
-  return {labels, impactedRows};
+function parseAzureRssFeed(xml){
+  // Azure RSS feed: active incidents appear as <item> elements.
+  // Each item has <title>, <description>, and optionally a severity keyword.
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const items=[...doc.querySelectorAll('item')];
+  return items.map(item=>{
+    const title=item.querySelector('title')?.textContent?.trim()||'';
+    const desc=item.querySelector('description')?.textContent?.trim()||'';
+    return {title,desc};
+  });
 }
 
 let audioCtx;
@@ -1250,7 +1238,6 @@ function _initBoardRadioAudio(){
   if(_boardRadioAudio) return _boardRadioAudio;
   const el=new Audio();
   el.preload='none';
-  el.crossOrigin='anonymous';
   el.volume=BOARD_RADIO_BASE_VOLUME;
   _boardRadioAudio=el;
   return el;
@@ -1289,6 +1276,9 @@ function _stopBoardRadio(){
 // ── CBS News On The Hour top-of-hour news break ──
 let _boardLoopAudio=null;
 let _boardLoopTimer=null;
+let _pendingLoopAudioUrl=null;
+let _pendingLoopTrack='';
+let _pendingLoopDeadline=0;
 const _WBZ_LOOP_RSS='https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest';
 
 function _scheduleWBZLoop(){
@@ -1311,9 +1301,25 @@ async function _playWBZLoop(){
     const enclosure=doc.querySelector('item enclosure');
     const audioUrl=enclosure?.getAttribute('url');
     if(!audioUrl) return;
+    // Wait for the current song to finish before starting the news break.
+    // Record the current track; _fetchNowPlaying will fire the break when the
+    // track changes or after a 3-minute deadline so it never waits forever.
+    _pendingLoopAudioUrl=audioUrl;
+    _pendingLoopTrack=_nowPlayingInfo?.track||'';
+    _pendingLoopDeadline=Date.now()+3*60*1000;
+  }catch{ /* network or playback error — skip this hour */ }
+}
+
+async function _triggerNewsBreak(){
+  const audioUrl=_pendingLoopAudioUrl;
+  _pendingLoopAudioUrl=null;
+  _pendingLoopTrack='';
+  _pendingLoopDeadline=0;
+  if(!audioUrl||!_boardModeActive||!_boardRadioEnabled) return;
+  if(!_boardRadioAudio||_boardRadioAudio.paused) return;
+  try{
     if(!_boardLoopAudio) _boardLoopAudio=new Audio();
     const loopEl=_boardLoopAudio;
-    // Fade radio out over 2s, then play news (fully silent during break)
     clearTimeout(_radioDuckTimer);
     _radioDuckUntil=0;
     document.getElementById('tv-now-playing')?.classList.add('tv-np-ducked');
@@ -1323,7 +1329,7 @@ async function _playWBZLoop(){
     loopEl.volume=station.baseVolume??BOARD_RADIO_BASE_VOLUME;
     loopEl.onended=_fadeInBoardRadioAfterLoop;
     await loopEl.play();
-  }catch{ /* network or playback error — skip this hour */ }
+  }catch{ /* playback error — skip */ }
 }
 
 function _fadeOutBoardRadio(durationMs=2000){
@@ -1363,6 +1369,9 @@ function _startWBZLoopSchedule(){
 function _stopWBZLoopSchedule(){
   clearTimeout(_boardLoopTimer);
   _boardLoopTimer=null;
+  _pendingLoopAudioUrl=null;
+  _pendingLoopTrack='';
+  _pendingLoopDeadline=0;
   if(_boardLoopAudio){ _boardLoopAudio.pause(); _boardLoopAudio.src=''; }
 }
 
@@ -1604,7 +1613,7 @@ const ROUTE_KEYS = {
   "https://status.dnsfilter.com/api/v2/summary.json": "dnsfilter-summary",
   "https://status.meraki.net/api/v2/summary.json": "meraki-summary",
   "https://status.aws.amazon.com/rss/all.rss": "aws-rss",
-  "https://azure.status.microsoft/en-us/status/": "azure-status",
+  "https://azure.status.microsoft/en-us/status/feed/": "azure-status",
   "https://status.cloud.google.com/incidents.json": "gcloud-incidents",
   "https://ocistatus.oraclecloud.com/api/v2/status.json": "oci-status",
   "https://ocistatus.oraclecloud.com/api/v2/components.json": "oci-components",
@@ -1623,7 +1632,7 @@ const ROUTE_KEYS = {
   "https://ip-api.com/json": "ip-api",
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
-  "https://stream.x1023.fm/stats?sid=1&json=1": "x1023-now-playing",
+  "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
   "https://status.openai.com/api/v2/summary.json": "openai-summary",
   "https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest": "cbs-news-rss",
   "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
@@ -1949,28 +1958,16 @@ async function fetchOne(s){
 
   if(s.p==='azure'){
     try {
-      const html=await getText(s.su);
-      const americasTable=extractAzureAmericasTable(html);
-      if(!americasTable){
-        return mk(s.name,'unknown','Azure status format changed','Could not locate the Americas status table.',new Date().toLocaleString(),s.hu);
-      }
-      const {labels, impactedRows}=parseAzureAmericasStatus(americasTable);
-      if(!labels.length){
-        return mk(s.name,'unknown','Azure status format changed','No status labels found in the Americas table.',new Date().toLocaleString(),s.hu);
-      }
-      const hasCritical=labels.some(label=>/critical/i.test(label));
-      const hasWarning=labels.some(label=>/warning|degraded|disrupted/i.test(label));
-      if(!hasCritical && !hasWarning){
-        return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
-      }
-      if(hasCritical||hasWarning){
-        const ind=hasCritical ? 'major' : 'minor';
-        const top=impactedRows[0];
-        const severity=top?.labels?.find(label=>/critical|warning|degraded|disrupted/i.test(label));
-        const title=top?.serviceName ? `${top.serviceName} (${severity||'Issue'})` : 'Americas Service Issue Detected';
-        return mk(s.name,ind,title,'Monitoring Azure Americas status table only.',new Date().toLocaleString(),s.hu);
-      }
-      return mk(s.name,'none','','',new Date().toLocaleString(),s.hu);
+      const xml=await getText(s.su);
+      const items=parseAzureRssFeed(xml);
+      const updated=new Date().toLocaleString();
+      if(!items.length) return mk(s.name,'none','','',updated,s.hu);
+      // Classify severity from title keywords; default to minor
+      const hasCritical=items.some(i=>/critical|outage|unavailable/i.test(i.title+' '+i.desc));
+      const ind=hasCritical?'major':'minor';
+      const title=items[0].title||'Azure Service Issue';
+      const body=items.length>1?`${items.length} active issues`:'';
+      return mk(s.name,ind,title,body,updated,s.hu);
     } catch { return errSvc(s); }
   }
 
@@ -2476,10 +2473,15 @@ async function fetchOne(s){
       const activeMaint=(res.maintenance?.active||[]);
       let title='',body='';
       if(incidents.length){
-        const inc=incidents[0];
-        title=inc.name||inc.incidents_name||'';
-        const msgs=inc.messages||inc.incident_updates||[];
-        body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        if(incidents.length===1){
+          const inc=incidents[0];
+          title=inc.name||inc.incidents_name||'';
+          const msgs=inc.messages||inc.incident_updates||[];
+          body=msgs.length?stripHtml(msgs[0].details||msgs[0].body||''):'';
+        }else{
+          title=`${incidents.length} Active Incidents`;
+          body=incidents.map(i=>i.name||i.incidents_name||'').filter(Boolean).join(' · ');
+        }
         if(ind==='none') ind='minor';
       } else if(activeMaint.length){
         const m=activeMaint[0];
@@ -2817,6 +2819,12 @@ async function _fetchNowPlaying(){
   }
   _nowPlayingFetching=false;
   _renderBoardNowPlaying();
+  // Fire pending news break once the track changes or the deadline passes
+  if(_pendingLoopAudioUrl){
+    const trackChanged=(_nowPlayingInfo?.track||'')!==_pendingLoopTrack;
+    const deadlinePassed=Date.now()>=_pendingLoopDeadline;
+    if(trackChanged||deadlinePassed) _triggerNewsBreak();
+  }
 }
 
 function _renderBoardWeatherBar(){
