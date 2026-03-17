@@ -3462,6 +3462,8 @@ function renderBoardView(results){
       <div class="tv-tile-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
     </div>`;
   }).join('');
+  // Save any active alert cards so they survive the innerHTML replacement
+  const _savedAlertCards=[...board.querySelectorAll('.tv-board-alert-card')];
   board.className='tv-board'+(_boardMinimal?' tv-board-minimal':'');
   board.innerHTML=`
     <div class="tv-hdr">
@@ -3504,6 +3506,8 @@ function renderBoardView(results){
         <button class="tv-exit-btn" id="tv-exit-btn">&#x2715; Exit Board</button>
       </div>
     </div>`;
+  // Re-attach any alert cards that were showing before the re-render
+  _savedAlertCards.forEach(card=>board.appendChild(card));
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
@@ -3522,10 +3526,10 @@ function renderBoardView(results){
     const pageIdx=parseInt(dot.dataset.page,10);
     if(isNaN(pageIdx)) return;
     _issuePage=pageIdx;
-    _showIssuePage(explodedIssues,pageIdx);
+    _showIssuePage(issuePages,pageIdx);
     clearTimeout(_issuePageTimer);
     _issuePageTimer=null;
-    _scheduleNextIssuePage(explodedIssues,totalIssuePages);
+    _scheduleNextIssuePage(issuePages);
   });
   document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
     _setBoardRadioEnabled(!!e.target.checked);
