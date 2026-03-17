@@ -2119,7 +2119,8 @@ async function fetchOne(s){
         const maintSummaries=[...activeMaintenance].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a)).map(evt=>{
           const desc=latestUpdateBody(evt) || stripHtml(evt.body || 'Cloudflare is performing ongoing maintenance.');
           const rawName=evt.name||'Ongoing maintenance';
-          return {name:stripMaintDate(rawName)||rawName, desc};
+          const stripped=stripMaintDate(rawName)||rawName;
+          return {name:fmtDc(stripped)||stripped, desc};
         });
         if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
