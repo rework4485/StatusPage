@@ -2550,6 +2550,14 @@ async function fetchOne(s){
       let desc=latestUpdateBody(a);
       if(!desc) desc=stripHtml(a.description||'');
       body=desc;
+    } else {
+      const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase()));
+      if(activeMaint.length){
+        const m=activeMaint[0];
+        if(ind!=='major'&&ind!=='minor') ind='maintenance';
+        title=m.name||'';
+        body=latestUpdateBody(m)||stripHtml(m.description||'');
+      }
     }
     return mk(s.name,ind,title,body,updated,s.hu);
   } catch { return errSvc(s); }
