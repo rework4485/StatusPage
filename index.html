@@ -1268,20 +1268,26 @@ async function _startBoardRadio(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   const station=_getBoardStation();
   const radio=_initBoardRadioAudio();
+  const current=(radio.dataset.stationId||'');
+  if(current!==station.id){
+    radio.pause();
+    // Set src directly — calling load() before play() on a live stream causes
+    // an AbortError because the browser interrupts the pending play() request.
+    // Setting src and calling play() is sufficient; play() triggers the load.
+    radio.src=station.streamUrl;
+    radio.dataset.stationId=station.id;
+  }
+  const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
+  radio.volume=isNaN(savedVol)?(station.baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
   try{
-    const current=(radio.dataset.stationId||'');
-    if(current!==station.id){
-      radio.pause();
-      radio.removeAttribute('src');
-      radio.load();
-      radio.src=station.streamUrl;
-      radio.dataset.stationId=station.id;
-      radio.load();
-    }
-    const savedVol=parseFloat(localStorage.getItem('board-radio-vol'));
-    radio.volume=isNaN(savedVol)?(station.baseVolume??BOARD_RADIO_BASE_VOLUME):savedVol;
     await radio.play();
-  }catch{}
+  }catch(e){
+    // AbortError means a concurrent load() interrupted play(); retry once
+    if(e?.name==='AbortError'){
+      await new Promise(r=>setTimeout(r,300));
+      try{ await radio.play(); }catch{}
+    }
+  }
 }
 
 function _stopBoardRadio(){
