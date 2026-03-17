@@ -291,7 +291,7 @@
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
     .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
     .meta-tag { font-size:11px; font-weight:600; color:var(--muted); padding:3px 9px; border-radius:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
@@ -3651,7 +3651,7 @@ function updateIncidentPin(data){
     return;
   }
 
-  pin.innerHTML=active.map(s=>`<span class="pin-chip chip-${s.ind||'unknown'}"><span class="pin-dot"></span>${s.name}</span>`).join('');
+  pin.innerHTML=active.map(s=>`<span class="pin-chip chip-${esc(s.ind)||'unknown'}"><span class="pin-dot"></span>${esc(s.name)}</span>`).join('');
 }
 
 
