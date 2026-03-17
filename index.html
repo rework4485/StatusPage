@@ -2731,6 +2731,7 @@ async function _fetchNowPlaying(){
     }
     const data=await getJson(proxyUrl);
     const fallbackRaw=[
+      data?.streams?.[0]?.currenttrack,
       data?.songtitle,
       data?.title,
       data?.currentSong,
