@@ -2679,9 +2679,17 @@ async function _getDeviceLocation(){
       );
       _deviceLocation={lat:pos.coords.latitude,lon:pos.coords.longitude};
       return _deviceLocation;
-    }catch{ /* permission denied or unavailable — fall through */ }
+    }catch{ /* permission denied or unavailable — fall through to IP */ }
   }
-  return {lat:41.7226,lon:-71.2829}; // default fallback
+  // Fallback: derive location from public IP via ip-api
+  try{
+    const d=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null);
+    if(d?.lat&&d?.lon){
+      _deviceLocation={lat:d.lat,lon:d.lon};
+      return _deviceLocation;
+    }
+  }catch{ /* ip-api unavailable */ }
+  return {lat:41.7226,lon:-71.2829}; // last-resort fallback
 }
 
 async function _fetchWeather(){
