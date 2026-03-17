@@ -20,7 +20,7 @@
     "dnsfilter-summary": "https://status.dnsfilter.com/api/v2/summary.json",
     "meraki-summary": "https://status.meraki.net/api/v2/summary.json",
     "aws-rss": "https://status.aws.amazon.com/rss/all.rss",
-    "azure-status": "https://azure.status.microsoft/en-us/status/",
+    "azure-status": "https://azure.status.microsoft/en-us/status/feed/",
     "gcloud-incidents": "https://status.cloud.google.com/incidents.json",
     "oci-status": "https://ocistatus.oraclecloud.com/api/v2/status.json",
     "oci-components": "https://ocistatus.oraclecloud.com/api/v2/components.json",
