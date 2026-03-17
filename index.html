@@ -2667,18 +2667,32 @@ let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
 const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
-let _wxInfo=null,_wxTimer=null,_wxFetching=false;
+let _wxInfo=null,_wxTimer=null,_wxFetching=false,_deviceLocation=null;
 let _nowPlayingInfo=null,_nowPlayingTimer=null,_nowPlayingFetching=false;
+
+async function _getDeviceLocation(){
+  if(_deviceLocation) return _deviceLocation;
+  if(navigator.geolocation){
+    try{
+      const pos=await new Promise((resolve,reject)=>
+        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:8000,maximumAge:15*60*1000})
+      );
+      _deviceLocation={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      return _deviceLocation;
+    }catch{ /* permission denied or unavailable — fall through */ }
+  }
+  return {lat:41.7226,lon:-71.2829}; // default fallback
+}
 
 async function _fetchWeather(){
   if(_wxFetching) return;
   _wxFetching=true;
   try{
-    // Fixed location: Warren, RI
-    const lat=41.7226,lon=-71.2829,locName='Warren, RI';
+    const{lat,lon}=await _getDeviceLocation();
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
-    const loc=locName;
+    const relLoc=pt.properties.relativeLocation?.properties;
+    const loc=relLoc?.city&&relLoc?.state?`${relLoc.city}, ${relLoc.state}`:'';
     const forecastHourlyUrl=pt.properties.forecastHourly;
     const [fR,aR]=await Promise.allSettled([
       fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
