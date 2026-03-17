@@ -3023,10 +3023,36 @@ function _optimizeBoardLayout(){
   const padH=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
   const availW=board.clientWidth-padH;
   const gap=Math.max(8,Math.round(availW*0.007));
-  // Layout issue tiles with a column count based on how many there are
+  // Layout issue tiles with content-proportional column widths
   if(issueEl&&issueN>0){
-    const issueCols=Math.min(issueN,Math.max(1,Math.min(4,issueN)));
-    issueEl.style.gridTemplateColumns=`repeat(${issueCols},1fr)`;
+    const tiles=[...issueEl.querySelectorAll('.tv-issue-tile')];
+    // Reset any explicit grid placement from previous render
+    tiles.forEach(t=>{t.style.gridColumn='';t.style.gridRow='';});
+    if(issueN===1){
+      issueEl.style.gridTemplateColumns='1fr';
+    } else if(issueN===2){
+      const w=tiles.map(t=>parseInt(t.dataset.weight)||1);
+      if(w[0]>w[1]*1.5) issueEl.style.gridTemplateColumns='2fr 1fr';
+      else if(w[1]>w[0]*1.5) issueEl.style.gridTemplateColumns='1fr 2fr';
+      else issueEl.style.gridTemplateColumns='1fr 1fr';
+    } else if(issueN===3){
+      const w=tiles.map(t=>parseInt(t.dataset.weight)||1);
+      const maxW=Math.max(...w);
+      const maxIdx=w.indexOf(maxW);
+      const avgOther=w.reduce((s,v,i)=>i===maxIdx?s:s+v,0)/2;
+      if(maxW>=2&&maxW>avgOther*1.4){
+        // One heavy card + 2 lighter: heavy spans left column across both rows
+        issueEl.style.gridTemplateColumns='2fr 1fr';
+        tiles[maxIdx].style.gridColumn='1';
+        tiles[maxIdx].style.gridRow='1 / span 2';
+        let row=1;
+        tiles.forEach((t,i)=>{if(i!==maxIdx){t.style.gridColumn='2';t.style.gridRow=String(row++);}});
+      } else {
+        issueEl.style.gridTemplateColumns='repeat(3,1fr)';
+      }
+    } else {
+      issueEl.style.gridTemplateColumns=`repeat(${Math.min(issueN,4)},1fr)`;
+    }
     issueEl.style.gap=gap+'px';
   }
   // Ticker mode for normal service tiles
@@ -3161,6 +3187,20 @@ function _explodeIssueTiles(issueSvcs){
   return result;
 }
 
+function _cardWeight(svc){
+  const textLen=(svc.title||'').length+(svc.body||'').length;
+  let w=1;
+  if(textLen>300) w=3;
+  else if(textLen>100) w=2;
+  if(svc.details?.type==='cloudflare'){
+    const items=(svc.details.dataCenters?.length||0)+(svc.details.maintenance?.length||0);
+    if(items>6) w=Math.max(w,3);
+    else if(items>2) w=Math.max(w,2);
+  }
+  if((svc._tileRoutes?.length||0)>4) w=Math.max(w,2);
+  return w;
+}
+
 function _buildIssueTilesHTML(svcs){
   return svcs.map(svc=>{
     const logos=logoSources(svc);
@@ -3223,7 +3263,7 @@ function _buildIssueTilesHTML(svcs){
     }
     const bodyEl=bodyInnerHtml
       ?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${bodyInnerHtml}</span></div>`:'';
-    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}" data-weight="${_cardWeight(svc)}">
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
       <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
       ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
@@ -3232,10 +3272,10 @@ function _buildIssueTilesHTML(svcs){
   }).join('');
 }
 
-function _showIssuePage(issueSvcs, pageIdx){
+function _showIssuePage(pages, pageIdx){
   const tilesEl=document.getElementById('tv-issue-tiles');
   if(!tilesEl) return;
-  const page=issueSvcs.slice(pageIdx*ISSUE_PAGE_SIZE,(pageIdx+1)*ISSUE_PAGE_SIZE);
+  const page=pages[pageIdx]||[];
   tilesEl.style.transition='opacity 0.35s';
   tilesEl.style.opacity='0';
   setTimeout(()=>{
@@ -3249,7 +3289,7 @@ function _showIssuePage(issueSvcs, pageIdx){
   if(pgNumEl) pgNumEl.textContent=pageIdx+1;
 }
 
-function _scheduleNextIssuePage(issueSvcs, totalPages){
+function _scheduleNextIssuePage(pages){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   // Wait a short time for requestAnimationFrame in _optimizeBoardLayout to finish
@@ -3266,20 +3306,33 @@ function _scheduleNextIssuePage(issueSvcs, totalPages){
     // Dwell = full scroll animation + 8s buffer to read bottom, minimum ISSUE_PAGE_SECS
     const dwell=Math.max(ISSUE_PAGE_SECS, maxScrollDur+8);
     _issuePageTimer=setTimeout(()=>{
-      _issuePage=(_issuePage+1)%totalPages;
-      _showIssuePage(issueSvcs,_issuePage);
-      _scheduleNextIssuePage(issueSvcs,totalPages);
+      _issuePage=(_issuePage+1)%pages.length;
+      _showIssuePage(pages,_issuePage);
+      _scheduleNextIssuePage(pages);
     },dwell*1000);
   },600);
 }
 
-function _initIssuePagination(issueSvcs){
+// Build pages avoiding orphaned single-card last pages.
+// e.g. 4 tiles → [2,2]; 7 tiles → [3,2,2] instead of [3,3,1]
+function _buildIssuePages(svcs){
+  if(!svcs.length) return [];
+  const pages=[];
+  let remaining=svcs.slice();
+  while(remaining.length>0){
+    const pagesLeft=Math.ceil(remaining.length/ISSUE_PAGE_SIZE);
+    const pageSize=Math.ceil(remaining.length/pagesLeft);
+    pages.push(remaining.splice(0,pageSize));
+  }
+  return pages;
+}
+
+function _initIssuePagination(pages){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   _issuePage=0;
-  const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
-  if(totalPages<=1) return;
-  _scheduleNextIssuePage(issueSvcs,totalPages);
+  if(pages.length<=1) return;
+  _scheduleNextIssuePage(pages);
 }
 
 function renderBoardView(results){
@@ -3311,10 +3364,11 @@ function renderBoardView(results){
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
   // Explode MBTA/CF into one tile per alert/event for better use of board space
   const explodedIssues=_explodeIssueTiles(issueSvcs);
-  // Build first page of issue tiles (pagination shows 3 at a time)
-  const firstPageSvcs=explodedIssues.slice(0,ISSUE_PAGE_SIZE);
+  // Build pages — smart packing avoids orphaned single-card last pages
+  const issuePages=_buildIssuePages(explodedIssues);
+  const firstPageSvcs=issuePages[0]||[];
   const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
-  const totalIssuePages=Math.ceil(explodedIssues.length/ISSUE_PAGE_SIZE);
+  const totalIssuePages=issuePages.length;
   const issueDotsHTML=totalIssuePages>1
     ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
     :'';
@@ -3375,7 +3429,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
-  _initIssuePagination(explodedIssues);
+  _initIssuePagination(issuePages);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
