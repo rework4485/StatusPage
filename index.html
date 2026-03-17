@@ -2686,7 +2686,8 @@ async function _getDeviceLocation(){
   try{
     const d=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null);
     if(d?.lat&&d?.lon){
-      _deviceLocation={lat:d.lat,lon:d.lon};
+      const locName=d.city&&d.regionName?`${d.city}, ${d.regionName}`:d.city||'';
+      _deviceLocation={lat:d.lat,lon:d.lon,locName};
       return _deviceLocation;
     }
   }catch{ /* ip-api unavailable */ }
@@ -2697,11 +2698,13 @@ async function _fetchWeather(){
   if(_wxFetching) return;
   _wxFetching=true;
   try{
-    const{lat,lon}=await _getDeviceLocation();
+    const deviceLoc=await _getDeviceLocation();
+    const{lat,lon}=deviceLoc;
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
     const relLoc=pt.properties.relativeLocation?.properties;
-    const loc=relLoc?.city&&relLoc?.state?`${relLoc.city}, ${relLoc.state}`:'';
+    const nwsLoc=relLoc?.city&&relLoc?.state?`${relLoc.city}, ${relLoc.state}`:'';
+    const loc=deviceLoc.locName||nwsLoc;
     const forecastHourlyUrl=pt.properties.forecastHourly;
     const [fR,aR]=await Promise.allSettled([
       fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
