@@ -2672,7 +2672,7 @@ let _nowPlayingInfo=null,_nowPlayingTimer=null,_nowPlayingFetching=false;
 
 async function _getDeviceLocation(){
   if(_deviceLocation) return _deviceLocation;
-  if(navigator.geolocation){
+  if(navigator.geolocation&&/^https?:$/.test(location.protocol)){
     try{
       const pos=await new Promise((resolve,reject)=>
         navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:8000,maximumAge:15*60*1000})
