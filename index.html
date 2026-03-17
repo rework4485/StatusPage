@@ -931,7 +931,7 @@ const SVCS=[
   {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/summary.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
-  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
+  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',p:'cachefly',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   {name:'Mimecast',su:'https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
@@ -2520,6 +2520,49 @@ async function fetchOne(s){
       } else if((sum?.scheduled_maintenances||[]).some(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase()))){
         const m=(sum.scheduled_maintenances||[]).find(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase()));
         ind='maintenance'; title=m.name||''; body=latestUpdateBody(m)||stripHtml(m.description||'');
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
+  if(s.p==='cachefly'){
+    // CacheFly — filter to North America POPs and services only
+    try{
+      const sum=await getJson(s.su);
+      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const comps=sum?.components||[];
+      // Find the North America group(s) and their child components
+      const naGroupIds=new Set(comps.filter(c=>c.group&&/north.?america/i.test(c.name||'')).map(c=>c.id));
+      // Also catch top-level components whose names look like NA airport codes (ATL1, BOS1, DFW1, etc.)
+      // or explicitly contain "north america"
+      const naComps=comps.filter(c=>
+        naGroupIds.has(c.group_id) ||
+        /north.?america/i.test(c.name||'') ||
+        /^(ATL|BOS|DFW|LAX|MIA|NYC|EWR|ORD|SEA|SJC|SFO|YYZ|YVR|MEX|IAD|PHX|DEN|LAS|MSP)\d/i.test(c.name||'')
+      );
+      const watched=naComps.length?naComps:comps;
+      const watchedIds=new Set(watched.map(c=>c.id));
+      const worstComp=watched.reduce((worst,c)=>{const ci=normalizeIndicator(c.status);return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;},'none');
+      let ind=worstComp;
+      const active=(sum?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        const affected=(x.components||[]).map(c=>c.id);
+        return !affected.length||affected.some(id=>watchedIds.has(id));
+      });
+      let title='',body='';
+      if(active.length){
+        const a=mostRecentEvent(active)||active[0];
+        if(ind==='none'){const imp=normalizeIndicator(a.impact||'none');if(imp!=='none') ind=imp;}
+        title=a.name||''; let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||''); body=desc;
+      } else {
+        const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>{
+          if(!['in_progress','verifying'].includes((x.status||'').toLowerCase())) return false;
+          const affected=(x.components||[]).map(c=>c.id);
+          return !affected.length||affected.some(id=>watchedIds.has(id));
+        });
+        if(activeMaint.length){
+          const m=activeMaint[0]; ind='maintenance'; title=m.name||''; body=latestUpdateBody(m)||stripHtml(m.description||'');
+        }
       }
       return mk(s.name,ind,title,body,updated,s.hu);
     }catch{return errSvc(s);}
