@@ -1493,8 +1493,8 @@ function showStatusBanner(svc, kind){
       <div class="status-banner-icon">${icon}</div>
       <div class="status-banner-text">
         <div class="status-banner-heading">${heading}</div>
-        <div class="status-banner-title">${svc.name}</div>
-        <div class="status-banner-sub">${detail}</div>
+        <div class="status-banner-title">${esc(svc.name)}</div>
+        <div class="status-banner-sub">${esc(detail)}</div>
       </div>
     </div>
     <div class="status-banner-time"></div>`;
