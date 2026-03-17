@@ -639,7 +639,7 @@
     .tv-issue-badge.maint  { color:var(--maint); }
     .tv-issue-badge.reroute{ color:var(--reroute); }
     .tv-issue-title { font-size:clamp(17px,1.8vw,28px); font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:pre-wrap; line-height:1.35; }
-    .tv-issue-body { font-size:clamp(14px,1.4vw,22px); color:rgba(255,255,255,0.78); line-height:1.55; overflow:hidden; max-height:12em; flex:1 1 auto; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; }
+    .tv-issue-body { font-size:clamp(14px,1.4vw,22px); color:rgba(255,255,255,0.78); line-height:1.55; overflow-y:auto; overflow-x:hidden; flex:1 1 auto; min-height:0; white-space:pre-wrap; overflow-wrap:anywhere; position:relative; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent; }
     .tv-issue-body-inner { display:block; }
     .tv-issue-body-inner.tv-scrolling { animation:tv-body-scroll var(--tv-scroll-dur,35s) ease-in-out 2.5s infinite; }
     @keyframes tv-body-scroll { 0%,35%{transform:translateY(0)} 75%,100%{transform:translateY(var(--tv-scroll-dist,0px))} }
@@ -657,7 +657,9 @@
     .tv-issue-maint-item { font-size:clamp(12px,1.1vw,17px); color:rgba(255,255,255,0.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:clamp(2px,0.2vh,4px) 0; }
     /* Issue page dots */
     .tv-page-dots { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:clamp(6px,0.7vh,12px); flex-shrink:0; }
-    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; }
+    .tv-page-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:background 0.3s, width 0.3s, border-radius 0.3s; flex-shrink:0; cursor:pointer; border:none; padding:0; appearance:none; -webkit-appearance:none; }
+    .tv-page-dot:hover { background:rgba(255,255,255,0.45); }
+    .tv-page-dot:focus-visible { outline:2px solid rgba(255,255,255,0.5); outline-offset:3px; }
     .tv-page-dot.active { width:24px; border-radius:4px; background:rgba(255,255,255,0.7); }
     /* Operational ticker */
     .tv-ticker-wrap { flex-shrink:0; margin-bottom:clamp(8px,0.9vh,14px); }
@@ -3003,7 +3005,7 @@ function _optimizeBoardLayout(){
     trackEl.querySelectorAll('.tv-tile-badge').forEach(el=>el.style.fontSize=badgeFs+'px');
     trackEl.querySelectorAll('.tv-tile-logo,.tv-tile-logo-fb').forEach(el=>{el.style.width=logoSz+'px';el.style.height=logoSz+'px';});
   }
-  // Initialise issue body slow-scroll after layout paint
+  // Adaptively scale issue body text to fit, then fall back to scroll for overflow
   requestAnimationFrame(()=>{
     if(!issueEl) return;
     issueEl.querySelectorAll('.tv-issue-body').forEach(el=>{
@@ -3012,6 +3014,16 @@ function _optimizeBoardLayout(){
       inner.classList.remove('tv-scrolling');
       inner.style.removeProperty('--tv-scroll-dist');
       inner.style.removeProperty('--tv-scroll-dur');
+      // Reset any previously applied font size override
+      el.style.removeProperty('font-size');
+      // Adaptively shrink font size until content fits or minimum is reached
+      const minFs=10;
+      let fs=parseFloat(getComputedStyle(el).fontSize);
+      while(inner.scrollHeight>el.clientHeight+2&&fs>minFs){
+        fs=Math.max(minFs,fs-0.5);
+        el.style.fontSize=fs+'px';
+      }
+      // If content still overflows after scaling, add slow-scroll animation
       const dist=inner.scrollHeight-el.clientHeight;
       if(dist>8){
         inner.style.setProperty('--tv-scroll-dist',`-${dist}px`);
@@ -3272,7 +3284,7 @@ function renderBoardView(results){
   const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
   const totalIssuePages=Math.ceil(explodedIssues.length/ISSUE_PAGE_SIZE);
   const issueDotsHTML=totalIssuePages>1
-    ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<span class="tv-page-dot${i===0?' active':''}"></span>`).join('')}</div>`
+    ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<button class="tv-page-dot${i===0?' active':''}" data-page="${i}" aria-label="Page ${i+1}" type="button"></button>`).join('')}</div>`
     :'';
   // Build compact subdued normal-service tiles
   const normalTilesHTML=normalSvcs.map(svc=>{
@@ -3339,6 +3351,18 @@ function renderBoardView(results){
   _boardResizeObs.observe(board);
   document.getElementById('tv-exit-btn').addEventListener('click',exitBoardMode);
   document.getElementById('tv-board-test-btn')?.addEventListener('click',runAlertTest);
+  // Page dot click: jump to that page and reset auto-rotation
+  document.getElementById('tv-page-dots')?.addEventListener('click',e=>{
+    const dot=e.target.closest('.tv-page-dot');
+    if(!dot) return;
+    const pageIdx=parseInt(dot.dataset.page,10);
+    if(isNaN(pageIdx)) return;
+    _issuePage=pageIdx;
+    _showIssuePage(explodedIssues,pageIdx);
+    clearTimeout(_issuePageTimer);
+    _issuePageTimer=null;
+    _scheduleNextIssuePage(explodedIssues,totalIssuePages);
+  });
   document.getElementById('tv-radio-toggle')?.addEventListener('change',(e)=>{
     _setBoardRadioEnabled(!!e.target.checked);
   });
