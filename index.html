@@ -275,7 +275,7 @@
     .c-badge.reroute { background:rgba(20,184,166,0.1); color:var(--reroute); border:1px solid rgba(20,184,166,0.22); }
     .c-badge.unknown { background:rgba(107,114,128,0.1); color:var(--unknown); border:1px solid rgba(107,114,128,0.22); }
     .card-div { height:1px; background:var(--border); margin-bottom:10px; }
-    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+    .inc-block { border-radius:10px; padding:8px 10px; margin-bottom:6px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
     .inc-block.ok-block { background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.1); }
     .inc-block.bad-block { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); }
     .inc-block.warn-block { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); }
@@ -291,7 +291,7 @@
     .inc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
     .status-labels { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
     .status-label { font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--sub); border:1px solid var(--border); background:rgba(255,255,255,0.04); padding:3px 7px; border-radius:999px; }
-    .card-meta { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; padding-top:5px; border-top:1px solid var(--border); margin-top:6px; gap:8px; }
     .meta-updated { font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
     .meta-updated svg { width:11px; height:11px; opacity:0.5; flex-shrink:0; }
     .meta-tag { font-size:11px; font-weight:600; color:var(--muted); padding:3px 9px; border-radius:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
@@ -933,7 +933,7 @@ const SVCS=[
   {name:'Akamai',su:'https://www.akamaistatus.com/api/v2/summary.json',hu:'https://www.akamaistatus.com',p:'akamai',cat:'infra'},
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
-  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',cat:'infra'},
+  {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',p:'cachefly',cat:'infra'},
   {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   {name:'Mimecast',su:'https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
@@ -1127,8 +1127,8 @@ const PREFERRED_TTS_VOICES=[
 
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
-  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=2&json=1',parse:'artist-track',albumArt:'itunes',quality:'128k',baseVolume:0.35,duckVolume:0.12},
-  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'32k AAC+',baseVolume:0.5,duckVolume:0.2}
+  {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'https://stream.x1023.fm/stats?sid=1&json=1',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
+  {id:'wocn',name:'Ocean 104.7',streamUrl:'https://streamdb3web.securenetsystems.net/cirrusencore/WOCN',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1295,10 +1295,10 @@ function _stopBoardRadio(){
   _boardRadioAudio.pause();
 }
 
-// ── WBZ "The Loop" top-of-hour news break ──
+// ── CBS News On The Hour top-of-hour news break ──
 let _boardLoopAudio=null;
 let _boardLoopTimer=null;
-const _WBZ_LOOP_RSS='https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss';
+const _WBZ_LOOP_RSS='https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest';
 
 function _scheduleWBZLoop(){
   clearTimeout(_boardLoopTimer);
@@ -1312,7 +1312,7 @@ async function _playWBZLoop(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   if(!_boardRadioAudio||_boardRadioAudio.paused) return; // Only play if radio is actually running
   try{
-    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=wbz-loop-rss':_WBZ_LOOP_RSS;
+    const proxyUrl=_IS_DEPLOYED?'/proxy?svc=cbs-news-rss':_WBZ_LOOP_RSS;
     const resp=await fetchWithTimeout(proxyUrl,10000);
     if(!resp.ok) return;
     const text=await resp.text();
@@ -1501,8 +1501,8 @@ function showStatusBanner(svc, kind){
       <div class="status-banner-icon">${icon}</div>
       <div class="status-banner-text">
         <div class="status-banner-heading">${heading}</div>
-        <div class="status-banner-title">${svc.name}</div>
-        <div class="status-banner-sub">${detail}</div>
+        <div class="status-banner-title">${esc(svc.name)}</div>
+        <div class="status-banner-sub">${esc(detail)}</div>
       </div>
     </div>
     <div class="status-banner-time"></div>`;
@@ -1632,9 +1632,9 @@ const ROUTE_KEYS = {
   "https://ip-api.com/json": "ip-api",
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
-  "https://stream.x1023.fm/stats?sid=2&json=1": "x1023-now-playing",
+  "https://stream.x1023.fm/stats?sid=1&json=1": "x1023-now-playing",
   "https://status.openai.com/api/v2/summary.json": "openai-summary",
-  "https://www.omnycontent.com/d/playlist/98a2599f-cd9b-4f2a-9be4-b22c00e585f2/f8e1e1e5-98ef-40d5-adbc-b36401397147/2e7067f9-ab8d-497e-ab72-b36401397155/podcast.rss": "wbz-loop-rss",
+  "https://rss.cbsradionewsfeed.com/254f5d63-d75a-44a2-b727-1ed9b51f03d4/90259cbd-993c-4ca1-afb4-aa23294369ac?feedFormat=allitemFormat=latest": "cbs-news-rss",
   "https://streamdb3web.securenetsystems.net/player_status_update/WOCN_history.xml": "wocn-nowplaying"
 };
 const SPECIAL_KEYS = new Set(["ioda-na-outages","radar-us-anomalies","wror-now-playing"]);
@@ -2533,6 +2533,49 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
+  if(s.p==='cachefly'){
+    // CacheFly — filter to North America POPs and services only
+    try{
+      const sum=await getJson(s.su);
+      const updated=sum?.page?.updated_at ? new Date(sum.page.updated_at).toLocaleString() : new Date().toLocaleString();
+      const comps=sum?.components||[];
+      // Find the North America group(s) and their child components
+      const naGroupIds=new Set(comps.filter(c=>c.group&&/north.?america/i.test(c.name||'')).map(c=>c.id));
+      // Also catch top-level components whose names look like NA airport codes (ATL1, BOS1, DFW1, etc.)
+      // or explicitly contain "north america"
+      const naComps=comps.filter(c=>
+        naGroupIds.has(c.group_id) ||
+        /north.?america/i.test(c.name||'') ||
+        /^(ATL|BOS|DFW|LAX|MIA|NYC|EWR|ORD|SEA|SJC|SFO|YYZ|YVR|MEX|IAD|PHX|DEN|LAS|MSP)\d/i.test(c.name||'')
+      );
+      const watched=naComps.length?naComps:comps;
+      const watchedIds=new Set(watched.map(c=>c.id));
+      const worstComp=watched.reduce((worst,c)=>{const ci=normalizeIndicator(c.status);return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;},'none');
+      let ind=worstComp;
+      const active=(sum?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        const affected=(x.components||[]).map(c=>c.id);
+        return !affected.length||affected.some(id=>watchedIds.has(id));
+      });
+      let title='',body='';
+      if(active.length){
+        const a=mostRecentEvent(active)||active[0];
+        if(ind==='none'){const imp=normalizeIndicator(a.impact||'none');if(imp!=='none') ind=imp;}
+        title=a.name||''; let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||''); body=desc;
+      } else {
+        const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>{
+          if(!['in_progress','verifying'].includes((x.status||'').toLowerCase())) return false;
+          const affected=(x.components||[]).map(c=>c.id);
+          return !affected.length||affected.some(id=>watchedIds.has(id));
+        });
+        if(activeMaint.length){
+          const m=activeMaint[0]; ind='maintenance'; title=m.name||''; body=latestUpdateBody(m)||stripHtml(m.description||'');
+        }
+      }
+      return mk(s.name,ind,title,body,updated,s.hu);
+    }catch{return errSvc(s);}
+  }
+
   try {
     const sum=await getJson(s.su);
     const [sd,id]=[sum,sum];
@@ -2640,18 +2683,44 @@ let _boardClockTimer=null,_boardLastUpdate=null;
 let _boardNetTimer=null,_boardNetInfo=null,_boardNetFetching=false;
 let _issuePageTimer=null,_issuePage=0;
 const ISSUE_PAGE_SIZE=3, ISSUE_PAGE_SECS=30;
-let _wxInfo=null,_wxTimer=null,_wxFetching=false;
+let _wxInfo=null,_wxTimer=null,_wxFetching=false,_deviceLocation=null;
 let _nowPlayingInfo=null,_nowPlayingTimer=null,_nowPlayingFetching=false;
+
+async function _getDeviceLocation(){
+  if(_deviceLocation) return _deviceLocation;
+  const _proto=window.location.protocol;
+  if(navigator.geolocation&&(_proto==='https:'||_proto==='http:')){
+    try{
+      const pos=await new Promise((resolve,reject)=>
+        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:8000,maximumAge:15*60*1000})
+      );
+      _deviceLocation={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      return _deviceLocation;
+    }catch{ /* permission denied or unavailable — fall through to IP */ }
+  }
+  // Fallback: derive location from public IP via ip-api
+  try{
+    const d=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null);
+    if(d?.lat&&d?.lon){
+      const locName=d.city&&d.regionName?`${d.city}, ${d.regionName}`:d.city||'';
+      _deviceLocation={lat:d.lat,lon:d.lon,locName};
+      return _deviceLocation;
+    }
+  }catch{ /* ip-api unavailable */ }
+  return {lat:41.7226,lon:-71.2829}; // last-resort fallback
+}
 
 async function _fetchWeather(){
   if(_wxFetching) return;
   _wxFetching=true;
   try{
-    // Fixed location: Warren, RI
-    const lat=41.7226,lon=-71.2829,locName='Warren, RI';
+    const deviceLoc=await _getDeviceLocation();
+    const{lat,lon}=deviceLoc;
     const pt=await fetchWithTimeout(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,12000).then(r=>r.ok?r.json():null).catch(()=>null);
     if(!pt?.properties){_wxInfo={err:'NWS unavailable'};_wxFetching=false;_renderWeather();return;}
-    const loc=locName;
+    const relLoc=pt.properties.relativeLocation?.properties;
+    const nwsLoc=relLoc?.city&&relLoc?.state?`${relLoc.city}, ${relLoc.state}`:'';
+    const loc=deviceLoc.locName||nwsLoc;
     const forecastHourlyUrl=pt.properties.forecastHourly;
     const [fR,aR]=await Promise.allSettled([
       fetchWithTimeout(forecastHourlyUrl,12000).then(r=>r.ok?r.json():null).catch(()=>null),
@@ -2747,6 +2816,7 @@ async function _fetchNowPlaying(){
     }
     const data=await getJson(proxyUrl);
     const fallbackRaw=[
+      data?.streams?.[0]?.currenttrack,
       data?.songtitle,
       data?.title,
       data?.currentSong,
@@ -3005,10 +3075,36 @@ function _optimizeBoardLayout(){
   const padH=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
   const availW=board.clientWidth-padH;
   const gap=Math.max(8,Math.round(availW*0.007));
-  // Layout issue tiles with a column count based on how many there are
+  // Layout issue tiles with content-proportional column widths
   if(issueEl&&issueN>0){
-    const issueCols=Math.min(issueN,Math.max(1,Math.min(4,issueN)));
-    issueEl.style.gridTemplateColumns=`repeat(${issueCols},1fr)`;
+    const tiles=[...issueEl.querySelectorAll('.tv-issue-tile')];
+    // Reset any explicit grid placement from previous render
+    tiles.forEach(t=>{t.style.gridColumn='';t.style.gridRow='';});
+    if(issueN===1){
+      issueEl.style.gridTemplateColumns='1fr';
+    } else if(issueN===2){
+      const w=tiles.map(t=>parseInt(t.dataset.weight)||1);
+      if(w[0]>w[1]*1.5) issueEl.style.gridTemplateColumns='2fr 1fr';
+      else if(w[1]>w[0]*1.5) issueEl.style.gridTemplateColumns='1fr 2fr';
+      else issueEl.style.gridTemplateColumns='1fr 1fr';
+    } else if(issueN===3){
+      const w=tiles.map(t=>parseInt(t.dataset.weight)||1);
+      const maxW=Math.max(...w);
+      const maxIdx=w.indexOf(maxW);
+      const avgOther=w.reduce((s,v,i)=>i===maxIdx?s:s+v,0)/2;
+      if(maxW>=2&&maxW>avgOther*1.4){
+        // One heavy card + 2 lighter: heavy spans left column across both rows
+        issueEl.style.gridTemplateColumns='2fr 1fr';
+        tiles[maxIdx].style.gridColumn='1';
+        tiles[maxIdx].style.gridRow='1 / span 2';
+        let row=1;
+        tiles.forEach((t,i)=>{if(i!==maxIdx){t.style.gridColumn='2';t.style.gridRow=String(row++);}});
+      } else {
+        issueEl.style.gridTemplateColumns='repeat(3,1fr)';
+      }
+    } else {
+      issueEl.style.gridTemplateColumns=`repeat(${Math.min(issueN,4)},1fr)`;
+    }
     issueEl.style.gap=gap+'px';
   }
   // Ticker mode for normal service tiles
@@ -3153,6 +3249,20 @@ function _explodeIssueTiles(issueSvcs){
   return result;
 }
 
+function _cardWeight(svc){
+  const textLen=(svc.title||'').length+(svc.body||'').length;
+  let w=1;
+  if(textLen>300) w=3;
+  else if(textLen>100) w=2;
+  if(svc.details?.type==='cloudflare'){
+    const items=(svc.details.dataCenters?.length||0)+(svc.details.maintenance?.length||0);
+    if(items>6) w=Math.max(w,3);
+    else if(items>2) w=Math.max(w,2);
+  }
+  if((svc._tileRoutes?.length||0)>4) w=Math.max(w,2);
+  return w;
+}
+
 function _buildIssueTilesHTML(svcs){
   return svcs.map(svc=>{
     const logos=logoSources(svc);
@@ -3215,7 +3325,7 @@ function _buildIssueTilesHTML(svcs){
     }
     const bodyEl=bodyInnerHtml
       ?`<div class="tv-issue-body"><span class="tv-issue-body-inner">${bodyInnerHtml}</span></div>`:'';
-    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}">
+    return `<div class="tv-issue-tile ${CC[svc.ind]||''}" data-url="${esc(svc.url||'')}" data-weight="${_cardWeight(svc)}">
       <div class="tv-issue-tile-top">${logoEl}<span class="tv-issue-name">${esc(svc.name)}</span></div>
       <div class="tv-issue-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
       ${svc.title?`<div class="tv-issue-title">${esc(svc.title)}</div>`:''}
@@ -3224,10 +3334,10 @@ function _buildIssueTilesHTML(svcs){
   }).join('');
 }
 
-function _showIssuePage(issueSvcs, pageIdx){
+function _showIssuePage(pages, pageIdx){
   const tilesEl=document.getElementById('tv-issue-tiles');
   if(!tilesEl) return;
-  const page=issueSvcs.slice(pageIdx*ISSUE_PAGE_SIZE,(pageIdx+1)*ISSUE_PAGE_SIZE);
+  const page=pages[pageIdx]||[];
   tilesEl.style.transition='opacity 0.35s';
   tilesEl.style.opacity='0';
   setTimeout(()=>{
@@ -3241,7 +3351,7 @@ function _showIssuePage(issueSvcs, pageIdx){
   if(pgNumEl) pgNumEl.textContent=pageIdx+1;
 }
 
-function _scheduleNextIssuePage(issueSvcs, totalPages){
+function _scheduleNextIssuePage(pages){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   // Wait a short time for requestAnimationFrame in _optimizeBoardLayout to finish
@@ -3258,20 +3368,33 @@ function _scheduleNextIssuePage(issueSvcs, totalPages){
     // Dwell = full scroll animation + 8s buffer to read bottom, minimum ISSUE_PAGE_SECS
     const dwell=Math.max(ISSUE_PAGE_SECS, maxScrollDur+8);
     _issuePageTimer=setTimeout(()=>{
-      _issuePage=(_issuePage+1)%totalPages;
-      _showIssuePage(issueSvcs,_issuePage);
-      _scheduleNextIssuePage(issueSvcs,totalPages);
+      _issuePage=(_issuePage+1)%pages.length;
+      _showIssuePage(pages,_issuePage);
+      _scheduleNextIssuePage(pages);
     },dwell*1000);
   },600);
 }
 
-function _initIssuePagination(issueSvcs){
+// Build pages avoiding orphaned single-card last pages.
+// e.g. 4 tiles → [2,2]; 7 tiles → [3,2,2] instead of [3,3,1]
+function _buildIssuePages(svcs){
+  if(!svcs.length) return [];
+  const pages=[];
+  let remaining=svcs.slice();
+  while(remaining.length>0){
+    const pagesLeft=Math.ceil(remaining.length/ISSUE_PAGE_SIZE);
+    const pageSize=Math.ceil(remaining.length/pagesLeft);
+    pages.push(remaining.splice(0,pageSize));
+  }
+  return pages;
+}
+
+function _initIssuePagination(pages){
   clearTimeout(_issuePageTimer);
   _issuePageTimer=null;
   _issuePage=0;
-  const totalPages=Math.ceil(issueSvcs.length/ISSUE_PAGE_SIZE);
-  if(totalPages<=1) return;
-  _scheduleNextIssuePage(issueSvcs,totalPages);
+  if(pages.length<=1) return;
+  _scheduleNextIssuePage(pages);
 }
 
 function renderBoardView(results){
@@ -3303,10 +3426,11 @@ function renderBoardView(results){
   const normalSvcs=sorted.filter(s=>s.ind==='none'||s.ind==='unknown');
   // Explode MBTA/CF into one tile per alert/event for better use of board space
   const explodedIssues=_explodeIssueTiles(issueSvcs);
-  // Build first page of issue tiles (pagination shows 3 at a time)
-  const firstPageSvcs=explodedIssues.slice(0,ISSUE_PAGE_SIZE);
+  // Build pages — smart packing avoids orphaned single-card last pages
+  const issuePages=_buildIssuePages(explodedIssues);
+  const firstPageSvcs=issuePages[0]||[];
   const issueTilesHTML=_buildIssueTilesHTML(firstPageSvcs);
-  const totalIssuePages=Math.ceil(explodedIssues.length/ISSUE_PAGE_SIZE);
+  const totalIssuePages=issuePages.length;
   const issueDotsHTML=totalIssuePages>1
     ?`<div class="tv-page-dots" id="tv-page-dots">${Array.from({length:totalIssuePages},(_,i)=>`<button class="tv-page-dot${i===0?' active':''}" data-page="${i}" aria-label="Page ${i+1}" type="button"></button>`).join('')}</div>`
     :'';
@@ -3367,7 +3491,7 @@ function renderBoardView(results){
   _renderBoardNetBar();
   _renderBoardWeatherBar();
   _optimizeBoardLayout();
-  _initIssuePagination(explodedIssues);
+  _initIssuePagination(issuePages);
   // Re-optimize on window resize
   if(_boardResizeObs) _boardResizeObs.disconnect();
   let _roDebounce=null;
@@ -3699,7 +3823,7 @@ function updateIncidentPin(data){
     return;
   }
 
-  pin.innerHTML=active.map(s=>`<span class="pin-chip chip-${s.ind||'unknown'}"><span class="pin-dot"></span>${s.name}</span>`).join('');
+  pin.innerHTML=active.map(s=>`<span class="pin-chip chip-${esc(s.ind)||'unknown'}"><span class="pin-dot"></span>${esc(s.name)}</span>`).join('');
 }
 
 

@@ -3,6 +3,15 @@ import routes from '../routes.json';
 const { static: ROUTES, special } = routes;
 const UA = 'Mozilla/5.0 (compatible; StatusMonitor/1.0)';
 const SPECIAL_KEYS = new Set(special);
+const SVC_KEY_RE = /^[a-z0-9][a-z0-9\-]{0,63}$/;
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_CONTENT_TYPES = ['application/json', 'application/xml', 'text/xml', 'text/plain', 'text/html', 'application/rss+xml', 'application/atom+xml'];
+
+function sanitizeContentType(raw) {
+  if (!raw) return 'text/plain';
+  const mime = raw.split(';')[0].trim().toLowerCase();
+  return ALLOWED_CONTENT_TYPES.includes(mime) ? raw : 'text/plain';
+}
 
 async function fetchSpecialRoute(key, env) {
   if (key === 'wror-now-playing') {
@@ -71,7 +80,7 @@ async function fetchSpecialRoute(key, env) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-store',
-        'Content-Type': resp.headers.get('content-type') || 'application/json',
+        'Content-Type': sanitizeContentType(resp.headers.get('content-type')),
       },
     });
   }
@@ -105,7 +114,7 @@ async function fetchSpecialRoute(key, env) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-store',
-        'Content-Type': resp.headers.get('content-type') || 'application/json',
+        'Content-Type': sanitizeContentType(resp.headers.get('content-type')),
       },
     });
   }
@@ -137,8 +146,8 @@ export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   const key = url.searchParams.get('svc');
 
-  if (!key) {
-    return new Response(JSON.stringify({ error: 'Missing svc parameter' }), {
+  if (!key || !SVC_KEY_RE.test(key)) {
+    return new Response(JSON.stringify({ error: 'Invalid or missing svc parameter' }), {
       status: 400,
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -150,8 +159,8 @@ export async function onRequest({ request, env }) {
   if (SPECIAL_KEYS.has(key)) {
     try {
       return await fetchSpecialRoute(key, env);
-    } catch (err) {
-      return new Response(JSON.stringify({ error: `Upstream fetch error: ${err.message}` }), {
+    } catch {
+      return new Response(JSON.stringify({ error: 'Upstream service error' }), {
         status: 502,
         headers: {
           'Access-Control-Allow-Origin': '*',
@@ -179,13 +188,34 @@ export async function onRequest({ request, env }) {
       },
     });
 
+    const contentLength = parseInt(upstream.headers.get('content-length'), 10);
+    if (contentLength > MAX_RESPONSE_BYTES) {
+      return new Response(JSON.stringify({ error: 'Upstream response too large' }), {
+        status: 502,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     const body = await upstream.text();
+    if (body.length > MAX_RESPONSE_BYTES) {
+      return new Response(JSON.stringify({ error: 'Upstream response too large' }), {
+        status: 502,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     return new Response(body, {
       status: upstream.ok || upstream.status === 204 ? 200 : 502,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-store',
-        'Content-Type': upstream.headers.get('content-type') || 'text/plain',
+        'Content-Type': sanitizeContentType(upstream.headers.get('content-type')),
       },
     });
   } catch {
