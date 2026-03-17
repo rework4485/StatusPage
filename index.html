@@ -2107,12 +2107,19 @@ async function fetchOne(s){
       };
 
       // Build structured maintenance details (kept separate from body text)
+      // Strip date suffixes from maintenance event names (e.g. "PDX (Portland) on 2026-03-17")
+      const stripMaintDate=n=>n
+        .replace(/\s*[-|]?\s*\bon\b\s+\d{4}-\d{2}-\d{2}.*$/i,'')
+        .replace(/\s*[-|]\s*\d{4}-\d{2}-\d{2}.*$/,'')
+        .replace(/\s*[-|,]\s*$/,'')
+        .trim();
       let detailsMaintenance=[];
       if(activeMaintenance.length){
         extraStatuses.push('Maintenance');
         const maintSummaries=[...activeMaintenance].sort((a,b)=>eventTimeValue(b)-eventTimeValue(a)).map(evt=>{
           const desc=latestUpdateBody(evt) || stripHtml(evt.body || 'Cloudflare is performing ongoing maintenance.');
-          return {name:evt.name||'Ongoing maintenance', desc};
+          const rawName=evt.name||'Ongoing maintenance';
+          return {name:stripMaintDate(rawName)||rawName, desc};
         });
         if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
