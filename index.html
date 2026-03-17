@@ -632,22 +632,6 @@
     .tv-radio-mute-btn { display:inline-flex; align-items:center; justify-content:center; width:clamp(18px,1.6vw,26px); height:clamp(18px,1.6vw,26px); border:none; background:transparent; color:var(--muted); cursor:pointer; flex-shrink:0; padding:0; transition:color 0.15s; }
     .tv-radio-mute-btn:hover { color:var(--text); }
     .tv-radio-mute-btn.muted { color:rgba(248,113,113,0.75); }
-    /* Spotify / Apple Music embed player */
-    .tv-radio-embed-wrap { width:100%; }
-    .tv-radio-embed-wrap iframe { display:block; width:100%; border:none; border-radius:10px; }
-    /* URL prompt (shown when no embed URL is saved) */
-    .tv-embed-prompt { display:flex; flex-direction:column; gap:clamp(5px,0.5vw,8px); }
-    .tv-embed-prompt-label { font-size:clamp(10px,0.78vw,13px); color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
-    .tv-embed-prompt-row { display:flex; gap:8px; align-items:center; }
-    .tv-embed-url-input { flex:1; min-width:0; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,0.25); color:var(--text); font-family:var(--font); font-size:clamp(11px,0.9vw,14px); padding:4px 2px; outline:none; }
-    .tv-embed-url-input:focus { border-bottom-color:rgba(59,130,246,0.8); }
-    .tv-embed-url-input::placeholder { color:var(--muted); opacity:0.55; }
-    .tv-embed-url-submit { background:rgba(255,255,255,0.1); border:none; color:var(--text); font-family:var(--font); font-size:clamp(10px,0.8vw,13px); font-weight:700; padding:4px 12px; border-radius:4px; cursor:pointer; white-space:nowrap; letter-spacing:0.04em; transition:background 0.15s; }
-    .tv-embed-url-submit:hover { background:rgba(255,255,255,0.22); }
-    .tv-embed-prompt-error { font-size:clamp(9px,0.7vw,12px); color:rgba(248,113,113,0.9); font-weight:600; }
-    /* "Change URL" button in controls row */
-    .tv-embed-change-btn { border:none; background:transparent; color:var(--muted); font-family:var(--font); font-size:clamp(9px,0.72vw,12px); font-weight:600; cursor:pointer; padding:2px 0; text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; border-bottom:1px solid transparent; transition:color 0.15s,border-color 0.15s; }
-    .tv-embed-change-btn:hover { color:var(--text); border-bottom-color:rgba(255,255,255,0.3); }
     /* Album art fallback (when no cover URL) */
     .tv-np-cover-fallback { width:clamp(36px,3.8vw,60px); height:clamp(36px,3.8vw,60px); border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.4vw,22px); font-weight:800; color:rgba(255,255,255,0.45); background:rgba(255,255,255,0.07); letter-spacing:-0.02em; }
     /* Clock */
@@ -1146,8 +1130,6 @@ const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25},
   {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'special://x1023-now-playing',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12},
   {id:'wocn',name:'Ocean 104.7',streamUrl:'https://ice7.securenetsystems.net/WOCN?play',nowPlayingUrl:'special://wocn-nowplaying',parse:'wocn-xml',quality:'128k',baseVolume:0.5,duckVolume:0.2},
-  {id:'spotify',name:'Spotify',type:'embed',embedHeight:80},
-  {id:'applemusic',name:'Apple Music',type:'embed',embedHeight:175}
 ];
 const BOARD_RADIO_BASE_VOLUME=0.35;
 const BOARD_RADIO_DUCK_VOLUME=0.12;
@@ -1288,75 +1270,9 @@ function _setBoardRadioVolume(target){
   _boardRadioAudio.volume=Math.min(1,Math.max(0,target));
 }
 
-function _toEmbedUrl(station,url){
-  if(!url) return null;
-  if(station.id==='spotify'){
-    const m=url.match(/open\.spotify\.com\/(playlist|album|track|artist|episode|show)\/([A-Za-z0-9]+)/);
-    if(m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
-    return null;
-  }
-  if(station.id==='applemusic'){
-    const m=url.match(/music\.apple\.com\/([^?#]+)/);
-    if(m) return `https://embed.music.apple.com/${m[1]}`;
-    return null;
-  }
-  return null;
-}
-
-function _renderEmbedPrompt(station){
-  const wrap=document.getElementById('tv-radio-embed-wrap');
-  if(!wrap) return;
-  const label=station.id==='spotify'?'Paste a Spotify playlist, album, or artist URL':'Paste an Apple Music playlist or album URL';
-  const placeholder=station.id==='spotify'?'https://open.spotify.com/playlist/…':'https://music.apple.com/us/playlist/…';
-  wrap.innerHTML=`<div class="tv-embed-prompt"><div class="tv-embed-prompt-label">${esc(label)}</div><div class="tv-embed-prompt-row"><input type="url" class="tv-embed-url-input" id="tv-embed-url-input" placeholder="${esc(placeholder)}" autocomplete="off" spellcheck="false"><button class="tv-embed-url-submit" id="tv-embed-url-submit" type="button">Load</button></div><div class="tv-embed-prompt-error" id="tv-embed-prompt-error" style="display:none"></div></div>`;
-  const submit=()=>{
-    const raw=(document.getElementById('tv-embed-url-input')?.value||'').trim();
-    const embedUrl=_toEmbedUrl(station,raw);
-    if(!embedUrl){
-      const errEl=document.getElementById('tv-embed-prompt-error');
-      if(errEl){errEl.textContent='Unrecognized URL — paste a direct link from Spotify or Apple Music.';errEl.style.display='';}
-      return;
-    }
-    localStorage.setItem(`board-embed-url-${station.id}`,embedUrl);
-    wrap.innerHTML='';
-    const fr=document.createElement('iframe');
-    fr.src=embedUrl;
-    fr.setAttribute('width','100%');
-    fr.setAttribute('height',String(station.embedHeight||80));
-    fr.allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-    fr.loading='lazy';
-    wrap.appendChild(fr);
-    _updateBoardMediaLayout();
-  };
-  document.getElementById('tv-embed-url-submit')?.addEventListener('click',submit);
-  document.getElementById('tv-embed-url-input')?.addEventListener('keydown',e=>{if(e.key==='Enter') submit();});
-  setTimeout(()=>document.getElementById('tv-embed-url-input')?.focus(),50);
-}
-
 async function _startBoardRadio(){
   if(!_boardModeActive||!_boardRadioEnabled) return;
   const station=_getBoardStation();
-  if(station.type==='embed'){
-    if(_boardRadioAudio) _boardRadioAudio.pause();
-    const wrap=document.getElementById('tv-radio-embed-wrap');
-    if(wrap&&!wrap.querySelector('iframe')&&!wrap.querySelector('.tv-embed-prompt')){
-      const savedUrl=localStorage.getItem(`board-embed-url-${station.id}`);
-      if(savedUrl){
-        const fr=document.createElement('iframe');
-        fr.src=savedUrl;
-        fr.setAttribute('width','100%');
-        fr.setAttribute('height',String(station.embedHeight||80));
-        fr.allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-        fr.loading='lazy';
-        wrap.appendChild(fr);
-      } else {
-        _renderEmbedPrompt(station);
-      }
-    }
-    _updateBoardMediaLayout();
-    return;
-  }
-  _updateBoardMediaLayout();
   const radio=_initBoardRadioAudio();
   const current=(radio.dataset.stationId||'');
   if(current!==station.id){
@@ -1382,9 +1298,6 @@ async function _startBoardRadio(){
 
 function _stopBoardRadio(){
   if(_boardRadioAudio) _boardRadioAudio.pause();
-  const wrap=document.getElementById('tv-radio-embed-wrap');
-  if(wrap) wrap.innerHTML='';
-  _updateBoardMediaLayout();
 }
 
 
@@ -1434,25 +1347,9 @@ function _toggleBoardRadioMute(){
 
 function _applyBoardEq(){
   const eq=document.querySelector('.tv-np-eq');
-  if(eq) eq.classList.toggle('paused',!_boardRadioEnabled||_getBoardStation().type==='embed');
+  if(eq) eq.classList.toggle('paused',!_boardRadioEnabled);
 }
 
-function _updateBoardMediaLayout(){
-  const station=_getBoardStation();
-  const isEmbed=station.type==='embed';
-  const activeEmbed=isEmbed&&_boardRadioEnabled;
-  const npEl=document.getElementById('tv-now-playing');
-  const embedWrap=document.getElementById('tv-radio-embed-wrap');
-  const muteBtn=document.getElementById('tv-radio-mute-btn');
-  const volSlider=document.getElementById('tv-radio-vol');
-  const changeBtn=document.getElementById('tv-embed-change-btn');
-  if(npEl) npEl.style.display=activeEmbed?'none':'';
-  if(embedWrap) embedWrap.style.display=activeEmbed?'':'none';
-  if(muteBtn) muteBtn.style.display=isEmbed?'none':'';
-  if(volSlider) volSlider.style.display=isEmbed?'none':'';
-  const hasSaved=isEmbed&&!!localStorage.getItem(`board-embed-url-${station.id}`);
-  if(changeBtn) changeBtn.style.display=(isEmbed&&hasSaved)?'':'none';
-}
 
 function _applyBoardRadioVolSlider(){
   const slider=document.getElementById('tv-radio-vol');
@@ -2226,6 +2123,19 @@ async function fetchOne(s){
         return code?`${code} · ${city}`:(city||n);
       };
 
+      // Build code→formatted-name lookup from North America components (e.g. "PDX"→"PDX · Portland, OR")
+      const dcCodeMap={};
+      watched.filter(c=>c.group_id===northAmericaGroupId).forEach(c=>{
+        const m=/\(([A-Z]{3,4})\)/.exec(c.name);
+        if(m) dcCodeMap[m[1]]=fmtDc(c.name);
+      });
+      // Format a maintenance event name; handles "PDX (Portland)" format by looking up the component name
+      const fmtMaintName=n=>{
+        const leadM=/^([A-Z]{3,4})\b/.exec(n);
+        if(leadM&&dcCodeMap[leadM[1]]) return dcCodeMap[leadM[1]];
+        return fmtDc(n)||n;
+      };
+
       // Build structured maintenance details (kept separate from body text)
       // Strip date suffixes from maintenance event names (e.g. "PDX (Portland) on 2026-03-17")
       const stripMaintDate=n=>n
@@ -2240,7 +2150,7 @@ async function fetchOne(s){
           const desc=latestUpdateBody(evt) || stripHtml(evt.body || 'Cloudflare is performing ongoing maintenance.');
           const rawName=evt.name||'Ongoing maintenance';
           const stripped=stripMaintDate(rawName)||rawName;
-          return {name:fmtDc(stripped)||stripped, desc};
+          return {name:fmtMaintName(stripped)||stripped, desc};
         });
         if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
         if(!title) title=maintSummaries[0].name;
@@ -3500,13 +3410,11 @@ function renderBoardView(results){
       <div class="tv-hdr-weather" id="tv-wx-bar" style="display:none"></div>
       <div class="tv-hdr-media">
         <div class="tv-now-playing" id="tv-now-playing"></div>
-        <div class="tv-radio-embed-wrap" id="tv-radio-embed-wrap" style="display:none"></div>
         <div class="tv-ctx-audio">
           <select class="tv-station-select" id="tv-station-select" title="Choose radio station">${BOARD_STATIONS.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('')}</select>
           <button class="tv-radio-playbtn${_boardRadioEnabled?' playing':''}" id="tv-radio-playbtn" type="button" title="${_boardRadioEnabled?'Pause radio':'Play radio'}">${_boardRadioEnabled?_ICON_PAUSE:_ICON_PLAY}</button>
           <button class="tv-radio-mute-btn" id="tv-radio-mute-btn" type="button" title="Mute">${_ICON_VOL}</button>
-          <button class="tv-embed-change-btn" id="tv-embed-change-btn" type="button" style="display:none">Change URL</button>
-          <input type="range" id="tv-radio-vol" class="tv-radio-vol-slider" min="0" max="1" step="0.05" title="Volume">
+<input type="range" id="tv-radio-vol" class="tv-radio-vol-slider" min="0" max="1" step="0.05" title="Volume">
         </div>
       </div>
       <div class="tv-clock-block">
@@ -3567,14 +3475,6 @@ function renderBoardView(results){
   document.getElementById('tv-radio-mute-btn')?.addEventListener('click',()=>{
     _toggleBoardRadioMute();
   });
-  document.getElementById('tv-embed-change-btn')?.addEventListener('click',()=>{
-    const station=_getBoardStation();
-    localStorage.removeItem(`board-embed-url-${station.id}`);
-    const wrap=document.getElementById('tv-radio-embed-wrap');
-    if(wrap) wrap.innerHTML='';
-    _renderEmbedPrompt(station);
-    _updateBoardMediaLayout();
-  });
   document.getElementById('tv-station-select')?.addEventListener('change',async (e)=>{
     _boardStationId=e.target.value;
     localStorage.setItem('board-station',_boardStationId);
@@ -3588,7 +3488,6 @@ function renderBoardView(results){
   _applyBoardRadioMuteBtn();
   _applyBoardStationSelect();
   _applyBoardRadioVolSlider();
-  _updateBoardMediaLayout();
   document.getElementById('tv-radio-vol')?.addEventListener('input',(e)=>{
     const v=parseFloat(e.target.value);
     if(_boardRadioAudio&&!(_radioDuckUntil>Date.now())) _setBoardRadioVolume(v);
