@@ -1191,6 +1191,41 @@ const PREFERRED_TTS_VOICES=[
   'Samantha'
 ];
 
+// IATA airport code → "City, State/Province" for CDN/network PoP labeling
+const IATA_CITY={
+  ABQ:'Albuquerque, NM',ANC:'Anchorage, AK',ATL:'Atlanta, GA',AUS:'Austin, TX',
+  BNA:'Nashville, TN',BOS:'Boston, MA',BUF:'Buffalo, NY',BWI:'Baltimore, MD',
+  CLT:'Charlotte, NC',CMH:'Columbus, OH',CVG:'Cincinnati, OH',
+  DAL:'Dallas, TX',DCA:'Washington, DC',DEN:'Denver, CO',DFW:'Dallas, TX',
+  DSM:'Des Moines, IA',DTW:'Detroit, MI',EWR:'Newark, NJ',
+  FLL:'Fort Lauderdale, FL',HNL:'Honolulu, HI',HOU:'Houston, TX',
+  IAD:'Ashburn, VA',IAH:'Houston, TX',IND:'Indianapolis, IN',
+  JAX:'Jacksonville, FL',JFK:'New York, NY',KCI:'Kansas City, MO',
+  LAS:'Las Vegas, NV',LAX:'Los Angeles, CA',LGA:'New York, NY',LGB:'Long Beach, CA',
+  LIT:'Little Rock, AR',MCO:'Orlando, FL',MDW:'Chicago, IL',MEM:'Memphis, TN',
+  MEX:'Mexico City',MIA:'Miami, FL',MKE:'Milwaukee, WI',MSP:'Minneapolis, MN',
+  MSY:'New Orleans, LA',NYC:'New York, NY',
+  OAK:'Oakland, CA',OGG:'Maui, HI',OKC:'Oklahoma City, OK',OMA:'Omaha, NE',
+  ONT:'Ontario, CA',ORD:'Chicago, IL',ORF:'Norfolk, VA',
+  PAO:'Palo Alto, CA',PBI:'West Palm Beach, FL',PDX:'Portland, OR',
+  PHL:'Philadelphia, PA',PHX:'Phoenix, AZ',PIT:'Pittsburgh, PA',
+  RDU:'Raleigh, NC',RIC:'Richmond, VA',RSW:'Fort Myers, FL',
+  SAN:'San Diego, CA',SAT:'San Antonio, TX',SEA:'Seattle, WA',
+  SFO:'San Francisco, CA',SJC:'San Jose, CA',SLC:'Salt Lake City, UT',
+  SMF:'Sacramento, CA',SNA:'Santa Ana, CA',SRQ:'Sarasota, FL',
+  STL:'St. Louis, MO',TPA:'Tampa, FL',TUL:'Tulsa, OK',TUS:'Tucson, AZ',
+  YVR:'Vancouver, BC',YYZ:'Toronto, ON',
+};
+// Format an IATA code (or "CODE (City)" / "CODE1" style name) as "CODE · City, ST"
+function fmtIataName(n){
+  if(!n) return n;
+  const leadM=/^([A-Z]{3,4})\b/i.exec(n.trim());
+  if(!leadM) return n;
+  const code=leadM[1].toUpperCase();
+  const city=IATA_CITY[code];
+  return city?`${code} · ${city}`:code;
+}
+
 const BOARD_STATIONS=[
   {id:'wror',name:'105.7 WROR',streamUrl:'https://18163.live.streamtheworld.com/WRORFM_SC',nowPlayingUrl:'special://wror-now-playing',parse:'artist-track',quality:'96k (highest available)',baseVolume:0.6,duckVolume:0.25,albumArt:'itunes'},
   {id:'x1023',name:"Cape Cod's X",streamUrl:'https://stream.x1023.fm/HD1',nowPlayingUrl:'special://x1023-now-playing',parse:'artist-track',quality:'128k',baseVolume:0.35,duckVolume:0.12,albumArt:'itunes'},
@@ -2195,9 +2230,14 @@ async function fetchOne(s){
         if(m) dcCodeMap[m[1]]=fmtDc(c.name);
       });
       // Format a maintenance event name; handles "PDX (Portland)" format by looking up the component name
+      // Falls back to the global IATA_CITY table if the component map doesn't have the code
       const fmtMaintName=n=>{
         const leadM=/^([A-Z]{3,4})\b/.exec(n);
-        if(leadM&&dcCodeMap[leadM[1]]) return dcCodeMap[leadM[1]];
+        if(leadM){
+          if(dcCodeMap[leadM[1]]) return dcCodeMap[leadM[1]];
+          const city=IATA_CITY[leadM[1]];
+          if(city) return `${leadM[1]} · ${city}`;
+        }
         return fmtDc(n)||n;
       };
 
@@ -2218,7 +2258,11 @@ async function fetchOne(s){
           return {name:fmtMaintName(stripped)||stripped, desc};
         });
         if(!hasPriorityIncident&&ind!=='major'&&ind!=='minor') ind='maintenance';
-        if(!title) title=maintSummaries[0].name;
+        if(!title){
+          title=maintSummaries.length===1
+            ?maintSummaries[0].name
+            :`Scheduled Maintenance at ${maintSummaries.length} Data Centers in North America`;
+        }
         if(!body) body=maintSummaries[0].desc;
         detailsMaintenance=maintSummaries;
       }
@@ -2266,8 +2310,13 @@ async function fetchOne(s){
         if(top) labelOverride=cloudflareStatusLabel(top.status);
       }
       if(hasRerouteNotice&&!hasPriorityIncident){
-        ind='rerouting';
-        labelOverride='Operational';
+        if(activeMaintenance.length){
+          // Maintenance + rerouting: maintenance is more impactful, keep that indicator
+          ind='maintenance';
+        } else {
+          ind='rerouting';
+          labelOverride='Operational';
+        }
         extraStatuses.push('Re-routed');
       }
       const statusLabels=[...new Set(extraStatuses.filter(Boolean))];
@@ -2577,7 +2626,9 @@ async function fetchOne(s){
           return !affected.length||affected.some(id=>watchedIds.has(id));
         });
         if(activeMaint.length){
-          const m=activeMaint[0]; ind='maintenance'; title=m.name||''; body=latestUpdateBody(m)||stripHtml(m.description||'');
+          const m=activeMaint[0]; ind='maintenance';
+          title=fmtIataName(m.name||'')||m.name||'';
+          body=latestUpdateBody(m)||stripHtml(m.description||'');
         }
       }
       return mk(s.name,ind,title,body,updated,s.hu);
