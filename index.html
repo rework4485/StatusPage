@@ -3821,6 +3821,7 @@ function mkIncCard(svc){
       const mkDcItem=(dc)=>`
         <div class="inc-detail-item">
           <span class="inc-detail-item-label">${esc(dc.name)}</span>
+          <span class="inc-detail-badge ${_indBadgeCls[dc.ind]||'ok'}">${_indLabel[dc.ind]||'Unknown'}</span>
         </div>`;
       if(rerouteDcs.length){
         const dcItems=rerouteDcs.map(mkDcItem).join('');
