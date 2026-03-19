@@ -2147,6 +2147,30 @@ async function fetchOne(s){
       });
       const hasActiveMaintenanceForComponent=(componentId)=>
         activeMaintenance.some(x=>!x.components?.length||x.components.some(c=>c.id===componentId));
+
+      // Sub-groups directly under North America (e.g. "United States") — their children are also NA PoPs
+      const northAmericaSubGroupIds=new Set(
+        northAmericaGroupId ? components.filter(c=>c.group && c.group_id===northAmericaGroupId).map(c=>c.id) : []
+      );
+      // Is this component a North America PoP (direct child or one level nested)?
+      const isNAChild=c=>!!northAmericaGroupId&&(c?.group_id===northAmericaGroupId||northAmericaSubGroupIds.has(c?.group_id));
+
+      // Active incidents must be computed before cloudflareComponentIndicator so we can tell
+      // components with real incidents apart from those that are merely being re-routed
+      const active=(id?.incidents||[]).filter(x=>{
+        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!x.components?.length) return true;
+        return x.components.some(c=>watchedIds.has(c.id));
+      });
+      // Component IDs that have a real (non-rerouting) active incident — these should show their
+      // actual degraded/outage status rather than being relabelled as re-routing
+      const componentIdsWithRealIncidents=new Set();
+      active.forEach(evt=>{
+        if(!hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt))){
+          (evt.components||[]).forEach(c=>componentIdsWithRealIncidents.add(c.id));
+        }
+      });
+
       const cloudflareComponentIndicator=(component)=>{
         const base=componentStatusToIndicator(component?.status);
         if(base==='none' || base==='unknown') return base;
@@ -2154,12 +2178,13 @@ async function fetchOne(s){
           if(!hasActiveMaintenanceForComponent(component?.id)) return 'none';
           return 'maintenance';
         }
-        const isNorthAmericaChild=!!northAmericaGroupId && component?.group_id===northAmericaGroupId;
-        if(isNorthAmericaChild || hasRerouteSignal(component?.name, component?.description)) return 'rerouting';
+        // Component has a real active incident → preserve its actual degraded/outage status
+        if(componentIdsWithRealIncidents.has(component?.id)) return base;
+        if(isNAChild(component) || hasRerouteSignal(component?.name, component?.description)) return 'rerouting';
         return base;
       };
       const affectedNorthAmerica=watched
-        .filter(c=>c.group_id===northAmericaGroupId && cloudflareComponentIndicator(c)!=='none')
+        .filter(c=>isNAChild(c) && cloudflareComponentIndicator(c)!=='none')
         .sort((a,b)=>((PRI[cloudflareComponentIndicator(a)]||9)-(PRI[cloudflareComponentIndicator(b)]||9)) || a.name.localeCompare(b.name));
 
       if(watched.length){
@@ -2172,12 +2197,6 @@ async function fetchOne(s){
         ind=normalizeIndicator(sd?.status?.indicator||'none');
       }
       const hasReroutingComponents=watched.some(c=>cloudflareComponentIndicator(c)==='rerouting');
-
-      const active=(id?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
-        if(!x.components?.length) return true;
-        return x.components.some(c=>watchedIds.has(c.id));
-      });
 
       let title='', body='', labelOverride='';
       let hasRerouteNotice=false;
@@ -2225,7 +2244,7 @@ async function fetchOne(s){
 
       // Build code→formatted-name lookup from North America components (e.g. "PDX"→"PDX · Portland, OR")
       const dcCodeMap={};
-      watched.filter(c=>c.group_id===northAmericaGroupId).forEach(c=>{
+      watched.filter(c=>isNAChild(c)).forEach(c=>{
         const m=/\(([A-Z]{3,4})\)/.exec(c.name);
         if(m) dcCodeMap[m[1]]=fmtDc(c.name);
       });
@@ -3769,7 +3788,8 @@ function mkIncCard(svc){
       // Group DCs by status
       const rerouteDcs=det.dataCenters.filter(dc=>dc.ind==='rerouting');
       const maintDcs=det.dataCenters.filter(dc=>dc.ind==='maintenance');
-      const otherDcs=det.dataCenters.filter(dc=>dc.ind!=='rerouting'&&dc.ind!=='maintenance');
+      const degradedDcs=det.dataCenters.filter(dc=>dc.ind==='minor'||dc.ind==='major');
+      const otherDcs=det.dataCenters.filter(dc=>!['rerouting','maintenance','minor','major'].includes(dc.ind));
       const mkDcItem=(dc)=>`
         <div class="inc-detail-item">
           <span class="inc-detail-item-label">${esc(dc.name)}</span>
@@ -3778,6 +3798,10 @@ function mkIncCard(svc){
       if(rerouteDcs.length){
         const dcItems=rerouteDcs.map(mkDcItem).join('');
         detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Re-Routed Data Centers</div>${dcItems}</div>`;
+      }
+      if(degradedDcs.length){
+        const dcItems=degradedDcs.map(mkDcItem).join('');
+        detailsHtml+=`<div class="inc-detail-section"><div class="inc-detail-hdr">Degraded Data Centers</div>${dcItems}</div>`;
       }
       if([...maintDcs,...otherDcs].length){
         const dcItems=[...maintDcs,...otherDcs].map(mkDcItem).join('');
