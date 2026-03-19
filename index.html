@@ -3847,7 +3847,6 @@ function mkIncCard(svc){
       const mkDcItem=(dc)=>`
         <div class="inc-detail-item">
           <span class="inc-detail-item-label">${esc(dc.name)}</span>
-          <span class="inc-detail-badge ${_indBadgeCls[dc.ind]||'warn'}">${esc(_indLabel[dc.ind]||dc.ind)}</span>
         </div>`;
       if(rerouteDcs.length){
         const dcItems=rerouteDcs.map(mkDcItem).join('');
@@ -3905,12 +3904,12 @@ function mkIncCard(svc){
           ${urlHost?`<a class="c-url" href="${esc(svc.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>${esc(urlHost)}</a>`:''}
         </div>
       </div>
-      <div class="c-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>
+      ${(det?.type==='cloudflare'||det?.type==='mbta')?'':`<div class="c-badge ${IC[svc.ind]||'ok'}">${esc(svc.label)}</div>`}
     </div>
     <div class="card-div"></div>
     <div class="inc-block ${blockCls}">
       <div class="inc-label" style="color:${color}"><span class="inc-label-dot" style="background:${color}"></span>${incLbl}</div>
-      ${statusLabels}
+      ${det?.type==='cloudflare'?'':statusLabels}
       <div class="inc-title">${esc(incTitle)}</div>
       ${bodyHtml}
       ${detailsHtml}
