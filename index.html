@@ -3049,20 +3049,42 @@ function renderServices(results){
       const cfDet=s.details?.type==='cloudflare' ? s.details : null;
       const hasCfDcs=(cfDet?.dataCenters?.length||0)+(cfDet?.maintenance?.length||0)>0;
       if(cfDet && hasCfDcs){
-        // Card 1: incident title + body only (no DC sections)
-        ig.appendChild(mkIncCard({...s, details:null}));
-        // Card 2: DC / maintenance details only
-        const allDcInds=(cfDet.dataCenters||[]).map(dc=>dc.ind);
-        const dcInd=allDcInds.includes('major')?'major'
-          :allDcInds.includes('minor')?'minor'
-          :allDcInds.includes('rerouting')?'rerouting'
-          :(cfDet.maintenance?.length||allDcInds.includes('maintenance'))?'maintenance'
+        const allDcs=cfDet.dataCenters||[];
+        // Degraded DCs belong with the active incident; maint/reroute go on the infrastructure card
+        const degradedDcs=allDcs.filter(dc=>dc.ind==='minor'||dc.ind==='major');
+        const infraDcs=allDcs.filter(dc=>dc.ind!=='minor'&&dc.ind!=='major');
+
+        // Card 1: incident title + body + degraded DCs (the real incident context)
+        // Strip "Maintenance" from labels — that label belongs to the infra card
+        const c1Labels=(s.labels||[]).filter(l=>l!=='Maintenance');
+        const c1DegInds=degradedDcs.map(dc=>dc.ind);
+        const c1Ind=c1DegInds.includes('major')?'major'
+          :c1DegInds.includes('minor')?'minor'
+          // if overall ind was forced to maintenance due to no real incident, keep it
           :s.ind;
-        const dcCount=(cfDet.dataCenters?.length||0);
-        const dcCardTitle=dcCount>0
-          ?`${dcCount} North America Data Center${dcCount!==1?'s':''} Affected`
-          :'Active Maintenance';
-        ig.appendChild(mkIncCard({...s, title:dcCardTitle, body:null, ind:dcInd, details:cfDet}));
+        const c1Details=degradedDcs.length
+          ?{type:'cloudflare',maintenance:[],dataCenters:degradedDcs}
+          :null;
+        ig.appendChild(mkIncCard({...s, ind:c1Ind, labels:c1Labels, details:c1Details}));
+
+        // Card 2: infra card — scheduled maintenance events + re-routed DCs
+        const hasC2=(cfDet.maintenance?.length||0)+infraDcs.length>0;
+        if(hasC2){
+          const infraInds=infraDcs.map(dc=>dc.ind);
+          const c2Ind=infraInds.includes('rerouting')?'rerouting'
+            :(cfDet.maintenance?.length||infraInds.includes('maintenance'))?'maintenance'
+            :s.ind;
+          const c2Label=c2Ind==='rerouting'?'Operational':c2Ind==='maintenance'?'Maintenance':s.label;
+          const c2Labels=(s.labels||[]).filter(l=>l==='Maintenance'||l==='Re-routed');
+          const infraCount=infraDcs.length;
+          const c2Title=infraCount>0
+            ?`${infraCount} North America Data Center${infraCount!==1?'s':''} Affected`
+            :'Active Maintenance';
+          ig.appendChild(mkIncCard({...s,
+            title:c2Title, body:null, ind:c2Ind, label:c2Label, labels:c2Labels,
+            details:{type:'cloudflare',maintenance:cfDet.maintenance,dataCenters:infraDcs}
+          }));
+        }
       } else {
         ig.appendChild(mkIncCard(s));
       }
