@@ -3045,7 +3045,28 @@ function renderServices(results){
     sec.appendChild(hdr);
     const ig=document.createElement('div');
     ig.className='issues-grid';
-    activeIssues.forEach(s=>ig.appendChild(mkIncCard(s)));
+    activeIssues.forEach(s=>{
+      const cfDet=s.details?.type==='cloudflare' ? s.details : null;
+      const hasCfDcs=(cfDet?.dataCenters?.length||0)+(cfDet?.maintenance?.length||0)>0;
+      if(cfDet && hasCfDcs){
+        // Card 1: incident title + body only (no DC sections)
+        ig.appendChild(mkIncCard({...s, details:null}));
+        // Card 2: DC / maintenance details only
+        const allDcInds=(cfDet.dataCenters||[]).map(dc=>dc.ind);
+        const dcInd=allDcInds.includes('major')?'major'
+          :allDcInds.includes('minor')?'minor'
+          :allDcInds.includes('rerouting')?'rerouting'
+          :(cfDet.maintenance?.length||allDcInds.includes('maintenance'))?'maintenance'
+          :s.ind;
+        const dcCount=(cfDet.dataCenters?.length||0);
+        const dcCardTitle=dcCount>0
+          ?`${dcCount} North America Data Center${dcCount!==1?'s':''} Affected`
+          :'Active Maintenance';
+        ig.appendChild(mkIncCard({...s, title:dcCardTitle, body:null, ind:dcInd, details:cfDet}));
+      } else {
+        ig.appendChild(mkIncCard(s));
+      }
+    });
     sec.appendChild(ig);
     grid.appendChild(sec);
   }
