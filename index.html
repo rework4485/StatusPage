@@ -675,6 +675,8 @@
     .tv-issue-dc-item { border-radius:8px; padding:clamp(3px,0.3vh,5px) clamp(8px,0.9vw,14px); font-size:clamp(11px,1.1vw,17px); font-weight:700; letter-spacing:0.04em; }
     .tv-issue-dc-item.reroute { background:rgba(20,184,166,0.18); border:1px solid rgba(20,184,166,0.45); color:var(--reroute); }
     .tv-issue-dc-item.maint   { background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.45); color:#60a5fa; }
+    .tv-issue-dc-item.warn    { background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4); color:var(--warn); }
+    .tv-issue-dc-item.bad     { background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4); color:var(--bad); }
     .tv-issue-cf-body { font-size:clamp(13px,1.2vw,18px); color:rgba(255,255,255,0.7); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .tv-issue-section-hdr { font-size:clamp(9px,0.75vw,12px); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.32); margin-top:clamp(6px,0.7vh,10px); padding-bottom:clamp(3px,0.3vh,4px); border-bottom:1px solid rgba(255,255,255,0.08); }
     /* Issue page dots */
@@ -3402,10 +3404,16 @@ function _buildIssueTilesHTML(svcs){
       }
       const cfDcs=svc.details.dataCenters||[];
       const cfRerouteDcs=cfDcs.filter(d=>d.ind==='rerouting');
-      const cfMaintDcs=cfDcs.filter(d=>d.ind!=='rerouting'&&d.ind!=='none');
+      const cfDegradedDcs=cfDcs.filter(d=>d.ind==='minor'||d.ind==='major');
+      const cfMaintDcs=cfDcs.filter(d=>d.ind==='maintenance');
       if(cfRerouteDcs.length){
         cfParts.push(`<div class="tv-issue-section-hdr">Re-Routed Data Centers</div>`);
         const dcHtml=cfRerouteDcs.map(dc=>`<span class="tv-issue-dc-item reroute">${esc(dc.name)}</span>`).join('');
+        cfParts.push(`<div class="tv-issue-dc-list">${dcHtml}</div>`);
+      }
+      if(cfDegradedDcs.length){
+        cfParts.push(`<div class="tv-issue-section-hdr">Degraded Data Centers</div>`);
+        const dcHtml=cfDegradedDcs.map(dc=>`<span class="tv-issue-dc-item ${dc.ind==='major'?'bad':'warn'}">${esc(dc.name)}</span>`).join('');
         cfParts.push(`<div class="tv-issue-dc-list">${dcHtml}</div>`);
       }
       if(cfMaintDcs.length){
@@ -3431,7 +3439,10 @@ function _buildIssueTilesHTML(svcs){
       } else if(!tileBody&&svc.details?.type==='cloudflare'){
         const lines=[];
         (svc.details.maintenance||[]).forEach(m=>lines.push('🔧 '+m.name));
-        (svc.details.dataCenters||[]).forEach(dc=>lines.push('• '+dc.name+' — '+(dc.ind==='rerouting'?'Re-routing':'Maintenance')));
+        (svc.details.dataCenters||[]).forEach(dc=>{
+          const lbl=dc.ind==='rerouting'?'Re-routing':dc.ind==='minor'||dc.ind==='major'?'Degraded':'Maintenance';
+          lines.push('• '+dc.name+' — '+lbl);
+        });
         tileBody=lines.join('\n');
       }
       if(tileBody) bodyInnerHtml=esc(tileBody);
