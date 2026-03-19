@@ -3050,31 +3050,28 @@ function renderServices(results){
       const hasCfDcs=(cfDet?.dataCenters?.length||0)+(cfDet?.maintenance?.length||0)>0;
       if(cfDet && hasCfDcs){
         const allDcs=cfDet.dataCenters||[];
-        // Degraded DCs belong with the active incident; maint/reroute go on the infrastructure card
         const degradedDcs=allDcs.filter(dc=>dc.ind==='minor'||dc.ind==='major');
         const infraDcs=allDcs.filter(dc=>dc.ind!=='minor'&&dc.ind!=='major');
+        const hasInfra=(cfDet.maintenance?.length||0)+infraDcs.length>0;
 
-        // Card 1: incident title + body + degraded DCs (the real incident context)
-        // Strip "Maintenance" from labels — that label belongs to the infra card
-        const c1Labels=(s.labels||[]).filter(l=>l!=='Maintenance');
-        const c1DegInds=degradedDcs.map(dc=>dc.ind);
-        const c1Ind=c1DegInds.includes('major')?'major'
-          :c1DegInds.includes('minor')?'minor'
-          // if overall ind was forced to maintenance due to no real incident, keep it
-          :s.ind;
-        const c1Details=degradedDcs.length
-          ?{type:'cloudflare',maintenance:[],dataCenters:degradedDcs}
-          :null;
-        ig.appendChild(mkIncCard({...s, ind:c1Ind, labels:c1Labels, details:c1Details}));
+        // Only split into two cards when there is BOTH a real incident (degraded DCs)
+        // AND separate infrastructure events (maintenance/re-routing).
+        // Maintenance-only or rerouting-only scenarios stay as a single card.
+        if(degradedDcs.length>0 && hasInfra){
+          // Card 1: active incident — body + degraded DCs; drop "Maintenance" label chip
+          const c1Labels=(s.labels||[]).filter(l=>l!=='Maintenance');
+          const c1Ind=degradedDcs.some(dc=>dc.ind==='major')?'major':'minor';
+          ig.appendChild(mkIncCard({...s,
+            ind:c1Ind, labels:c1Labels,
+            details:{type:'cloudflare',maintenance:[],dataCenters:degradedDcs}
+          }));
 
-        // Card 2: infra card — scheduled maintenance events + re-routed DCs
-        const hasC2=(cfDet.maintenance?.length||0)+infraDcs.length>0;
-        if(hasC2){
+          // Card 2: infrastructure — scheduled maintenance + re-routed DCs
           const infraInds=infraDcs.map(dc=>dc.ind);
           const c2Ind=infraInds.includes('rerouting')?'rerouting'
             :(cfDet.maintenance?.length||infraInds.includes('maintenance'))?'maintenance'
             :s.ind;
-          const c2Label=c2Ind==='rerouting'?'Operational':c2Ind==='maintenance'?'Maintenance':s.label;
+          const c2Label=c2Ind==='maintenance'?'Maintenance':c2Ind==='rerouting'?'Operational':s.label;
           const c2Labels=(s.labels||[]).filter(l=>l==='Maintenance'||l==='Re-routed');
           const infraCount=infraDcs.length;
           const c2Title=infraCount>0
@@ -3084,6 +3081,9 @@ function renderServices(results){
             title:c2Title, body:null, ind:c2Ind, label:c2Label, labels:c2Labels,
             details:{type:'cloudflare',maintenance:cfDet.maintenance,dataCenters:infraDcs}
           }));
+        } else {
+          // Single card — maintenance/rerouting only, or degraded with no separate infra
+          ig.appendChild(mkIncCard(s));
         }
       } else {
         ig.appendChild(mkIncCard(s));
