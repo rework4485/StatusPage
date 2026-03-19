@@ -1014,7 +1014,6 @@ const SVCS=[
   {name:'Fastly',su:'https://www.fastlystatus.com/rss/',hu:'https://www.fastlystatus.com',p:'fastly',cat:'infra'},
   {name:'Bunny.net',su:'https://status.bunny.net/api/v2/summary.json',hu:'https://status.bunny.net',cat:'infra'},
   {name:'CacheFly',su:'https://www.cacheflystatus.com/api/v2/summary.json',hu:'https://www.cacheflystatus.com',p:'cachefly',cat:'infra'},
-  {name:'Quad9',su:'https://uptime.quad9.net/api/v2/summary.json',hu:'https://uptime.quad9.net',p:'quad9',cat:'infra'},
   {name:'Mimecast',su:'https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4',hu:'https://status.mimecast.com',p:'mimecast',cat:'app'},
   {name:'Wasabi',su:'https://status.wasabi.com/api/v2/summary.json',hu:'https://status.wasabi.com',p:'wasabi',cat:'infra'},
   // Transit
@@ -1648,7 +1647,6 @@ const ROUTE_KEYS = {
   "https://www.fastlystatus.com/rss/": "fastly-rss",
   "https://status.bunny.net/api/v2/summary.json": "bunny-summary",
   "https://www.cacheflystatus.com/api/v2/summary.json": "cachefly-summary",
-  "https://uptime.quad9.net/api/v2/summary.json": "quad9-summary",
   "https://api.status.io/1.0/status/5d849b1c02e65b3ec45369d4": "mimecast-summary",
   "https://status.wasabi.com/api/v2/summary.json": "wasabi-summary",
   "https://api-v3.mbta.com/alerts?filter[route]=CR-Providence&filter[activity]=BOARD,EXIT,RIDE": "mbta-providence",
@@ -2470,29 +2468,6 @@ async function fetchOne(s){
     }catch{return errSvc(s);}
   }
 
-  if(s.p==='quad9'){
-    // IATA codes of Quad9 PoPs in the United States
-    const US_IATA=new Set(['ABQ','ANC','ATL','AUS','BNA','BOS','BUF','BWI','CLT','CMH','CVG','DAL','DCA','DEN','DFW','DSM','DTW','EWR','FLL','HNL','HOU','IAD','IAH','IND','JAX','JFK','KCI','LAS','LAX','LGA','LGB','LIT','MCO','MDW','MEM','MIA','MKE','MSP','MSY','OAK','OGG','OKC','OMA','ONT','ORD','ORF','PAO','PDX','PBI','PHL','PHX','PIT','RDU','RIC','RSW','SAT','SAN','SEA','SFO','SJC','SLC','SMF','SNA','SRQ','STL','TPA','TUL','TUS']);
-    try{
-      const sum=await getJson(s.su);
-      const [sd,id]=[sum,sum];
-      const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
-      const active=(id?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
-        // Include: incidents with no IATA code (global/network-wide) and US-specific ones
-        const m=/\(([A-Z]{3,4})\)/.exec(x.name||'');
-        return !m || US_IATA.has(m[1]);
-      });
-      // If no US-relevant active incidents, report operational regardless of global indicator
-      if(!active.length) return mk(s.name,'none','','',updated,s.hu);
-      const a=mostRecentEvent(active)||active[0];
-      const ind=normalizeIndicator(a.impact||'minor');
-      const title=a.name||'';
-      let body=latestUpdateBody(a);
-      if(!body) body=stripHtml(a.description||'');
-      return mk(s.name,ind,title,body,updated,s.hu);
-    }catch{return errSvc(s);}
-  }
 
   if(s.p==='iiq'){
     // Filter out incidents/maintenances that only affect the "User Integrations" component group
@@ -2712,7 +2687,6 @@ const LOGO_DOMAINS={
   'Fastly':'fastly.com',
   'Bunny.net':'bunny.net',
   'CacheFly':'cachefly.com',
-  'Quad9':'quad9.net',
   'Apple Services':'apple.com',
   'Apple Developer':'developer.apple.com',
 };
@@ -4218,7 +4192,6 @@ const _DOH_PROVIDERS = [
   // 162.159.x / 172.64.x / 104.16–21.x — Cloudflare anycast CDN network (also serves DNS)
   { name: 'Cloudflare DNS',           cidrs: ['162.159.', '172.64.', '104.16.', '104.17.', '104.18.', '104.19.', '104.20.', '104.21.'] },
   { name: 'Google DNS (8.8.8.8)',     cidrs: ['8.8.8.', '8.8.4.'] },
-  { name: 'Quad9 (9.9.9.9)',          cidrs: ['9.9.9.', '149.112.112.'] },
   { name: 'NextDNS',                  cidrs: ['45.90.28.', '45.90.30.'] },
   { name: 'AdGuard DNS',              cidrs: ['94.140.14.', '94.140.15.'] },
   { name: 'OpenDNS',                  cidrs: ['208.67.222.', '208.67.220.'] },
@@ -4351,14 +4324,11 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
   const shortOrg = !geoOrg ? null
     : /cloudflare/i.test(geoOrg)               ? 'Cloudflare'
     : /\bgoogle\b/i.test(geoOrg)               ? 'Google'
-    : /quad9/i.test(geoOrg)                    ? 'Quad9'
     : /nextdns/i.test(geoOrg)                  ? 'NextDNS'
     : /adguard/i.test(geoOrg)                  ? 'AdGuard'
     : /opendns|cisco umbrella/i.test(geoOrg)   ? 'OpenDNS'
-    // WoodyNet and PCH (Packet Clearing House) are known Quad9 anycast routing partners
-    : /woody.?net|packet clearing house|pch\.net/i.test(geoOrg) ? 'Quad9'
     : geoOrg.replace(/,?\s*(Inc|LLC|Ltd|Corp|GmbH)\.?\s*$/i, '').trim();
-  const knownPublicDns = /cloudflare|google|quad9|nextdns|adguard|opendns|cisco umbrella|woody.?net|packet clearing house|pch\.net/i.test(geoOrg || '');
+  const knownPublicDns = /cloudflare|google|nextdns|adguard|opendns|cisco umbrella/i.test(geoOrg || '');
   const resolverProvider = resolverClassification.isDoh
     ? resolverClassification.provider
     : (shortOrg || resolverClassification.provider);
@@ -4385,7 +4355,7 @@ function _renderNetCards(cf, meta, ip, resolverIp, cfLat, gLat, traceHops, iodaD
   const dnsCard = resolverDisplay
     + mkNetMetric('Public DNS Provider', pubDnsBadge)
     + leakRow
-    + `<div class="net-note">Shows the recursive DNS resolver your browser used to look up this page. Public DNS providers (Cloudflare, Google, Quad9, etc.) offer privacy and filtering features.</div>`;
+    + `<div class="net-note">Shows the recursive DNS resolver your browser used to look up this page. Public DNS providers (Cloudflare, Google, etc.) offer privacy and filtering features.</div>`;
 
   const gLatCard = gLat
     ? mkNetMetric('Latency to Google', gLat.min + ' ms min · ' + gLat.avg + ' ms avg' + _lossStr(gLat))

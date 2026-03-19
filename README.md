@@ -9,7 +9,7 @@ Real-time status dashboard for cloud providers, SaaS applications, CDNs, DNS res
 | Category | Services |
 |----------|----------|
 | **Applications** | i-Ready, HMH, Follett, IncidentIQ, Clever, Seesaw, Jamf, Duo, Imagine Learning, FinalSite, Dexcom, Adobe CC, Google Workspace, Apple Services, Apple Developer |
-| **Infrastructure** | Cloudflare, DNSFilter, Meraki, AWS, Azure, Google Cloud, Oracle Cloud, IBM Cloud, Akamai, Fastly, Bunny.net, CacheFly, Quad9 |
+| **Infrastructure** | Cloudflare, DNSFilter, Meraki, AWS, Azure, Google Cloud, Oracle Cloud, IBM Cloud, Akamai, Fastly, Bunny.net, CacheFly |
 | **Transit** | MBTA Providence/Stoughton Line, MBTA South Coast Rail |
 
 ---
