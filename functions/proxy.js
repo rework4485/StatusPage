@@ -31,7 +31,10 @@ async function fetchSpecialRoute(key, env) {
     const reader = resp.body.getReader();
     let chunk = new Uint8Array(0);
     let totalRead = 0;
-    const targetBytes = Math.min(metaInt * 3 + 4096, 180000);
+    // Read enough bytes to cover several metadata blocks so we can skip
+    // station-identification announcements ("Station ID", call-sign-only, etc.)
+    // and find a real song title.
+    const targetBytes = Math.min(metaInt * 6 + 4096, 360000);
     while (totalRead < targetBytes) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -43,8 +46,11 @@ async function fetchSpecialRoute(key, env) {
     }
     await reader.cancel().catch(() => {});
 
+    // Titles that are station housekeeping, not a song.
+    const isNonSong = t => /^(station\s+id|sign[\s-]?off|[\w-]+fm|[\w-]+am|[\w-]+hd\d?)$/i.test(t);
+
     let songtitle = '';
-    for (let pos = metaInt; pos < chunk.length && !songtitle; ) {
+    for (let pos = metaInt; pos < chunk.length; ) {
       const metaLen = (chunk[pos] || 0) * 16;
       const metaStart = pos + 1;
       const metaEnd = Math.min(chunk.length, metaStart + metaLen);
@@ -52,7 +58,7 @@ async function fetchSpecialRoute(key, env) {
       const m = rawMeta.match(/StreamTitle='([^']*)';/i);
       if (m?.[1]) {
         const title = m[1].trim();
-        if (title) songtitle = title;
+        if (title && !isNonSong(title)) { songtitle = title; break; }
       }
       pos = metaEnd + metaInt;
     }
@@ -110,6 +116,33 @@ async function fetchSpecialRoute(key, env) {
     );
     if (!resp.ok) throw new Error(`upstream ${resp.status}`);
     return new Response(await resp.text(), {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store',
+        'Content-Type': sanitizeContentType(resp.headers.get('content-type')),
+      },
+    });
+  }
+
+  // Adobe status endpoints block generic bot User-Agents; use a browser-like UA
+  // with a Referer so their WAF passes the request through.
+  if (key === 'adobe-registry' || key === 'adobe-events') {
+    const adobeUrls = {
+      'adobe-registry': 'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',
+      'adobe-events':   'https://data.status.adobe.com/adobestatus/StatusEvents',
+    };
+    const resp = await fetch(adobeUrls[key], {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://status.adobe.com/',
+      },
+    });
+    if (!resp.ok) throw new Error(`upstream ${resp.status}`);
+    const body = await resp.text();
+    return new Response(body, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',

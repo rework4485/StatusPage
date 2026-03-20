@@ -304,7 +304,8 @@
     .issues-hdr::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:stalePulse 1.8s ease-in-out infinite; flex-shrink:0; }
     .issues-hdr.has-outage::before { background:var(--bad); }
     .issues-hdr-count { font-size:10px; font-weight:500; color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:1px 7px; border-radius:999px; }
-    .issues-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:start; }
+    .issues-grid { columns:300px; column-gap:10px; }
+    .issues-grid > .card { break-inside:avoid; margin-bottom:10px; }
 
     /* ── Service directory (bottom panel) ───────────────────────────────────── */
     .svc-directory { display:flex; flex-direction:column; gap:10px; }
@@ -524,7 +525,6 @@
 
 
     /* Issues grid responsive */
-    .issues-grid { container-type:inline-size; }
 
     /* ── Weather bar ─────────────────────────────────────────────────────────── */
     .weather-bar { display:none; align-items:center; gap:8px 14px; flex-wrap:wrap; padding:7px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; font-size:13px; color:var(--sub); }
@@ -758,7 +758,7 @@
       .hdr-left { flex-direction:column; align-items:flex-start; gap:8px; width:100%; }
       .hdr-right { flex-wrap:wrap; justify-content:flex-start; gap:10px; }
       .stats { gap:8px 14px; flex-wrap:wrap; }
-      .issues-grid { grid-template-columns:1fr; }
+      .issues-grid { columns:1; }
       .footer { flex-wrap:wrap; gap:8px; }
     }
 
@@ -1003,6 +1003,7 @@ const SVCS=[
   {name:'OpenAI',su:'https://status.openai.com/api/v2/summary.json',hu:'https://status.openai.com',cat:'app'},
   // Infrastructure Providers
   {name:'Cloudflare',su:'https://www.cloudflarestatus.com/api/v2/summary.json',hu:'https://www.cloudflarestatus.com',p:'cloudflare',cat:'infra'},
+  {name:'Tailscale',su:'https://status.tailscale.com/api/v2/summary.json',hu:'https://status.tailscale.com',cat:'infra'},
   {name:'DNSFilter',su:'https://status.dnsfilter.com/api/v2/summary.json',hu:'https://status.dnsfilter.com',cat:'infra'},
   {name:'Meraki',su:'https://status.meraki.net/api/v2/summary.json',hu:'https://status.meraki.net',cat:'infra'},
   {name:'AWS',su:'https://status.aws.amazon.com/rss/all.rss',hu:'https://health.aws.amazon.com/health/status',p:'aws',cat:'infra'},
@@ -2215,22 +2216,33 @@ async function fetchOne(s){
         const incidentSummaries=sortedActive.map(evt=>{
           let desc=latestUpdateBody(evt);
           if(!desc) desc=stripHtml(evt.description||'');
-          return {name:evt.name||'Service Disruption', desc};
+          const isReroute=hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, desc);
+          return {name:evt.name||'Service Disruption', desc, isReroute};
         });
-        hasPriorityIncident=sortedActive.some(evt=>{
+        // Exclude pure reroute-signal incidents (e.g. "Jakarta issue causing ORF to reroute")
+        // from hasPriorityIncident so they don't suppress the rerouting collapse logic.
+        hasPriorityIncident=incidentSummaries.some((s,i)=>{
+          if(s.isReroute) return false;
+          const evt=sortedActive[i];
           const impact=normalizeIndicator(evt.impact||'none');
-          const statusText=`${evt.name||''} ${evt.status||''} ${evt.impact||''} ${evt.description||''} ${latestUpdateBody(evt)||''}`.toLowerCase();
+          const statusText=`${evt.name||''} ${evt.status||''} ${evt.impact||''} ${s.desc}`.toLowerCase();
           return impact==='major'||impact==='minor'||/\binvestigating\b|\bdegraded\b|\bdown\b|\boutage\b/.test(statusText);
         });
-        if(sortedActive.some(evt=>hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt)))){
+        if(incidentSummaries.some(s=>s.isReroute)){
           hasRerouteNotice=true;
           if(ind==='minor'&&!hasPriorityIncident) ind='none';
         }
-        title=incidentSummaries[0].name;
-        body=incidentSummaries[0].desc;
-        if(incidentSummaries.length>1){
-          const rest=incidentSummaries.slice(1).map(evt=>`• ${evt.name}${evt.desc ? ` — ${evt.desc}` : ''}`).join('\n');
-          body=`${body ? `${body}\n\n` : ''}Additional active incidents:\n${rest}`;
+        // Only surface title/body from real (non-reroute) incidents; reroute-only
+        // incidents (e.g. a non-NA PoP issue causing NA traffic to shift) should not
+        // show their remote-region title — the DC re-route section below covers them.
+        const realSummaries=incidentSummaries.filter(s=>!s.isReroute);
+        if(realSummaries.length){
+          title=realSummaries[0].name;
+          body=realSummaries[0].desc;
+          if(realSummaries.length>1){
+            const rest=realSummaries.slice(1).map(s=>`• ${s.name}${s.desc ? ` — ${s.desc}` : ''}`).join('\n');
+            body=`${body ? `${body}\n\n` : ''}Additional active incidents:\n${rest}`;
+          }
         }
       }
 
