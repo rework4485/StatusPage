@@ -2156,6 +2156,17 @@ async function fetchOne(s){
       // Is this component a North America PoP (direct child or one level nested)?
       const isNAChild=c=>!!northAmericaGroupId&&(c?.group_id===northAmericaGroupId||northAmericaSubGroupIds.has(c?.group_id));
 
+      // Full component lookup so incident component refs can be resolved to group info
+      const compById=Object.fromEntries(components.map(c=>[c.id,c]));
+      // An incident whose every tagged component is non-NA (e.g. "Network Performance Issues
+      // in Jakarta") should not surface as an NA real incident — treat it as a reroute signal.
+      const isNonNAOnlyIncident=evt=>{
+        if(!evt.components?.length) return false;
+        const resolved=evt.components.map(c=>compById[c.id]).filter(Boolean);
+        if(!resolved.length) return false;
+        return resolved.every(c=>!isNAChild(c));
+      };
+
       // Active incidents must be computed before cloudflareComponentIndicator so we can tell
       // components with real incidents apart from those that are merely being re-routed
       const active=(id?.incidents||[]).filter(x=>{
@@ -2167,7 +2178,7 @@ async function fetchOne(s){
       // actual degraded/outage status rather than being relabelled as re-routing
       const componentIdsWithRealIncidents=new Set();
       active.forEach(evt=>{
-        if(!hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt))){
+        if(!hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, latestUpdateBody(evt))&&!isNonNAOnlyIncident(evt)){
           (evt.components||[]).forEach(c=>componentIdsWithRealIncidents.add(c.id));
         }
       });
@@ -2210,13 +2221,13 @@ async function fetchOne(s){
           const impact=normalizeIndicator(a.impact||'none');
           if(impact!=='none') ind=impact;
         }
-        if(!hasRerouteSignal(a.name, a.impact, a.status, a.description, latestUpdateBody(a))){
+        if(!hasRerouteSignal(a.name, a.impact, a.status, a.description, latestUpdateBody(a))&&!isNonNAOnlyIncident(a)){
           labelOverride=cloudflareIncidentStatusLabel(a.status) || labelOverride;
         }
         const incidentSummaries=sortedActive.map(evt=>{
           let desc=latestUpdateBody(evt);
           if(!desc) desc=stripHtml(evt.description||'');
-          const isReroute=hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, desc);
+          const isReroute=hasRerouteSignal(evt.name, evt.impact, evt.status, evt.description, desc)||isNonNAOnlyIncident(evt);
           return {name:evt.name||'Service Disruption', desc, isReroute};
         });
         // Exclude pure reroute-signal incidents (e.g. "Jakarta issue causing ORF to reroute")
