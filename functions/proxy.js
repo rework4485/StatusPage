@@ -119,6 +119,33 @@ async function fetchSpecialRoute(key, env) {
     });
   }
 
+  // Adobe status endpoints block generic bot User-Agents; use a browser-like UA
+  // with a Referer so their WAF passes the request through.
+  if (key === 'adobe-registry' || key === 'adobe-events') {
+    const adobeUrls = {
+      'adobe-registry': 'https://data.status.adobe.com/adobestatus/SnowServiceRegistry',
+      'adobe-events':   'https://data.status.adobe.com/adobestatus/StatusEvents',
+    };
+    const resp = await fetch(adobeUrls[key], {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://status.adobe.com/',
+      },
+    });
+    if (!resp.ok) throw new Error(`upstream ${resp.status}`);
+    const body = await resp.text();
+    return new Response(body, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store',
+        'Content-Type': sanitizeContentType(resp.headers.get('content-type')),
+      },
+    });
+  }
+
   throw new Error('unknown special key');
 }
 
