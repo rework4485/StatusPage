@@ -2780,15 +2780,15 @@ async function _getDeviceLocation(){
       return _deviceLocation;
     }catch{ /* permission denied or unavailable — fall through to IP */ }
   }
-  // Fallback: derive location from public IP via ip-api
+  // Fallback: derive location from public IP via ipapi.co (CORS-enabled)
   try{
-    const d=await fetchWithTimeout('https://ip-api.com/json',8000).then(r=>r.ok?r.json():null);
-    if(d?.lat&&d?.lon){
-      const locName=d.city&&d.regionName?`${d.city}, ${d.regionName}`:d.city||'';
-      _deviceLocation={lat:d.lat,lon:d.lon,locName};
+    const d=await fetchWithTimeout('https://ipapi.co/json/',8000).then(r=>r.ok?r.json():null);
+    if(d?.latitude&&d?.longitude){
+      const locName=d.city&&d.region?`${d.city}, ${d.region}`:d.city||'';
+      _deviceLocation={lat:d.latitude,lon:d.longitude,locName};
       return _deviceLocation;
     }
-  }catch{ /* ip-api unavailable */ }
+  }catch{ /* ipapi.co unavailable */ }
   return {lat:41.7226,lon:-71.2829}; // last-resort fallback
 }
 
@@ -4486,8 +4486,9 @@ const _TRACE_HOPS=[
   {label:'Cloudflare CDN', url:'https://cloudflare.com/cdn-cgi/trace', noCors:false},
   {label:'Google Anycast',  url:'https://dns.google/generate_204',      noCors:true},
   {label:'Amazon AWS',      url:'https://checkip.amazonaws.com/',        noCors:true},
-  // azure.microsoft.com redirects to CDN; management.azure.com is the actual Azure ARM endpoint
-  {label:'Microsoft Azure', url:'https://management.azure.com/', noCors:true},
+  // azure.microsoft.com is CDN-served and handles no-cors latency probes cleanly;
+  // management.azure.com (ARM API) aborts no-cors requests with ERR_ABORTED.
+  {label:'Microsoft Azure', url:'https://azure.microsoft.com/', noCors:true},
 ];
 async function measureTraceroute(){
   const results=await Promise.allSettled(
@@ -4526,9 +4527,8 @@ async function runNetworkDiag() {
     // so the returned IP/ISP/colo data reflects the *user's* connection, not the proxy server's.
     _netDirectText('https://cloudflare.com/cdn-cgi/trace').then(parseCFTrace),
     _netDirectJson('https://speed.cloudflare.com/meta'),
-    // ip-api: direct-fetch only — proxy server IPs are blocked by ip-api as datacenter IPs.
-    // Optional enrichment (city/country); failure is graceful since meta provides ISP/ASN.
-    fetchWithTimeout('https://ip-api.com/json', 8000).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => ({})),
+    // ISP/ASN/city covered by speed.cloudflare.com/meta; no separate IP-geolocation call needed.
+    Promise.resolve({}),
     // DoH resolver check — asks what DNS resolver Cloudflare sees
     detectDohResolver(),
     // Latency pings are already direct (fetchWithTimeout, no proxy)
