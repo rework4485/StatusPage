@@ -51,7 +51,8 @@
     .light-mode .f-settings-btn,
     .light-mode .tv-exit-btn,
     .light-mode .test-btn,
-    .light-mode .net-refresh-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
+    .light-mode .net-refresh-btn,
+    .light-mode .net-run-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
     .light-mode .nav-tab.active,
     .light-mode .filter-chip.active { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.18); color:var(--text); }
     .light-mode .nav-tab:hover:not(.active),
@@ -61,9 +62,8 @@
     .light-mode .f-theme-btn:hover,
     .light-mode .f-settings-btn:hover,
     .light-mode .tv-exit-btn:hover,
-    .light-mode .net-refresh-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.16); }
-    .light-mode .net-run-btn { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.12); }
-    .light-mode .net-run-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.18); }
+    .light-mode .net-refresh-btn:hover,
+    .light-mode .net-run-btn:hover { background:rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.16); }
     .light-mode .svc-icon-wrap { background:rgba(0,0,0,0.05); }
     .light-mode .svc-row:hover { background:rgba(0,0,0,0.03); }
     .light-mode .svc-row:active { background:rgba(0,0,0,0.06); }
@@ -1057,6 +1057,8 @@ function hasRerouteSignal(...parts){
   return /(re-?rout|rerout|traffic\s+(?:is\s+)?(?:re-?routed|shifted|redirected)|route\s+shift|partially\s+re-?routed)/.test(text);
 }
 
+const ACTIVE_STATUSES=['investigating','identified','monitoring'];
+
 function componentStatusToIndicator(status){
   const val=String(status||'').toLowerCase().trim();
   if(val==='operational') return 'none';
@@ -1064,6 +1066,13 @@ function componentStatusToIndicator(status){
   if(val==='major_outage') return 'major';
   if(val==='under_maintenance') return 'maintenance';
   return 'unknown';
+}
+
+function worstIndicator(components){
+  return components.reduce((worst,c)=>{
+    const ci=normalizeIndicator(c.status);
+    return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;
+  },'none');
 }
 
 function cloudflareStatusLabel(status){
@@ -1657,7 +1666,7 @@ const ROUTE_KEYS = {
   "https://api-v3.mbta.com/alerts?filter[route]=CR-NewBedford,CR-FallRiver&filter[activity]=BOARD,EXIT,RIDE": "mbta-southcoast",
   "https://cloudflare.com/cdn-cgi/trace": "cf-trace",
   "https://speed.cloudflare.com/meta": "speed-meta",
-  "https://ip-api.com/json": "ip-api",
+
   "https://cloudflare-dns.com/dns-query?name=whoami.cloudflare&type=TXT&ct=application/dns-json": "doh-cloudflare",
   "https://dns.google/generate_204": "google-204",
   "https://stream.x1023.fm/stats?sid=1&json=1": "x1023-now-playing",
@@ -1907,7 +1916,7 @@ async function fetchOne(s){
       // Also check active incidents that reference watched component IDs
       const watchedIds=new Set(watched.map(c=>c.id));
       const active=(id?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!ACTIVE_STATUSES.includes((x.status||'').toLowerCase())) return false;
         // Include if no components listed (global) or if a watched component is affected
         if(!x.components?.length) return true;
         return x.components.some(c=>watchedIds.has(c.id));
@@ -2173,7 +2182,7 @@ async function fetchOne(s){
       // Active incidents must be computed before cloudflareComponentIndicator so we can tell
       // components with real incidents apart from those that are merely being re-routed
       const active=(id?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!ACTIVE_STATUSES.includes((x.status||'').toLowerCase())) return false;
         if(!x.components?.length) return true;
         return x.components.some(c=>watchedIds.has(c.id));
       });
@@ -2511,8 +2520,7 @@ async function fetchOne(s){
         const affected=(inc.components||[]).map(c=>c.id);
         return affected.length>0 && affected.every(id=>uiChildIds.has(id));
       };
-      const activeStatuses=['investigating','identified','monitoring'];
-      const active=(sum?.incidents||[]).filter(x=>activeStatuses.includes((x.status||'').toLowerCase())&&!isOnlyUI(x));
+      const active=(sum?.incidents||[]).filter(x=>ACTIVE_STATUSES.includes((x.status||'').toLowerCase())&&!isOnlyUI(x));
       const activeMaint=(sum?.scheduled_maintenances||[]).filter(x=>['in_progress','verifying'].includes((x.status||'').toLowerCase())&&!isOnlyUI(x));
       let ind=normalizeIndicator(sum?.status?.indicator||'none');
       let title='',body='';
@@ -2592,12 +2600,12 @@ async function fetchOne(s){
       const watched=usComps.length?usComps:comps;
       const watchedIds=new Set(watched.map(c=>c.id));
       const active=(sum?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!ACTIVE_STATUSES.includes((x.status||'').toLowerCase())) return false;
         const affected=(x.components||[]).map(c=>c.id);
         return !affected.length||affected.some(id=>watchedIds.has(id));
       });
       let ind='none';
-      const worstComp=watched.reduce((worst,c)=>{const ci=normalizeIndicator(c.status);return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;},'none');
+      const worstComp=worstIndicator(watched);
       if(worstComp!=='none') ind=worstComp;
       let title='',body='';
       if(active.length){
@@ -2629,10 +2637,10 @@ async function fetchOne(s){
       );
       const watched=naComps.length?naComps:comps;
       const watchedIds=new Set(watched.map(c=>c.id));
-      const worstComp=watched.reduce((worst,c)=>{const ci=normalizeIndicator(c.status);return (PRI[ci]||9)<(PRI[worst]||9)?ci:worst;},'none');
+      const worstComp=worstIndicator(watched);
       let ind=worstComp;
       const active=(sum?.incidents||[]).filter(x=>{
-        if(!['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())) return false;
+        if(!ACTIVE_STATUSES.includes((x.status||'').toLowerCase())) return false;
         const affected=(x.components||[]).map(c=>c.id);
         return !affected.length||affected.some(id=>watchedIds.has(id));
       });
@@ -2661,18 +2669,21 @@ async function fetchOne(s){
     // Quad9 — Atlassian Statuspage (uptime.quad9.net) + per-PoP CSV (status.quad9.net/smap/)
     // Incidents are named "City (CODE) - Description"; filter to North America PoPs only.
     try{
-      const sum=await getJson(s.su);
+      // Fetch Statuspage summary and PoP CSV in parallel
+      const [sum, csvText]=await Promise.all([
+        getJson(s.su),
+        getText('https://status.quad9.net/smap/assets/data.csv').catch(()=>null),
+      ]);
       const updated=sum?.page?.updated_at?new Date(sum.page.updated_at).toLocaleString():new Date().toLocaleString();
 
       // Countries considered North America for Quad9 PoP filtering
       const NA_COUNTRIES=new Set(['United States','Canada','Mexico','Puerto Rico','Guatemala','Curaçao','Curacao']);
 
-      // Fetch the per-PoP status CSV — best-effort; used for both NA code resolution and DC details.
+      // Parse PoP CSV — best-effort; used for both NA code resolution and DC details.
       // Columns: status, pop_code, city, country, [ixp…]
       let naCodes=null; // Set<string> built from CSV; null if CSV unavailable
       let detailsDcs=[];
-      try{
-        const csvText=await getText('https://status.quad9.net/smap/assets/data.csv');
+      if(csvText){
         const rows=csvText.trim().split('\n');
         if(rows.length>1){
           const hdr=rows[0].split(',').map(h=>h.trim().toLowerCase());
@@ -2696,7 +2707,7 @@ async function fetchOne(s){
             detailsDcs.push({name:`${code} · ${city}`,ind:popInd,status});
           }
         }
-      }catch{} // CSV is best-effort
+      }
 
       // Fallback NA codes used when CSV is unreachable (from last-known smap data)
       const FALLBACK_NA=new Set([
@@ -2712,7 +2723,7 @@ async function fetchOne(s){
       const extractPopCode=name=>{const m=/\(([A-Z]{2,6}\d*)\)/.exec(name||'');return m?.[1]||null;};
       const isNAIncident=evt=>{const code=extractPopCode(evt.name||'');return !code||resolvedNaCodes.has(code);};
       const allActive=(sum?.incidents||[]).filter(x=>
-        ['investigating','identified','monitoring'].includes((x.status||'').toLowerCase())
+        ACTIVE_STATUSES.includes((x.status||'').toLowerCase())
       );
       const naActive=allActive.filter(isNAIncident);
 
@@ -2720,8 +2731,7 @@ async function fetchOne(s){
       let title='',body='';
       if(naActive.length){
         const a=mostRecentEvent(naActive)||naActive[0];
-        const impact=normalizeIndicator(a.impact||'none');
-        if(impact!=='none') ind=impact;
+        if(ind==='none'){ const impact=normalizeIndicator(a.impact||'none'); if(impact!=='none') ind=impact; }
         title=a.name||'';
         let desc=latestUpdateBody(a); if(!desc) desc=stripHtml(a.description||'');
         body=desc;
@@ -2742,7 +2752,7 @@ async function fetchOne(s){
     const [sd,id]=[sum,sum];
     let ind=normalizeIndicator(sd?.status?.indicator||'none');
     const updated=sd?.page?.updated_at ? new Date(sd.page.updated_at).toLocaleString() : new Date().toLocaleString();
-    const active=(id?.incidents||[]).filter(x=>['investigating','identified','monitoring'].includes((x.status||'').toLowerCase()));
+    const active=(id?.incidents||[]).filter(x=>ACTIVE_STATUSES.includes((x.status||'').toLowerCase()));
     let title='', body='';
     if(active.length){
       const a=mostRecentEvent(active) || active[0];
